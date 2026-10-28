@@ -1,10 +1,12 @@
 name: Release
 
-# Push a tag like v1.0.2 to build the Windows installer and publish it as a
-# GitHub release. Installed copies of Daybook pick it up automatically.
+# When the version in package.json changes on main, build the Windows installer
+# and publish it as a GitHub release (tag v<version>). Installed copies of
+# Daybook pick it up automatically. Versions already released are skipped.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: ['package.json', '.github/workflows/release.yml']
   workflow_dispatch:
 
 permissions:
@@ -15,13 +17,30 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check whether this version is already released
+        id: ver
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "v$v" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "v$v is already released, nothing to do."
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.ver.outputs.skip != 'true'
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - name: Build and publish
+      - if: steps.ver.outputs.skip != 'true'
+        run: npm ci
+      - if: steps.ver.outputs.skip != 'true'
+        run: npm test
+      - name: Build and publish v${{ steps.ver.outputs.version }}
+        if: steps.ver.outputs.skip != 'true'
         run: npx electron-builder --win nsis --x64 --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

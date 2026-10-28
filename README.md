@@ -56,7 +56,6 @@ Building the Windows installer on Linux/macOS needs Wine (64- and 32-bit).
 
 ## Releasing an update
 
-1. Bump `version` in `package.json` and commit.
-2. Tag and push: `git tag v<version> && git push origin main v<version>`.
+Bump `version` in `package.json`, commit and push to `main`. GitHub Actions (`.github/workflows/release.yml`) runs the tests, builds the installer on Windows and publishes it as release `v<version>`.
 
-GitHub Actions (`.github/workflows/release.yml`) runs the tests, builds the installer on Windows and publishes the release. Installed copies check for updates a few seconds after launch and every 6 hours, download in the background, and offer "Restart to update".
+Installed copies check for updates a few seconds after launch and every 6 hours, download in the background, and offer "Restart to update".
