@@ -56,8 +56,7 @@ Building the Windows installer on Linux/macOS needs Wine (64- and 32-bit).
 
 ## Releasing an update
 
-1. Bump `version` in `package.json`.
-2. `npm test` and `npm run dist`.
-3. Create a GitHub release tagged `v<version>` on `chrisgribbs/diary` and attach `dist/Daybook-Setup-<version>.exe`, its `.blockmap`, and `dist/latest.yml`.
+1. Bump `version` in `package.json` and commit.
+2. Tag and push: `git tag v<version> && git push origin main v<version>`.
 
-Installed copies check for updates a few seconds after launch and every 6 hours, download in the background, and offer "Restart to update".
+GitHub Actions (`.github/workflows/release.yml`) runs the tests, builds the installer on Windows and publishes the release. Installed copies check for updates a few seconds after launch and every 6 hours, download in the background, and offer "Restart to update".
