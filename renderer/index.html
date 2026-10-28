@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Daybook</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ LOCK SCREEN ============ -->
+<section id="lock" class="lock" hidden>
+  <div class="lock-card">
+    <div class="foil-mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64"><path d="M14 10h28a8 8 0 0 1 8 8v36H22a8 8 0 0 1-8-8z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M14 46a8 8 0 0 1 8-8h28" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M40 10v18l-4-3-4 3V10" fill="currentColor"/></svg>
+    </div>
+    <h1 class="lock-title">Daybook</h1>
+
+    <form id="unlockForm" class="lock-form" hidden>
+      <label for="unlockPw">Password</label>
+      <input id="unlockPw" type="password" autocomplete="current-password" autofocus>
+      <p class="lock-error" id="unlockErr" role="alert"></p>
+      <button class="btn-foil" type="submit" id="unlockBtn">Open journal</button>
+    </form>
+
+    <form id="setupForm" class="lock-form" hidden>
+      <p class="lock-intro">Choose a password for your journal. Every entry is encrypted with it on this computer.</p>
+      <label for="setupPw">New password</label>
+      <input id="setupPw" type="password" autocomplete="new-password" minlength="6">
+      <label for="setupPw2">Type it again</label>
+      <input id="setupPw2" type="password" autocomplete="new-password" minlength="6">
+      <p class="lock-note">There is no way to recover a forgotten password. Write it down somewhere safe.</p>
+      <p class="lock-error" id="setupErr" role="alert"></p>
+      <button class="btn-foil" type="submit" id="setupBtn">Create journal</button>
+      <button class="btn-link" type="button" id="restoreFreshBtn">Restore from a backup instead</button>
+    </form>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="app" class="app" hidden>
+  <aside class="cloth">
+    <header class="cloth-head">
+      <span class="wordmark">Daybook</span>
+      <button class="btn-foil btn-small" id="newBtn" title="New entry (Ctrl+N)">New entry</button>
+    </header>
+
+    <div class="cal" id="cal">
+      <div class="cal-head">
+        <button class="icon-btn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 20 20"><path d="M12 4l-6 6 6 6"/></svg></button>
+        <button class="cal-title" id="calTitle" title="Go to today"></button>
+        <button class="icon-btn" id="calNext" aria-label="Next month"><svg viewBox="0 0 20 20"><path d="M8 4l6 6-6 6"/></svg></button>
+      </div>
+      <div class="cal-grid" id="calGrid" role="grid"></div>
+    </div>
+
+    <button class="onthisday" id="onThisDay" hidden></button>
+
+    <div class="search">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>
+      <input id="search" type="search" placeholder="Search entries" aria-label="Search entries" spellcheck="false">
+    </div>
+    <div class="tagbar" id="tagbar"></div>
+    <div class="filter-note" id="filterNote" hidden></div>
+
+    <nav class="list" id="list" aria-label="Entries"></nav>
+
+    <div class="update-bar" id="updateBar" hidden>
+      <span id="updateText"></span>
+      <button class="btn-foil btn-small" id="updateBtn">Restart to update</button>
+    </div>
+    <footer class="cloth-foot">
+      <span id="stats"></span>
+      <span class="foot-btns">
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Settings"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2M4.7 4.7l1.6 1.6M13.7 13.7l1.6 1.6M4.7 15.3l1.6-1.6M13.7 6.3l1.6-1.6"/></svg></button>
+        <button class="icon-btn" id="lockBtn" title="Lock journal (Ctrl+L)" aria-label="Lock journal"><svg viewBox="0 0 20 20"><rect x="4" y="9" width="12" height="8.5" rx="1.5"/><path d="M6.8 9V6.5a3.2 3.2 0 0 1 6.4 0V9"/></svg></button>
+      </span>
+    </footer>
+  </aside>
+
+  <main class="page" id="page">
+    <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting"></div>
+
+    <div class="sheet-scroll" id="sheetScroll">
+      <article class="sheet" id="sheet" hidden>
+        <div class="ribbon" aria-hidden="true"></div>
+        <header class="stamp">
+          <button class="stamp-day" id="stampDay" title="Change date"></button>
+          <div class="stamp-rest">
+            <button class="stamp-weekday" id="stampWeekday" title="Change date"></button>
+            <span class="stamp-month" id="stampMonth"></span>
+            <button class="stamp-time" id="stampTime" title="Change time"></button>
+          </div>
+          <input type="date" id="dateInput" class="visually-hidden" tabindex="-1" aria-label="Entry date">
+          <input type="time" id="timeInput" class="visually-hidden" tabindex="-1" aria-label="Entry time">
+        </header>
+
+        <input class="title" id="title" placeholder="Title" aria-label="Title" maxlength="300">
+        <div class="tags" id="tags">
+          <span id="tagChips"></span>
+          <input id="tagInput" placeholder="Add a tag" list="tagList" aria-label="Add a tag" spellcheck="false">
+          <datalist id="tagList"></datalist>
+        </div>
+
+        <div class="body" id="body" contenteditable="true" spellcheck="true" aria-label="Entry" data-placeholder="Begin writing…"></div>
+      </article>
+
+      <div class="empty" id="empty" hidden></div>
+    </div>
+
+    <footer class="page-foot" id="pageFoot" hidden>
+      <span id="saveState"></span>
+      <span id="wordCount"></span>
+      <button class="btn-link danger" id="deleteBtn">Delete entry</button>
+    </footer>
+  </main>
+</div>
+
+<!-- ============ DIALOGS ============ -->
+<dialog id="dlg" class="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+<div class="lightbox" id="lightbox" hidden><img alt=""></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="imgFile" accept="image/*" multiple hidden>
+
+<script src="purify.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

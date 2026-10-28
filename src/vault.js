@@ -1,0 +1,289 @@
+'use strict';
+/**
+ * Daybook vault — encrypted on-disk storage for journal entries.
+ *
+ * Design
+ *  - A random 256-bit data key encrypts everything (AES-256-GCM).
+ *  - The data key is "wrapped" (encrypted) with a key derived from the
+ *    password using scrypt. Changing the password only re-wraps the key.
+ *  - Each entry lives in its own encrypted file; a separate encrypted index
+ *    holds titles, dates, tags and plain text for fast search.
+ *  - Nothing readable ever touches the disk while the vault is in use.
+ */
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const MAGIC = Buffer.from('DBK1');
+const KDF = { N: 1 << 17, r: 8, p: 1, keyLen: 32 };
+const MAXMEM = 512 * 1024 * 1024;
+const ID_RE = /^[a-z0-9-]{8,64}$/;
+
+function deriveKey(password, salt, kdf = KDF) {
+  return crypto.scryptSync(String(password).normalize('NFKC'), salt, kdf.keyLen || 32, {
+    N: kdf.N, r: kdf.r, p: kdf.p, maxmem: MAXMEM,
+  });
+}
+
+function seal(key, plain) {
+  const iv = crypto.randomBytes(12);
+  const c = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const ct = Buffer.concat([c.update(plain), c.final()]);
+  return Buffer.concat([MAGIC, iv, c.getAuthTag(), ct]);
+}
+
+function open(key, buf) {
+  if (buf.length < 32 || !buf.subarray(0, 4).equals(MAGIC)) throw new Error('Not a Daybook file');
+  const iv = buf.subarray(4, 16), tag = buf.subarray(16, 32), ct = buf.subarray(32);
+  const d = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  d.setAuthTag(tag);
+  return Buffer.concat([d.update(ct), d.final()]);
+}
+
+function writeAtomic(file, data) {
+  const tmp = file + '.' + crypto.randomBytes(4).toString('hex') + '.tmp';
+  fs.writeFileSync(tmp, data);
+  fs.renameSync(tmp, file);
+}
+
+function wrapDataKey(password, dataKey) {
+  const salt = crypto.randomBytes(16);
+  const kek = deriveKey(password, salt);
+  const wrapped = seal(kek, dataKey);
+  kek.fill(0);
+  return {
+    version: 1,
+    kdf: { name: 'scrypt', N: KDF.N, r: KDF.r, p: KDF.p, keyLen: 32, salt: salt.toString('base64') },
+    wrappedKey: wrapped.toString('base64'),
+  };
+}
+
+function unwrapDataKey(password, vaultJson) {
+  const k = vaultJson.kdf;
+  const kek = deriveKey(password, Buffer.from(k.salt, 'base64'), k);
+  try {
+    return open(kek, Buffer.from(vaultJson.wrappedKey, 'base64'));
+  } catch {
+    return null; // wrong password (GCM auth failure)
+  } finally {
+    kek.fill(0);
+  }
+}
+
+class Vault {
+  constructor(dir) {
+    this.dir = dir;
+    this.entriesDir = path.join(dir, 'entries');
+    this.vaultFile = path.join(dir, 'vault.json');
+    this.indexFile = path.join(dir, 'index.enc');
+    this.key = null;
+    this.index = null; // Map id -> meta
+  }
+
+  exists() { return fs.existsSync(this.vaultFile); }
+  isUnlocked() { return !!this.key; }
+
+  _requireKey() { if (!this.key) throw new Error('Journal is locked'); }
+
+  create(password) {
+    if (this.exists()) throw new Error('A journal already exists here');
+    if (!password || String(password).length < 6) throw new Error('Use a password of at least 6 characters');
+    fs.mkdirSync(this.entriesDir, { recursive: true });
+    const dataKey = crypto.randomBytes(32);
+    writeAtomic(this.vaultFile, JSON.stringify(wrapDataKey(password, dataKey), null, 2));
+    this.key = dataKey;
+    this.index = new Map();
+    this._writeIndex();
+  }
+
+  unlock(password) {
+    if (!this.exists()) throw new Error('No journal found');
+    const key = unwrapDataKey(password, JSON.parse(fs.readFileSync(this.vaultFile, 'utf8')));
+    if (!key) return false;
+    this.key = key;
+    this._loadIndex();
+    return true;
+  }
+
+  lock() {
+    if (this.key) this.key.fill(0);
+    this.key = null;
+    this.index = null;
+  }
+
+  changePassword(oldPw, newPw) {
+    this._requireKey();
+    if (!newPw || String(newPw).length < 6) throw new Error('Use a password of at least 6 characters');
+    const check = unwrapDataKey(oldPw, JSON.parse(fs.readFileSync(this.vaultFile, 'utf8')));
+    if (!check) throw new Error('Current password is incorrect');
+    check.fill(0);
+    writeAtomic(this.vaultFile, JSON.stringify(wrapDataKey(newPw, this.key), null, 2));
+  }
+
+  // ---------- index ----------
+  _loadIndex() {
+    this.index = new Map();
+    if (fs.existsSync(this.indexFile)) {
+      try {
+        const list = JSON.parse(open(this.key, fs.readFileSync(this.indexFile)).toString('utf8'));
+        for (const m of list) this.index.set(m.id, m);
+      } catch { /* fall through to rebuild */ this.index = null; }
+    }
+    // Rebuild if index is missing, damaged, or out of step with entry files.
+    const files = fs.existsSync(this.entriesDir)
+      ? fs.readdirSync(this.entriesDir).filter(f => f.endsWith('.enc')).map(f => f.slice(0, -4))
+      : [];
+    if (!this.index || files.length !== this.index.size || files.some(id => !this.index.has(id))) {
+      this._rebuildIndex(files);
+    }
+  }
+
+  _rebuildIndex(ids) {
+    this.index = new Map();
+    for (const id of ids) {
+      try { this.index.set(id, Vault.metaOf(this._readEntry(id))); } catch { /* skip unreadable */ }
+    }
+    this._writeIndex();
+  }
+
+  _writeIndex() {
+    writeAtomic(this.indexFile, seal(this.key, Buffer.from(JSON.stringify([...this.index.values()]))));
+  }
+
+  static metaOf(e) {
+    const text = String(e.text || '');
+    return {
+      id: e.id, date: e.date, time: e.time || '', title: e.title || '', tags: e.tags || [],
+      text, words: (text.match(/\S+/g) || []).length,
+      images: (String(e.html || '').match(/<img\b/gi) || []).length,
+      created: e.created, updated: e.updated,
+    };
+  }
+
+  // ---------- entries ----------
+  _entryFile(id) {
+    if (!ID_RE.test(id)) throw new Error('Bad entry id');
+    return path.join(this.entriesDir, id + '.enc');
+  }
+
+  _readEntry(id) {
+    return JSON.parse(open(this.key, fs.readFileSync(this._entryFile(id))).toString('utf8'));
+  }
+
+  list() { this._requireKey(); return [...this.index.values()]; }
+
+  get(id) { this._requireKey(); return this._readEntry(id); }
+
+  save(input) {
+    this._requireKey();
+    const now = new Date().toISOString();
+    const id = input.id && ID_RE.test(input.id) ? input.id : crypto.randomUUID();
+    const prev = this.index.get(id);
+    const tags = [...new Set((input.tags || []).map(t => String(t).trim().toLowerCase()).filter(Boolean))].slice(0, 30);
+    const entry = {
+      id,
+      date: /^\d{4}-\d{2}-\d{2}$/.test(input.date) ? input.date : now.slice(0, 10),
+      time: String(input.time || '').slice(0, 5),
+      title: String(input.title || '').slice(0, 300),
+      tags,
+      html: String(input.html || ''),
+      text: String(input.text || ''),
+      created: prev ? prev.created : (input.created || now),
+      updated: input.updated && input.keepUpdated ? input.updated : now,
+    };
+    fs.mkdirSync(this.entriesDir, { recursive: true });
+    writeAtomic(this._entryFile(id), seal(this.key, Buffer.from(JSON.stringify(entry))));
+    const meta = Vault.metaOf(entry);
+    this.index.set(id, meta);
+    this._writeIndex();
+    return meta;
+  }
+
+  remove(id) {
+    this._requireKey();
+    const f = this._entryFile(id);
+    if (fs.existsSync(f)) fs.unlinkSync(f);
+    this.index.delete(id);
+    this._writeIndex();
+  }
+
+  // ---------- backup ----------
+  /** Encrypted backup: one file holding the wrapped key and all encrypted entries. */
+  exportBackup(file) {
+    this._requireKey();
+    const entries = {};
+    for (const id of this.index.keys()) entries[id] = fs.readFileSync(this._entryFile(id)).toString('base64');
+    const data = {
+      app: 'Daybook', format: 1, exported: new Date().toISOString(),
+      vault: JSON.parse(fs.readFileSync(this.vaultFile, 'utf8')),
+      entries,
+    };
+    writeAtomic(file, JSON.stringify(data));
+    return Object.keys(entries).length;
+  }
+
+  static readBackup(file, password) {
+    let data;
+    try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { throw new Error('That file is not a Daybook backup'); }
+    if (data.app !== 'Daybook' || !data.vault || !data.entries) throw new Error('That file is not a Daybook backup');
+    const key = unwrapDataKey(password, data.vault);
+    if (!key) throw new Error('That password does not open this backup');
+    return { data, key };
+  }
+
+  /** Merge a backup into the open journal. Newer copies of the same entry win. */
+  importBackup(file, password) {
+    this._requireKey();
+    const { data, key } = Vault.readBackup(file, password);
+    let added = 0, updated = 0;
+    try {
+      for (const [id, b64] of Object.entries(data.entries)) {
+        if (!ID_RE.test(id)) continue;
+        const e = JSON.parse(open(key, Buffer.from(b64, 'base64')).toString('utf8'));
+        const cur = this.index.get(id);
+        if (cur && cur.updated >= e.updated) continue;
+        this.save({ ...e, keepUpdated: true });
+        cur ? updated++ : added++;
+      }
+    } finally { key.fill(0); }
+    return { added, updated };
+  }
+
+  /** Start a fresh install from a backup (backup's password becomes the journal password). */
+  restoreFresh(file, password) {
+    if (this.exists()) throw new Error('A journal already exists here');
+    const { data, key } = Vault.readBackup(file, password);
+    fs.mkdirSync(this.entriesDir, { recursive: true });
+    writeAtomic(this.vaultFile, JSON.stringify(data.vault, null, 2));
+    for (const [id, b64] of Object.entries(data.entries)) {
+      if (ID_RE.test(id)) writeAtomic(this._entryFile(id), Buffer.from(b64, 'base64'));
+    }
+    this.key = key;
+    this._rebuildIndex(Object.keys(data.entries).filter(id => ID_RE.test(id)));
+    return this.index.size;
+  }
+
+  /** Readable copy of every entry as a single HTML page (unencrypted — user asked for it). */
+  exportReadable(file, sanitize = x => x) {
+    this._requireKey();
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const list = this.list().sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    const body = list.map(m => {
+      const e = this._readEntry(m.id);
+      const d = new Date(e.date + 'T00:00:00');
+      const when = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + (e.time ? ', ' + e.time : '');
+      return `<article><p class="d">${esc(when)}</p>${e.title ? `<h2>${esc(e.title)}</h2>` : ''}` +
+        `${e.tags.length ? `<p class="t">${e.tags.map(t => '#' + esc(t)).join(' ')}</p>` : ''}<div>${sanitize(e.html)}</div></article>`;
+    }).join('\n');
+    const html = `<!doctype html><meta charset="utf-8"><title>Daybook journal</title><style>
+body{font:17px/1.65 Georgia,serif;max-width:42em;margin:3em auto;padding:0 1.2em;color:#222}
+article{page-break-after:always;border-bottom:1px solid #ccc;padding-bottom:2em;margin-bottom:2em}
+.d{color:#666;font-style:italic;margin:0}.t{color:#666;font-size:.9em}img{max-width:100%;height:auto}
+blockquote{border-left:3px solid #ccc;margin-left:0;padding-left:1em;color:#555}</style>
+<h1>Journal</h1><p>${list.length} entries, exported ${esc(new Date().toLocaleString())}</p>${body}`;
+    writeAtomic(file, html);
+    return list.length;
+  }
+}
+
+module.exports = { Vault, _internal: { seal, open, deriveKey } };

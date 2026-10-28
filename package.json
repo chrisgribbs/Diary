@@ -1,0 +1,74 @@
+{
+  "name": "daybook",
+  "productName": "Daybook",
+  "version": "1.0.1",
+  "description": "A private, encrypted desktop journal",
+  "main": "main.js",
+  "author": "Chris Gribble",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/vault.test.js",
+    "assets": "node -e \"const f=require('fs');f.copyFileSync('node_modules/dompurify/dist/purify.min.js','renderer/purify.min.js')\"",
+    "dist": "electron-builder --win nsis --x64 --publish never",
+    "dist:portable": "electron-builder --win portable --x64 --publish never"
+  },
+  "devDependencies": {
+    "@fontsource-variable/instrument-sans": "^5.3.0",
+    "@fontsource-variable/newsreader": "^5.3.0",
+    "dompurify": "^3.4.17",
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0",
+    "pe-library": "^2.0.1",
+    "resedit": "^2.0.3"
+  },
+  "build": {
+    "appId": "com.daybook.journal",
+    "productName": "Daybook",
+    "copyright": "Copyright \u00a9 2026 Chris Gribble",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**",
+      "renderer/**",
+      "build/icon.png"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis"
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Daybook",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Daybook-Setup-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "Daybook-Portable-${version}.exe"
+    },
+    "afterPack": "build/afterPack.js",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "chrisgribbs",
+        "repo": "diary",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
+  "repository": "https://github.com/chrisgribbs/diary"
+}
