@@ -2,7 +2,8 @@ name: Release
 
 # When the version in package.json changes on main, build the Windows installer
 # and publish it as a GitHub release (tag v<version>). Installed copies of
-# Daybook pick it up automatically. Versions already released are skipped.
+# Daybook pick it up automatically. Complete releases are skipped; incomplete
+# ones (e.g. an interrupted upload) are repaired.
 on:
   push:
     branches: [main]
@@ -15,19 +16,25 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check whether this version is already released
+      - name: Check release status
         id: ver
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           v=$(node -p "require('./package.json').version")
           echo "version=$v" >> "$GITHUB_OUTPUT"
-          if gh release view "v$v" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "v$v is already released, nothing to do."
+          assets=$(gh release view "v$v" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' 2>/dev/null || echo "__none__")
+          if [ "$assets" = "__none__" ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            if grep -qx "latest.yml" <<<"$assets" && grep -qx "Daybook-Setup-$v.exe" <<<"$assets"; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"; echo "v$v is already fully released."
+            fi
           fi
 
       - uses: actions/setup-node@v4
@@ -39,16 +46,33 @@ jobs:
         run: npm ci
       - if: steps.ver.outputs.skip != 'true'
         run: npm test
-      - name: Build and publish v${{ steps.ver.outputs.version }}
+
+      - name: Build installer
         if: steps.ver.outputs.skip != 'true'
         shell: bash
         run: |
           set -o pipefail
-          if ! npx electron-builder --win nsis --x64 --publish always 2>&1 | tee build.log; then
-            # Surface the end of the log as an annotation so it's readable without the full log.
-            tail -n 60 build.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > tail.txt
-            echo "::error title=electron-builder failed::$(cat tail.txt)"
-            exit 1
+          if ! npx electron-builder --win nsis --x64 --publish never 2>&1 | tee build.log; then
+            msg=$(tail -n 60 build.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+            echo "::error title=Build failed::$msg"; exit 1
           fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ls -la dist
+
+      - name: Publish v${{ steps.ver.outputs.version }}
+        if: steps.ver.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          v=${{ steps.ver.outputs.version }}
+          files=("dist/Daybook-Setup-$v.exe" "dist/Daybook-Setup-$v.exe.blockmap" "dist/latest.yml")
+          {
+            if [ "${{ steps.ver.outputs.exists }}" = "true" ]; then
+              gh release upload "v$v" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+            else
+              gh release create "v$v" "${files[@]}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+                --title "Daybook $v" --notes "Daybook $v. Installed copies update automatically."
+            fi
+          } 2>&1 | tee publish.log || {
+            msg=$(tail -n 30 publish.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+            echo "::error title=Publish failed::$msg"; exit 1
+          }
