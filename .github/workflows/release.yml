@@ -41,6 +41,14 @@ jobs:
         run: npm test
       - name: Build and publish v${{ steps.ver.outputs.version }}
         if: steps.ver.outputs.skip != 'true'
-        run: npx electron-builder --win nsis --x64 --publish always
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! npx electron-builder --win nsis --x64 --publish always 2>&1 | tee build.log; then
+            # Surface the end of the log as an annotation so it's readable without the full log.
+            tail -n 60 build.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > tail.txt
+            echo "::error title=electron-builder failed::$(cat tail.txt)"
+            exit 1
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
