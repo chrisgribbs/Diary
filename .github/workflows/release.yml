@@ -44,8 +44,15 @@ jobs:
           cache: npm
       - if: steps.ver.outputs.skip != 'true'
         run: npm ci
-      - if: steps.ver.outputs.skip != 'true'
-        run: npm test
+      - name: Test
+        if: steps.ver.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          if ! npm test 2>&1 | tee test.log; then
+            msg=$(tail -n 40 test.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+            echo "::error title=Tests failed::$msg"; exit 1
+          fi
 
       - name: Add Google sign-in settings
         if: steps.ver.outputs.skip != 'true'

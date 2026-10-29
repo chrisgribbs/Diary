@@ -270,7 +270,8 @@ function makeDrive(g, dir) {
   await assert.rejects(none.connect(), /not set up/);
 
   // folder suggestions on Windows
-  const sugg = suggestFolders({ env: { USERPROFILE: '/home/chris', OneDrive: '/home/chris/OneDrive' }, exists: p => ['/home/chris/OneDrive', '/home/chris/Dropbox'].includes(p) });
+  const home = path.join(tmp, 'home'), oneDrive = path.join(home, 'OneDrive');
+  const sugg = suggestFolders({ env: { USERPROFILE: home, OneDrive: oneDrive }, exists: p => [oneDrive, path.join(home, 'Dropbox')].includes(p) });
   assert.deepEqual(sugg.map(s => s.label), ['OneDrive', 'Dropbox']);
 
   g.server.close();
