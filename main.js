@@ -4,13 +4,19 @@ const path = require('path');
 const fs = require('fs');
 const { Vault } = require('./src/vault');
 const { autoUpdater } = require('electron-updater');
+const { migrateJournal } = require('./src/migrate');
 const { GoogleDrive } = require('./src/gdrive');
 const { BackupManager, suggestFolders } = require('./src/backup');
 
-app.setAppUserModelId('com.daybook.journal');
+app.setAppUserModelId('com.daybook.journal'); // kept from the Daybook days so updates and pins carry over
 if (!app.requestSingleInstanceLock()) { app.quit(); }
 
-const DATA_DIR = process.env.DAYBOOK_DATA_DIR || path.join(app.getPath('userData'), 'journal');
+const DATA_DIR = process.env.WELLWRITE_DATA_DIR || process.env.DAYBOOK_DATA_DIR || path.join(app.getPath('userData'), 'journal');
+// Bring the journal across from when the app was called Daybook.
+if (!process.env.WELLWRITE_DATA_DIR && !process.env.DAYBOOK_DATA_DIR) {
+  try { migrateJournal(path.join(app.getPath('appData'), 'Daybook', 'journal'), DATA_DIR); }
+  catch (e) { console.error('Journal move failed:', e); }
+}
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const vault = new Vault(DATA_DIR);
 let win = null;
@@ -47,8 +53,9 @@ function writeSettings(s, { internal = false } = {}) {
 
 // ---------- backups ----------
 function loadGoogleConfig() {
-  if (process.env.DAYBOOK_GOOGLE_CLIENT_ID) {
-    return { clientId: process.env.DAYBOOK_GOOGLE_CLIENT_ID, clientSecret: process.env.DAYBOOK_GOOGLE_CLIENT_SECRET || '' };
+  const id = process.env.WELLWRITE_GOOGLE_CLIENT_ID || process.env.DAYBOOK_GOOGLE_CLIENT_ID;
+  if (id) {
+    return { clientId: id, clientSecret: process.env.WELLWRITE_GOOGLE_CLIENT_SECRET || process.env.DAYBOOK_GOOGLE_CLIENT_SECRET || '' };
   }
   try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'google-config.json'), 'utf8')); } catch { return null; }
 }
@@ -93,7 +100,7 @@ function createWindow() {
   nativeTheme.themeSource = ['light', 'dark'].includes(settings.theme) ? settings.theme : 'system';
   win = new BrowserWindow({
     width: 1280, height: 820, minWidth: 820, minHeight: 560,
-    title: 'Daybook',
+    title: 'WellWrite',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#141a28' : '#1d2a47',
     icon: path.join(__dirname, 'build', 'icon.png'),
     show: false,
@@ -186,8 +193,8 @@ handle('backup:export', async () => {
   const stamp = new Date().toISOString().slice(0, 10);
   const r = await dialog.showSaveDialog(win, {
     title: 'Save encrypted backup',
-    defaultPath: path.join(app.getPath('documents'), `Daybook backup ${stamp}.daybook`),
-    filters: [{ name: 'Daybook backup', extensions: ['daybook'] }],
+    defaultPath: path.join(app.getPath('documents'), `WellWrite backup ${stamp}.wellwrite`),
+    filters: [{ name: 'WellWrite backup', extensions: ['wellwrite'] }],
   });
   if (r.canceled || !r.filePath) return null;
   return { count: vault.exportBackup(r.filePath), file: r.filePath };
@@ -195,8 +202,8 @@ handle('backup:export', async () => {
 
 async function pickBackup() {
   const r = await dialog.showOpenDialog(win, {
-    title: 'Choose a Daybook backup', properties: ['openFile'],
-    filters: [{ name: 'Daybook backup', extensions: ['daybook'] }],
+    title: 'Choose a WellWrite backup', properties: ['openFile'],
+    filters: [{ name: 'WellWrite backup', extensions: ['wellwrite', 'daybook'] }, { name: 'All files', extensions: ['*'] }],
   });
   return r.canceled ? null : r.filePaths[0];
 }
@@ -207,7 +214,7 @@ handle('backup:restoreFresh', (file, pw) => vault.restoreFresh(file, pw));
 handle('export:readable', async () => {
   const r = await dialog.showSaveDialog(win, {
     title: 'Export a readable copy',
-    defaultPath: path.join(app.getPath('documents'), 'Daybook journal.html'),
+    defaultPath: path.join(app.getPath('documents'), 'WellWrite journal.html'),
     filters: [{ name: 'Web page', extensions: ['html'] }],
   });
   if (r.canceled || !r.filePath) return null;
@@ -257,7 +264,7 @@ handle('backup:chooseFolder', async suggested => {
     if (r.canceled || !r.filePaths[0]) return backupInfo();
     dir = r.filePaths[0];
   }
-  if (path.resolve(dir).startsWith(path.resolve(DATA_DIR))) throw new Error("Choose a folder outside Daybook's own journal folder");
+  if (path.resolve(dir).startsWith(path.resolve(DATA_DIR))) throw new Error("Choose a folder outside WellWrite's own journal folder");
   writeSettings({ backupDir: dir, backupToFolder: true }, { internal: true });
   backups.maybeRun('connected').catch(() => {});
   return backupInfo();
@@ -274,7 +281,7 @@ handle('google:cancel', () => { drive.cancelConnect(); return true; });
 handle('google:disconnect', async () => { await drive.disconnect(); return backupInfo(); });
 handle('google:list', () => drive.list());
 async function downloadDriveBackup(id) {
-  const tmp = path.join(app.getPath('temp'), `daybook-restore-${Date.now()}.daybook`);
+  const tmp = path.join(app.getPath('temp'), `wellwrite-restore-${Date.now()}.wellwrite`);
   await drive.download(id, tmp);
   return tmp;
 }

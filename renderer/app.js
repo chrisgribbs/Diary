@@ -1,6 +1,6 @@
 'use strict';
-/* Daybook — renderer */
-const api = window.daybook;
+/* WellWrite — renderer */
+const api = window.wellwrite;
 const $ = s => document.querySelector(s);
 const el = (tag, attrs = {}, ...kids) => {
   const n = document.createElement(tag);
@@ -757,7 +757,7 @@ function openSettings(section) {
         el('button', { type: 'button', class: 'btn-link', onclick: () => api.showDataFolder() }, 'Show folder')),
 
       el('h3', {}, 'About'),
-      el('div', { class: 'row' }, el('div', {}, 'Daybook ' + state.version, el('small', { id: 'updStatus' }, 'Updates install automatically when you restart.')),
+      el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, 'Updates install automatically when you restart.')),
         el('button', { type: 'button', class: 'btn-plain', onclick: checkUpdates }, 'Check for updates')),
 
       el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Done')),
@@ -772,7 +772,7 @@ async function checkUpdates() {
   const r = await api.checkUpdates().catch(() => ({ status: 'offline' }));
   out.textContent = {
     dev: 'Updates are only checked in the installed app.',
-    ready: `Version ${r.version} is ready. Restart Daybook to install it.`,
+    ready: `Version ${r.version} is ready. Restart WellWrite to install it.`,
     downloading: `Downloading version ${r.version}. You'll be asked to restart when it's ready.`,
     latest: 'You have the latest version.',
     offline: "Couldn't reach the update server. Check your connection and try again.",
@@ -780,7 +780,7 @@ async function checkUpdates() {
 }
 
 function showUpdate(version) {
-  $('#updateText').textContent = `Daybook ${version} is ready to install.`;
+  $('#updateText').textContent = `WellWrite ${version} is ready to install.`;
   $('#updateBar').hidden = false;
 }
 $('#updateBtn').onclick = async () => {
@@ -916,10 +916,10 @@ function renderBackupSection() {
 
   // --- Google Drive
   let gDetail, gAction = null;
-  if (!g.available) gDetail = "Not available in this version of Daybook yet.";
+  if (!g.available) gDetail = "Not available in this version of WellWrite yet.";
   else if (state.connecting) { gDetail = 'Finish signing in to Google in your browser…'; gAction = button('Cancel', 'btn-plain', () => api.googleCancel()); }
-  else if (g.connected) { gDetail = `${g.email || 'Connected'}. Backups go in the "Daybook backups" folder in your Drive.`; gAction = button('Disconnect', 'btn-link', disconnectDrive); }
-  else { gDetail = 'Not connected. Daybook can only see the backups it puts in your Drive.'; gAction = button('Connect Google Drive', 'btn-ink', connectDrive); }
+  else if (g.connected) { gDetail = `${g.email || 'Connected'}. Backups go in the "WellWrite backups" folder in your Drive.`; gAction = button('Disconnect', 'btn-link', disconnectDrive); }
+  else { gDetail = 'Not connected. WellWrite can only see the backups it puts in your Drive.'; gAction = button('Connect Google Drive', 'btn-ink', connectDrive); }
   const gTick = tick(s.backupToGoogle, async (on, box) => {
     if (on && !g.connected) { box.checked = false; return connectDrive(); }
     await updateSetting({ backupToGoogle: on }); refreshBackupInfo();
@@ -960,7 +960,7 @@ function renderBackupSection() {
   box.replaceChildren(...[
     el('p', { class: 'dest-intro' }, 'Back up automatically to:'),
     g.available ? google : null, folder,
-    row('How often', 'Only when something has changed.', select(s.backupEvery, [['daily', 'Once a day'], ['weekly', 'Once a week'], ['close', 'Each time I close Daybook']], 'backupEvery')),
+    row('How often', 'Only when something has changed.', select(s.backupEvery, [['daily', 'Once a day'], ['weekly', 'Once a week'], ['close', 'Each time I close WellWrite']], 'backupEvery')),
     row('Backups to keep', g.available ? 'In each place. Older automatic backups are removed.' : 'Older automatic backups are removed.', select(s.backupKeep, [['5', 'Newest 5'], ['10', 'Newest 10'], ['30', 'Newest 30'], ['0', 'All of them']], 'backupKeep', Number)),
     el('div', { class: 'backup-status' },
       el('span', { id: 'backupLine' }, on.length ? `Backing up to ${on.map(d => (d === 'google' ? 'Google Drive' : 'this computer')).join(' and ')}.` : 'Automatic backups are off. Tick a place above to turn them on.'),
@@ -1026,7 +1026,7 @@ async function restoreFromDrive(mode) {
   let files;
   try { files = await api.googleList(); } catch (x) { toast(x.message); return; }
   if (!files.length) {
-    await confirmDialog({ title: 'No backups found', text: 'There are no Daybook backups in the "Daybook backups" folder of this Google account.', ok: 'OK' });
+    await confirmDialog({ title: 'No backups found', text: 'There are no WellWrite backups in the "WellWrite backups" folder of this Google account.', ok: 'OK' });
     return;
   }
   const fmtSize = n => n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;

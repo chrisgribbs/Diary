@@ -4,17 +4,17 @@
  *
  *  - Signs in with OAuth 2.0 for desktop apps: the system browser opens Google's
  *    sign-in page and redirects back to a one-off server on 127.0.0.1 (PKCE).
- *  - Uses the drive.file scope, so Daybook can only see files it created itself.
+ *  - Uses the drive.file scope, so WellWrite can only see files it created itself.
  *  - The refresh token is kept encrypted by the operating system (Windows DPAPI
  *    via the `protect`/`unprotect` functions passed in).
- *  - Backups go into a "Daybook backups" folder in the user's Drive.
+ *  - Backups go into a "WellWrite backups" folder in the user's Drive.
  */
 const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
 
 const SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/drive.file'];
-const FOLDER_NAME = 'Daybook backups';
+const FOLDER_NAME = 'WellWrite backups';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 const SIGN_IN_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -68,7 +68,7 @@ class GoogleDrive {
 
   // ---------- sign in ----------
   async connect() {
-    if (!this.config) throw new Error('Google Drive is not set up in this version of Daybook');
+    if (!this.config) throw new Error('Google Drive is not set up in this version of WellWrite');
     if (this.pendingSignIn) this.pendingSignIn.cancel();
 
     const verifier = b64url(crypto.randomBytes(48));
@@ -82,7 +82,7 @@ class GoogleDrive {
         clearTimeout(timer); server.close(); this.pendingSignIn = null;
         err ? reject(err) : resolve(val);
       };
-      const page = (title, msg) => `<!doctype html><meta charset="utf-8"><title>Daybook</title>
+      const page = (title, msg) => `<!doctype html><meta charset="utf-8"><title>WellWrite</title>
 <body style="font:17px/1.5 Georgia,serif;background:#1d2a47;color:#e9e4d6;display:grid;place-items:center;height:90vh;margin:0">
 <div style="text-align:center;max-width:28em"><h1 style="font-style:italic;font-weight:500;color:#d6b263">${title}</h1><p>${msg}</p></div>`;
 
@@ -93,10 +93,10 @@ class GoogleDrive {
         if (p.get('state') !== state) { res.writeHead(400).end('Unexpected request'); return; }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         if (p.get('error')) {
-          res.end(page('Not connected', 'Google Drive was not connected. You can close this tab and try again from Daybook.'));
+          res.end(page('Not connected', 'Google Drive was not connected. You can close this tab and try again from WellWrite.'));
           finish(new Error(p.get('error') === 'access_denied' ? 'Sign-in was cancelled' : 'Google sign-in failed: ' + p.get('error')));
         } else if (p.get('code')) {
-          res.end(page('Google Drive connected', 'You can close this tab and go back to Daybook.'));
+          res.end(page('Google Drive connected', 'You can close this tab and go back to WellWrite.'));
           finish(null, { code: p.get('code'), redirectUri: `http://127.0.0.1:${server.address().port}` });
         } else res.end('Missing code');
       });
@@ -217,7 +217,7 @@ class GoogleDrive {
     const start = await this._api(`${this.ep.upload}/files?uploadType=resumable&fields=id,name,size,createdTime`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': 'application/octet-stream', 'X-Upload-Content-Length': String(data.length) },
-      body: JSON.stringify({ name, parents: [folder], mimeType: 'application/octet-stream', appProperties: { daybook: 'backup' } }),
+      body: JSON.stringify({ name, parents: [folder], mimeType: 'application/octet-stream', appProperties: { wellwrite: 'backup' } }),
     });
     const session = start.headers.get('location');
     if (!session) throw new Error('Google Drive did not accept the upload');
@@ -236,7 +236,7 @@ class GoogleDrive {
       const params = new URLSearchParams({ q, orderBy: 'createdTime desc', pageSize: '200', fields: 'nextPageToken,files(id,name,size,createdTime)', spaces: 'drive' });
       if (pageToken) params.set('pageToken', pageToken);
       const j = await (await this._api(`${this.ep.api}/files?${params}`)).json();
-      out.push(...(j.files || []).filter(f => /\.daybook$/i.test(f.name)));
+      out.push(...(j.files || []).filter(f => /\.(wellwrite|daybook)$/i.test(f.name)));
       pageToken = j.nextPageToken || '';
     } while (pageToken);
     return out.map(f => ({ id: f.id, name: f.name, size: +f.size || 0, created: f.createdTime }));

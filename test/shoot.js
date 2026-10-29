@@ -7,8 +7,8 @@ const os = require('os');
 const OUT = path.resolve(process.argv.slice(2).find(a => !a.startsWith('-') && a !== 'dark' && !a.endsWith('.js')) || 'shots');
 const DARK = process.argv.includes('dark');
 fs.mkdirSync(OUT, { recursive: true });
-process.env.DAYBOOK_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'daybook-shot-'));
-if (DARK) fs.writeFileSync(path.join(process.env.DAYBOOK_DATA_DIR, 'settings.json'), JSON.stringify({ theme: 'dark' }));
+process.env.WELLWRITE_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'wellwrite-shot-'));
+if (DARK) fs.writeFileSync(path.join(process.env.WELLWRITE_DATA_DIR, 'settings.json'), JSON.stringify({ theme: 'dark' }));
 
 const { app } = require('electron');
 const { getWindow } = require('../main.js');
@@ -68,7 +68,7 @@ app.whenReady().then(async () => {
     ];
     for (const e of E) {
       const d = document.createElement('div'); d.innerHTML = e.html;
-      await window.daybook.save({ ...e, text: d.innerText || d.textContent });
+      await window.wellwrite.save({ ...e, text: d.innerText || d.textContent });
     }
   `);
   // Re-enter so the app loads the seeded entries.
@@ -109,7 +109,7 @@ app.whenReady().then(async () => {
   await win.webContents.insertText('Typed through the real input path. ');
   await js(`const t = document.querySelector('#tagInput'); t.focus(); t.value = 'test, keyboard'; t.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true}));`);
   await wait(1500);
-  const saved = await js(`return { state: document.querySelector('#saveState').textContent, n: (await window.daybook.list()).length, chips: document.querySelectorAll('.chip').length };`);
+  const saved = await js(`return { state: document.querySelector('#saveState').textContent, n: (await window.wellwrite.list()).length, chips: document.querySelectorAll('.chip').length };`);
   console.log('autosave', JSON.stringify(saved));
 
   await shot('6b-backup-card');
@@ -117,13 +117,13 @@ app.whenReady().then(async () => {
   await wait(700);
   await shot('7-settings-backups');
   // Turn on automatic backups to a folder and back up now.
-  const bdir = path.join(process.env.DAYBOOK_DATA_DIR, '..', 'daybook-shot-usb-' + process.pid);
+  const bdir = path.join(process.env.WELLWRITE_DATA_DIR, '..', 'wellwrite-shot-usb-' + process.pid);
   fs.mkdirSync(bdir, { recursive: true });
   // Set the folder in the settings file, as the folder picker would.
-  const sf = path.join(process.env.DAYBOOK_DATA_DIR, 'settings.json');
+  const sf = path.join(process.env.WELLWRITE_DATA_DIR, 'settings.json');
   let cur = {}; try { cur = JSON.parse(fs.readFileSync(sf, 'utf8')); } catch {}
   fs.writeFileSync(sf, JSON.stringify({ ...cur, backupDir: bdir }));
-  await js(`await window.daybook.setSettings({ backupToFolder: true }); await refreshBackupInfo();`);
+  await js(`await window.wellwrite.setSettings({ backupToFolder: true }); await refreshBackupInfo();`);
   await wait(300);
   await js(`document.querySelector('.backup-status button').click();`);
   await wait(1500);
@@ -139,6 +139,6 @@ app.whenReady().then(async () => {
   console.log('after lock, content visible:', leaked);
 
   console.log('console errors:', errors.length ? errors : 'none');
-  fs.rmSync(process.env.DAYBOOK_DATA_DIR, { recursive: true, force: true });
+  fs.rmSync(process.env.WELLWRITE_DATA_DIR, { recursive: true, force: true });
   app.exit(0);
 }).catch(e => { console.error(e); app.exit(1); });

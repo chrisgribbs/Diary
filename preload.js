@@ -7,7 +7,7 @@ async function call(name, ...args) {
   return r.value;
 }
 
-contextBridge.exposeInMainWorld('daybook', {
+contextBridge.exposeInMainWorld('wellwrite', {
   status: () => call('vault:status'),
   create: pw => call('vault:create', pw),
   unlock: pw => call('vault:unlock', pw),

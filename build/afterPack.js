@@ -19,8 +19,8 @@ exports.default = async function (ctx) {
   vi.setFileVersion(v[0], v[1], v[2], 0, 1033);
   vi.setProductVersion(v[0], v[1], v[2], 0, 1033);
   vi.setStringValues({ lang: 1033, codepage: 1200 }, {
-    FileDescription: 'Daybook', ProductName: 'Daybook', CompanyName: 'Daybook',
-    InternalName: 'Daybook', OriginalFilename: 'Daybook.exe', LegalCopyright: ctx.packager.appInfo.copyright,
+    FileDescription: 'WellWrite', ProductName: 'WellWrite', CompanyName: 'WellWrite',
+    InternalName: 'WellWrite', OriginalFilename: 'WellWrite.exe', LegalCopyright: ctx.packager.appInfo.copyright,
   });
   vi.outputToResourceEntries(res.entries);
   res.outputResource(exeData);

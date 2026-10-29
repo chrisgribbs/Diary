@@ -2,7 +2,7 @@ name: Release
 
 # When the version in package.json changes on main, build the Windows installer
 # and publish it as a GitHub release (tag v<version>). Installed copies of
-# Daybook pick it up automatically. Complete releases are skipped; incomplete
+# WellWrite pick it up automatically. Complete releases are skipped; incomplete
 # ones (e.g. an interrupted upload) are repaired.
 on:
   push:
@@ -32,7 +32,7 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           else
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            if grep -qx "latest.yml" <<<"$assets" && grep -qx "Daybook-Setup-$v.exe" <<<"$assets"; then
+            if grep -qx "latest.yml" <<<"$assets" && grep -qx "WellWrite-Setup-$v.exe" <<<"$assets"; then
               echo "skip=true" >> "$GITHUB_OUTPUT"; echo "v$v is already fully released."
             fi
           fi
@@ -85,13 +85,13 @@ jobs:
         run: |
           set -o pipefail
           v=${{ steps.ver.outputs.version }}
-          files=("dist/Daybook-Setup-$v.exe" "dist/Daybook-Setup-$v.exe.blockmap" "dist/latest.yml")
+          files=("dist/WellWrite-Setup-$v.exe" "dist/WellWrite-Setup-$v.exe.blockmap" "dist/latest.yml")
           {
             if [ "${{ steps.ver.outputs.exists }}" = "true" ]; then
               gh release upload "v$v" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
             else
               gh release create "v$v" "${files[@]}" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-                --title "Daybook $v" --notes "Daybook $v. Installed copies update automatically."
+                --title "WellWrite $v" --notes "WellWrite $v. Installed copies update automatically."
             fi
           } 2>&1 | tee publish.log || {
             msg=$(tail -n 30 publish.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')

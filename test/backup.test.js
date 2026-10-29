@@ -107,14 +107,14 @@ function makeDrive(g, dir) {
   vault.lock(); // backups must work while locked
 
   let clock = new Date('2026-10-30T08:00:00');
-  const settings = { backupToFolder: true, backupToGoogle: false, backupDir: path.join(tmp, 'usb', 'Daybook backups'), backupEvery: 'daily', backupKeep: 2 };
+  const settings = { backupToFolder: true, backupToGoogle: false, backupDir: path.join(tmp, 'usb', 'WellWrite backups'), backupEvery: 'daily', backupKeep: 2 };
   const g = await fakeGoogle();
   const drive = makeDrive(g, dataDir);
   const results = [];
   const bm = new BackupManager({ vault, dataDir, drive, getSettings: () => settings, now: () => clock, tmpDir: tmp, onResult: r => results.push(r) });
 
   // ---------- folder ----------
-  assert.equal(backupName(clock), 'Daybook backup 2026-10-30 0800.daybook');
+  assert.equal(backupName(clock), 'WellWrite backup 2026-10-30 0800.wellwrite');
   assert(AUTO_NAME_RE.test(backupName(clock)));
   assert.equal(bm.isDue('start'), true);
   let r = await bm.run('start');
@@ -128,7 +128,7 @@ function makeDrive(g, dir) {
   r = await bm.maybeRun('timer');
   assert(r && r.ok, 'retries later, creates the last folder level');
   assert.equal(r.count, 2);
-  assert(fs.existsSync(path.join(settings.backupDir, 'Daybook backup 2026-10-30 0840.daybook')));
+  assert(fs.existsSync(path.join(settings.backupDir, 'WellWrite backup 2026-10-30 0840.wellwrite')));
   assert.equal(bm.isDue('timer'), false, 'unchanged -> not due');
 
   vault.unlock('river-stone'); vault.save({ ...vault.get(e1.id), title: 'One edited' }); vault.lock();
@@ -136,17 +136,25 @@ function makeDrive(g, dir) {
   clock = new Date('2026-10-31T07:00:00');
   assert.equal(bm.isDue('timer'), true, 'daily: new day and changed');
   fs.writeFileSync(path.join(settings.backupDir, 'my notes.txt'), 'keep me');
+  fs.writeFileSync(path.join(settings.backupDir, 'Daybook backup 2026-10-20 0700.daybook'), 'old-name backup');
   for (const t of ['2026-10-31T07:00:00', '2026-11-01T07:00:00', '2026-11-02T07:00:00']) {
     clock = new Date(t);
     vault.unlock('river-stone'); vault.save({ date: t.slice(0, 10), title: t, html: '', text: '' }); vault.lock();
     assert((await bm.maybeRun('timer')).ok);
   }
   const left = fs.readdirSync(settings.backupDir).sort();
-  assert.deepEqual(left, ['Daybook backup 2026-11-01 0700.daybook', 'Daybook backup 2026-11-02 0700.daybook', 'my notes.txt'], 'keeps newest 2 and other files');
+  assert.deepEqual(left, ['WellWrite backup 2026-11-01 0700.wellwrite', 'WellWrite backup 2026-11-02 0700.wellwrite', 'my notes.txt'], 'keeps newest 2 (old Daybook names included) and other files');
 
   // backup restores elsewhere with the password
   const other = new Vault(path.join(tmp, 'other'));
   assert.equal(other.restoreFresh(path.join(settings.backupDir, left[1]), 'river-stone'), 5);
+
+  // a backup made by Daybook (before the rename) still restores
+  const legacy = path.join(tmp, 'legacy.daybook');
+  const lj = JSON.parse(fs.readFileSync(path.join(settings.backupDir, left[1]), 'utf8'));
+  assert.equal(lj.app, 'WellWrite');
+  fs.writeFileSync(legacy, JSON.stringify({ ...lj, app: 'Daybook' }));
+  assert.equal(new Vault(path.join(tmp, 'legacy')).restoreFresh(legacy, 'river-stone'), 5);
 
   // weekly + close modes
   settings.backupEvery = 'weekly';
@@ -183,12 +191,12 @@ function makeDrive(g, dir) {
     assert.equal(r.where, 'Google Drive');
   }
   const folders = [...g.files.values()].filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-  assert.equal(folders.length, 1, 'one Daybook backups folder');
-  assert.equal(folders[0].name, 'Daybook backups');
+  assert.equal(folders.length, 1, 'one WellWrite backups folder');
+  assert.equal(folders[0].name, 'WellWrite backups');
   const listed = await drive.list();
   assert.equal(listed.length, 2, 'pruned to newest 2');
-  assert.equal(listed[0].name, 'Daybook backup 2026-11-12 0700.daybook');
-  assert(!fs.readdirSync(tmp).some(f => /^daybook-.*\.daybook$/.test(f)), 'temp upload file cleaned up');
+  assert.equal(listed[0].name, 'WellWrite backup 2026-11-12 0700.wellwrite');
+  assert(!fs.readdirSync(tmp).some(f => /^wellwrite-.*\.wellwrite$/.test(f)), 'temp upload file cleaned up');
 
   // ---------- both at once ----------
   settings.backupToFolder = true;
@@ -200,9 +208,9 @@ function makeDrive(g, dir) {
   r = await bm.maybeRun('timer');
   assert(r.ok, JSON.stringify(r));
   assert.equal(r.where, 'Google Drive and ' + settings.backupDir);
-  assert(fs.existsSync(path.join(settings.backupDir, 'Daybook backup 2026-11-13 0700.daybook')));
+  assert(fs.existsSync(path.join(settings.backupDir, 'WellWrite backup 2026-11-13 0700.wellwrite')));
   assert(!fs.readdirSync(settings.backupDir).some(f => f.endsWith('.part')));
-  assert.equal((await drive.list())[0].name, 'Daybook backup 2026-11-13 0700.daybook');
+  assert.equal((await drive.list())[0].name, 'WellWrite backup 2026-11-13 0700.wellwrite');
 
   // one destination failing doesn't stop the other
   fs.rmSync(path.join(tmp, 'usb'), { recursive: true });
@@ -233,7 +241,7 @@ function makeDrive(g, dir) {
   await drive2.connect();
   const got = await drive2.list();
   assert.equal(got.length, 2);
-  const dl = path.join(pc2, 'dl.daybook');
+  const dl = path.join(pc2, 'dl.wellwrite');
   await drive2.download(got[0].id, dl);
   const v2 = new Vault(path.join(pc2, 'journal'));
   assert.equal(v2.restoreFresh(dl, 'river-stone'), 11);

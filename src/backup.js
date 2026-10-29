@@ -2,7 +2,7 @@
 /**
  * Automatic backups to Google Drive, a folder on this computer (or USB/network
  * drive), or both. Each destination keeps its own schedule state, so one being
- * offline never holds up the other. Backups are the same encrypted .daybook
+ * offline never holds up the other. Backups are the same encrypted .wellwrite
  * files as "Save a backup file", so they are safe anywhere.
  */
 const fs = require('fs');
@@ -10,10 +10,11 @@ const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 
-const AUTO_NAME_RE = /^Daybook backup \d{4}-\d{2}-\d{2} \d{4}\.daybook$/;
+// Automatic backups, including ones made back when the app was called Daybook.
+const AUTO_NAME_RE = /^(?:WellWrite|Daybook) backup (\d{4}-\d{2}-\d{2} \d{4})\.(?:wellwrite|daybook)$/;
 const pad = n => String(n).padStart(2, '0');
 const localDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const backupName = d => `Daybook backup ${localDay(d)} ${pad(d.getHours())}${pad(d.getMinutes())}.daybook`;
+const backupName = d => `WellWrite backup ${localDay(d)} ${pad(d.getHours())}${pad(d.getMinutes())}.wellwrite`;
 const RETRY_AFTER_ERROR_MS = 30 * 60 * 1000;
 const DESTS = ['google', 'folder'];
 
@@ -134,7 +135,7 @@ class BackupManager {
         }
         try {
           if (!tmp) {
-            tmp = path.join(this.tmpDir, `daybook-${crypto.randomBytes(6).toString('hex')}.daybook`);
+            tmp = path.join(this.tmpDir, `wellwrite-${crypto.randomBytes(6).toString('hex')}.wellwrite`);
             count = this.vault.exportBackup(tmp);
           }
           let where;
@@ -184,9 +185,9 @@ function friendly(e, dest, settings) {
   if (dest === 'folder') {
     if (e.code === 'ENOENT' || /no such file|cannot find/i.test(m)) return `Couldn't find the backup folder ${settings.backupDir}. If it's on a USB or network drive, check it's connected.`;
     if (e.code === 'ENOSPC') return 'The backup drive is full.';
-    if (e.code === 'EACCES' || e.code === 'EPERM') return `Daybook isn't allowed to write to ${settings.backupDir}. Choose another folder.`;
+    if (e.code === 'EACCES' || e.code === 'EPERM') return `WellWrite isn't allowed to write to ${settings.backupDir}. Choose another folder.`;
   } else if (/fetch failed|ENOTFOUND|ECONNRESET|ETIMEDOUT|network|ERR_INTERNET|ERR_NAME/i.test(m)) {
-    return "Couldn't reach Google Drive. Daybook will try again when you're online.";
+    return "Couldn't reach Google Drive. WellWrite will try again when you're online.";
   }
   return m;
 }
@@ -202,7 +203,8 @@ function ensureFolder(dir) {
 /** Delete all but the newest `keep` automatic backups. Never touches other files. */
 function pruneFolder(dir, keep) {
   if (!keep || keep < 1) return 0;
-  const auto = fs.readdirSync(dir).filter(n => AUTO_NAME_RE.test(n)).sort().reverse();
+  const stamp = n => n.match(AUTO_NAME_RE)[1];
+  const auto = fs.readdirSync(dir).filter(n => AUTO_NAME_RE.test(n)).sort((a, b) => stamp(b).localeCompare(stamp(a)));
   let n = 0;
   for (const name of auto.slice(keep)) { try { fs.unlinkSync(path.join(dir, name)); n++; } catch {} }
   return n;
@@ -211,7 +213,7 @@ function pruneFolder(dir, keep) {
 /** Cloud-synced folders worth suggesting on Windows: OneDrive, Dropbox. */
 function suggestFolders({ env = process.env, exists = fs.existsSync } = {}) {
   const out = [];
-  const add = (label, base) => { if (base && exists(base) && !out.some(o => o.base === base)) out.push({ label, base, path: path.join(base, 'Daybook backups') }); };
+  const add = (label, base) => { if (base && exists(base) && !out.some(o => o.base === base)) out.push({ label, base, path: path.join(base, 'WellWrite backups') }); };
   const home = env.USERPROFILE || env.HOME || '';
   add('OneDrive', env.OneDrive || env.OneDriveConsumer || env.OneDriveCommercial);
   add('Dropbox', home && path.join(home, 'Dropbox'));

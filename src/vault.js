@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Daybook vault — encrypted on-disk storage for journal entries.
+ * WellWrite vault — encrypted on-disk storage for journal entries.
  *
  * Design
  *  - A random 256-bit data key encrypts everything (AES-256-GCM).
@@ -33,7 +33,7 @@ function seal(key, plain) {
 }
 
 function open(key, buf) {
-  if (buf.length < 32 || !buf.subarray(0, 4).equals(MAGIC)) throw new Error('Not a Daybook file');
+  if (buf.length < 32 || !buf.subarray(0, 4).equals(MAGIC)) throw new Error('Not a WellWrite file');
   const iv = buf.subarray(4, 16), tag = buf.subarray(16, 32), ct = buf.subarray(32);
   const d = crypto.createDecipheriv('aes-256-gcm', key, iv);
   d.setAuthTag(tag);
@@ -219,7 +219,7 @@ class Vault {
       if (ID_RE.test(id)) entries[id] = fs.readFileSync(path.join(this.entriesDir, f)).toString('base64');
     }
     const data = {
-      app: 'Daybook', format: 1, exported: new Date().toISOString(),
+      app: 'WellWrite', format: 1, exported: new Date().toISOString(),
       vault: JSON.parse(fs.readFileSync(this.vaultFile, 'utf8')),
       entries,
     };
@@ -229,8 +229,9 @@ class Vault {
 
   static readBackup(file, password) {
     let data;
-    try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { throw new Error('That file is not a Daybook backup'); }
-    if (data.app !== 'Daybook' || !data.vault || !data.entries) throw new Error('That file is not a Daybook backup');
+    try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { throw new Error('That file is not a WellWrite backup'); }
+    // Backups made before the rename say "Daybook".
+    if (!['WellWrite', 'Daybook'].includes(data.app) || !data.vault || !data.entries) throw new Error('That file is not a WellWrite backup');
     const key = unwrapDataKey(password, data.vault);
     if (!key) throw new Error('That password does not open this backup');
     return { data, key };
@@ -280,7 +281,7 @@ class Vault {
       return `<article><p class="d">${esc(when)}</p>${e.title ? `<h2>${esc(e.title)}</h2>` : ''}` +
         `${e.tags.length ? `<p class="t">${e.tags.map(t => '#' + esc(t)).join(' ')}</p>` : ''}<div>${sanitize(e.html)}</div></article>`;
     }).join('\n');
-    const html = `<!doctype html><meta charset="utf-8"><title>Daybook journal</title><style>
+    const html = `<!doctype html><meta charset="utf-8"><title>WellWrite journal</title><style>
 body{font:17px/1.65 Georgia,serif;max-width:42em;margin:3em auto;padding:0 1.2em;color:#222}
 article{page-break-after:always;border-bottom:1px solid #ccc;padding-bottom:2em;margin-bottom:2em}
 .d{color:#666;font-style:italic;margin:0}.t{color:#666;font-size:.9em}img{max-width:100%;height:auto}

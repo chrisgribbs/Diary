@@ -1,14 +1,14 @@
 {
-  "name": "daybook",
-  "productName": "Daybook",
-  "version": "1.1.0",
+  "name": "wellwrite",
+  "productName": "WellWrite",
+  "version": "1.2.0",
   "description": "A private, encrypted desktop journal",
   "main": "main.js",
   "author": "Chris Gribble",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node test/vault.test.js && node test/backup.test.js",
+    "test": "node test/vault.test.js && node test/backup.test.js && node test/migrate.test.js",
     "assets": "node -e \"const f=require('fs');f.copyFileSync('node_modules/dompurify/dist/purify.min.js','renderer/purify.min.js')\"",
     "dist": "electron-builder --win nsis --x64 --publish never",
     "dist:portable": "electron-builder --win portable --x64 --publish never"
@@ -24,7 +24,7 @@
   },
   "build": {
     "appId": "com.daybook.journal",
-    "productName": "Daybook",
+    "productName": "WellWrite",
     "copyright": "Copyright \u00a9 2026 Chris Gribble",
     "files": [
       "main.js",
@@ -50,12 +50,12 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Daybook",
+      "shortcutName": "WellWrite",
       "deleteAppDataOnUninstall": false,
-      "artifactName": "Daybook-Setup-${version}.exe"
+      "artifactName": "WellWrite-Setup-${version}.exe"
     },
     "portable": {
-      "artifactName": "Daybook-Portable-${version}.exe"
+      "artifactName": "WellWrite-Portable-${version}.exe"
     },
     "afterPack": "build/afterPack.js",
     "publish": [
