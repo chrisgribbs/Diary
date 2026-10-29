@@ -957,14 +957,15 @@ function renderBackupSection() {
   const nowBtn = button(on.length > 1 ? 'Back up to both now' : 'Back up now', 'btn-ink', backupNow);
   if (!on.length || b.running || on.every(d => b.blockers[d])) nowBtn.disabled = true;
 
-  box.replaceChildren(
+  box.replaceChildren(...[
     el('p', { class: 'dest-intro' }, 'Back up automatically to:'),
-    google, folder,
+    g.available ? google : null, folder,
     row('How often', 'Only when something has changed.', select(s.backupEvery, [['daily', 'Once a day'], ['weekly', 'Once a week'], ['close', 'Each time I close Daybook']], 'backupEvery')),
-    row('Backups to keep', 'In each place. Older automatic backups are removed.', select(s.backupKeep, [['5', 'Newest 5'], ['10', 'Newest 10'], ['30', 'Newest 30'], ['0', 'All of them']], 'backupKeep', Number)),
+    row('Backups to keep', g.available ? 'In each place. Older automatic backups are removed.' : 'Older automatic backups are removed.', select(s.backupKeep, [['5', 'Newest 5'], ['10', 'Newest 10'], ['30', 'Newest 30'], ['0', 'All of them']], 'backupKeep', Number)),
     el('div', { class: 'backup-status' },
       el('span', { id: 'backupLine' }, on.length ? `Backing up to ${on.map(d => (d === 'google' ? 'Google Drive' : 'this computer')).join(' and ')}.` : 'Automatic backups are off. Tick a place above to turn them on.'),
-      nowBtn));
+      nowBtn),
+  ].filter(Boolean));
 }
 
 async function connectDrive() {
