@@ -112,9 +112,29 @@ app.whenReady().then(async () => {
   const saved = await js(`return { state: document.querySelector('#saveState').textContent, n: (await window.daybook.list()).length, chips: document.querySelectorAll('.chip').length };`);
   console.log('autosave', JSON.stringify(saved));
 
-  await js(`document.querySelector('#settingsBtn').click();`);
-  await wait(500);
-  await shot('7-settings');
+  await shot('6b-backup-card');
+  await js(`document.querySelector('#backupCard .btn-foil').click();`);
+  await wait(700);
+  await shot('7-settings-backups');
+  // Turn on automatic backups to a folder and back up now.
+  const bdir = path.join(process.env.DAYBOOK_DATA_DIR, '..', 'daybook-shot-usb-' + process.pid);
+  fs.mkdirSync(bdir, { recursive: true });
+  // Set the folder in the settings file, as the folder picker would.
+  const sf = path.join(process.env.DAYBOOK_DATA_DIR, 'settings.json');
+  let cur = {}; try { cur = JSON.parse(fs.readFileSync(sf, 'utf8')); } catch {}
+  fs.writeFileSync(sf, JSON.stringify({ ...cur, backupDir: bdir }));
+  await js(`await window.daybook.setSettings({ autoBackup: true, backupTarget: 'folder' }); await refreshBackupInfo();`);
+  await wait(300);
+  await js(`document.querySelector('.backup-status button').click();`);
+  await wait(1500);
+  await shot('7b-backed-up-folder');
+  console.log('folder backups:', fs.readdirSync(bdir));
+  fs.rmSync(bdir, { recursive: true, force: true });
+  await js(`await window.daybook.setSettings({ backupTarget: 'google' }); await refreshBackupInfo();`);
+  await wait(400);
+  await js(`document.getElementById('set-backups').scrollIntoView();`);
+  await wait(200);
+  await shot('7c-google');
   await js(`document.querySelector('#dlg').close();`);
 
   // Lock wipes the page

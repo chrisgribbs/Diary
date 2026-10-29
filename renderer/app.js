@@ -168,6 +168,19 @@ $('#setupForm').addEventListener('submit', async e => {
 });
 
 $('#restoreFreshBtn').addEventListener('click', async () => {
+  let info = null;
+  try { info = await api.backupInfo(); } catch {}
+  if (info && info.google.available) {
+    const pick = await openDialog((f, done) => f.append(
+      el('h2', {}, 'Restore from a backup'),
+      el('p', {}, 'Where is your backup?'),
+      el('div', { class: 'actions', style: 'justify-content:flex-start' },
+        el('button', { type: 'button', class: 'btn-ink', autofocus: true, onclick: () => done('google') }, 'Google Drive'),
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => done('file') }, 'A backup file'),
+        el('button', { type: 'button', class: 'btn-link', style: 'margin-left:auto', onclick: () => done(null) }, 'Cancel'))));
+    if (pick === 'google') { restoreFromDrive('fresh'); return; }
+    if (pick !== 'file') return;
+  }
   const file = await api.pickBackup();
   if (!file) return;
   const pw = await promptDialog({ title: 'Restore from backup', text: 'Enter the password that was used when this backup was made. It becomes your journal password.', label: 'Backup password', type: 'password', ok: 'Restore' });
@@ -187,6 +200,7 @@ async function enterApp() {
   const today = sorted(state.metas.filter(m => m.date === todayISO()))[0];
   if (today) await openEntry(today.id); else showEmpty();
   renderSidebar();
+  refreshBackupInfo();
 }
 
 async function lockNow() {
@@ -382,7 +396,7 @@ $('#calPrev').onclick = () => { state.viewMonth.setMonth(state.viewMonth.getMont
 $('#calNext').onclick = () => { state.viewMonth.setMonth(state.viewMonth.getMonth() + 1); renderCalendar(); };
 $('#calTitle').onclick = () => { const d = new Date(); state.viewMonth = new Date(d.getFullYear(), d.getMonth(), 1); renderCalendar(); };
 
-function renderSidebar() { renderCalendar(); renderOnThisDay(); renderTags(); renderFilterNote(); renderList(); renderStats(); }
+function renderSidebar() { renderCalendar(); renderOnThisDay(); renderTags(); renderFilterNote(); renderList(); renderStats(); renderBackupCard(); }
 
 let searchTimer;
 $('#search').addEventListener('input', e => {
@@ -695,7 +709,8 @@ async function updateSetting(patch) {
   applySettings();
 }
 
-function openSettings() {
+function openSettings(section) {
+  if (section) setTimeout(() => { const h = document.getElementById('set-' + section); if (h) h.scrollIntoView({ block: 'start' }); }, 30);
   return openDialog((f, done) => {
     const s = state.settings;
     const totalWords = state.metas.reduce((a, m) => a + m.words, 0);
@@ -729,11 +744,14 @@ function openSettings() {
       row('Lock when minimised', 'Also locks when Windows locks or the computer sleeps.', check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
       row('Password', null, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); changePassword(); } }, 'Change password')),
 
-      el('h3', {}, 'Backups'),
-      el('p', {}, 'Backups are encrypted with your current password. Keep one on a USB drive or cloud folder in case this computer fails.'),
-      el('div', { class: 'btns' },
-        el('button', { type: 'button', class: 'btn-ink', onclick: doBackup }, 'Save a backup'),
-        el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); doImport(); } }, 'Import a backup'),
+      el('h3', { id: 'set-backups' }, 'Backups'),
+      el('p', {}, 'Backups are encrypted with your password, so they are safe to keep online or on a USB drive.'),
+      el('div', { id: 'backupSection' }),
+      el('div', { class: 'btns', style: 'margin-top:14px' },
+        el('button', { type: 'button', class: 'btn-plain', onclick: doBackup }, 'Save a backup file'),
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); doImport(); } }, 'Import a backup file'),
+        state.backup && state.backup.google.connected
+          ? el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); restoreFromDrive('import'); } }, 'Restore from Google Drive') : null,
         el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); doExportReadable(); } }, 'Export readable copy')),
       el('p', { class: 'path', style: 'margin-top:14px' }, 'Journal folder: ', state.dataDir, ' ',
         el('button', { type: 'button', class: 'btn-link', onclick: () => api.showDataFolder() }, 'Show folder')),
@@ -744,6 +762,8 @@ function openSettings() {
 
       el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Done')),
     );
+    renderBackupSection();
+    refreshBackupInfo();
   });
 }
 
@@ -816,6 +836,221 @@ function changePassword() {
       el('label', { class: 'field' }, 'New password', a),
       el('label', { class: 'field' }, 'Type the new password again', b), err,
       el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', onclick: () => done() }, 'Cancel'), btn));
+  });
+}
+
+
+/* ---------- automatic backups & Google Drive ---------- */
+state.backup = null;
+state.connecting = false;
+const shownErrors = new Set();
+
+async function refreshBackupInfo() {
+  try { state.backup = await api.backupInfo(); } catch { return; }
+  renderBackupCard();
+  renderBackupSection();
+}
+
+function whenText(iso) {
+  const d = new Date(iso), now = new Date();
+  const t = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const day = isoOf(d), y = new Date(now); y.setDate(now.getDate() - 1);
+  if (day === isoOf(now)) return `today at ${t}`;
+  if (day === isoOf(y)) return `yesterday at ${t}`;
+  return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' })} at ${t}`;
+}
+
+/** The latest failure, if it happened after the latest success. */
+function backupProblem(b) {
+  const st = b.status;
+  if (!st.lastError || !st.lastErrorAt) return null;
+  if (st.lastAt && new Date(st.lastAt) > new Date(st.lastErrorAt)) return null;
+  return st;
+}
+
+function renderBackupCard() {
+  const card = $('#backupCard'), b = state.backup;
+  if (!card) return;
+  if (!b || !state.unlocked) { card.hidden = true; return; }
+  const s = b.settings, problem = backupProblem(b);
+  const btn = (label, cls, fn) => el('button', { class: cls, onclick: fn }, label);
+  let content = null;
+  if (s.autoBackup && problem && problem.lastErrorCode === 'reauth') {
+    content = [el('span', {}, 'Google Drive needs reconnecting. Backups are paused until you do.'),
+      el('span', { class: 'card-btns' }, btn('Reconnect', 'btn-foil btn-small', () => openSettings('backups')))];
+  } else if (s.autoBackup && problem && (!b.status.lastAt || Date.now() - new Date(b.status.lastAt) > 3 * 864e5)) {
+    content = [el('span', {}, b.status.lastAt ? `Backups haven't worked since ${whenText(b.status.lastAt)}.` : "Your journal hasn't been backed up yet."),
+      el('span', { class: 'card-btns' }, btn('See why', 'btn-foil btn-small', () => openSettings('backups')))];
+  } else if (!s.autoBackup && !s.backupNudgeDismissed && state.metas.length >= 3) {
+    content = [el('span', {}, b.google.available
+      ? 'Back up your journal to Google Drive, so it survives a lost or broken computer.'
+      : 'Turn on automatic backups, so your journal survives a lost or broken computer.'),
+      el('span', { class: 'card-btns' },
+        btn('Set up backups', 'btn-foil btn-small', () => openSettings('backups')),
+        btn('Not now', 'btn-link', async () => { await updateSetting({ backupNudgeDismissed: true }); refreshBackupInfo(); }))];
+  }
+  card.hidden = !content;
+  if (content) card.replaceChildren(...content);
+}
+
+function renderBackupSection() {
+  const box = document.getElementById('backupSection');
+  const b = state.backup;
+  if (!box || !b) return;
+  const s = b.settings;
+  const row = (label, help, ...controls) => el('div', { class: 'row' }, el('div', { class: 'row-text' }, label, help ? el('small', {}, help) : null), el('span', { class: 'row-ctl' }, ...controls));
+  const select = (val, opts, key, cast = x => x) => {
+    const sel = el('select', { onchange: async e => { await updateSetting({ [key]: cast(e.target.value) }); refreshBackupInfo(); } },
+      ...opts.map(([v, l]) => el('option', { value: v }, l)));
+    sel.value = String(val); return sel;
+  };
+  const auto = el('input', { type: 'checkbox', onchange: async e => { await updateSetting({ autoBackup: e.target.checked }); refreshBackupInfo(); } });
+  auto.checked = s.autoBackup;
+
+  const parts = [
+    row('Back up automatically', null, auto),
+    row('Back up to', null, select(s.backupTarget, [['google', 'Google Drive'], ['folder', 'A folder or USB drive']], 'backupTarget')),
+  ];
+
+  if (s.backupTarget === 'google') {
+    const g = b.google;
+    if (!g.available) {
+      parts.push(el('p', { class: 'note' }, "Google Drive backups aren't switched on in this version of Daybook yet. Use a folder for now."));
+    } else if (state.connecting) {
+      parts.push(row('Google account', 'Finish signing in to Google in your browser…',
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => api.googleCancel() }, 'Cancel')));
+    } else if (g.connected) {
+      parts.push(row('Google account', `${g.email || 'Connected'}. Backups go in the "Daybook backups" folder in your Drive.`,
+        el('button', { type: 'button', class: 'btn-plain', onclick: disconnectDrive }, 'Disconnect')));
+    } else {
+      parts.push(row('Google account', 'Not connected. Daybook can only see the backups it puts in your Drive.',
+        el('button', { type: 'button', class: 'btn-ink', onclick: connectDrive }, 'Connect Google Drive')));
+    }
+  } else {
+    const chooseBtn = el('button', { type: 'button', class: 'btn-plain', onclick: () => chooseFolder() }, s.backupDir ? 'Change' : 'Choose folder');
+    parts.push(row('Folder', s.backupDir || 'No folder chosen yet', s.backupDir ? el('button', { type: 'button', class: 'btn-link', onclick: () => api.showBackupFolder() }, 'Open') : null, chooseBtn));
+    const sugg = b.suggestions.filter(x => x.path !== s.backupDir);
+    if (sugg.length) parts.push(el('p', { class: 'note' }, 'Or use: ',
+      ...sugg.map((x, i) => [i ? ', ' : '', el('button', { type: 'button', class: 'btn-link', title: x.path, onclick: () => chooseFolder(x.path) }, x.label)]).flat()));
+  }
+
+  parts.push(
+    row('How often', 'Only when something has changed.', select(s.backupEvery, [['daily', 'Once a day'], ['weekly', 'Once a week'], ['close', 'Each time I close Daybook']], 'backupEvery')),
+    row('Backups to keep', 'Older automatic backups are removed.', select(s.backupKeep, [['5', 'Newest 5'], ['10', 'Newest 10'], ['30', 'Newest 30'], ['0', 'All of them']], 'backupKeep', Number)),
+  );
+
+  // Only report on backups made to the destination currently chosen.
+  const key = s.backupTarget === 'google' ? 'google' : 'folder:' + (s.backupDir || '');
+  const st = b.status.lastTarget === key ? b.status : {};
+  const problem = b.status.lastErrorTarget === key ? backupProblem(b) : null;
+  let line, bad = false;
+  if (b.running) line = 'Backing up…';
+  else if (problem) { line = `Last backup failed ${whenText(problem.lastErrorAt)}: ${problem.lastError}`; bad = true; }
+  else if (st.lastAt) line = `Last backup ${whenText(st.lastAt)}, ${plainEntries(st.lastCount || 0)}, to ${st.lastWhere}.`;
+  else if (b.blocker && s.autoBackup) line = b.blocker + '.';
+  else line = s.backupTarget === 'google' ? 'No backups to Google Drive yet.' : 'No backups to this folder yet.';
+  const nowBtn = el('button', { type: 'button', class: 'btn-ink', onclick: backupNow }, 'Back up now');
+  if (b.blocker || b.running) nowBtn.disabled = true;
+  parts.push(el('div', { class: 'backup-status' + (bad ? ' bad' : '') }, el('span', { id: 'backupLine' }, line), nowBtn));
+  box.replaceChildren(...parts);
+}
+
+async function connectDrive() {
+  state.connecting = true; renderBackupSection();
+  try {
+    state.backup = await api.googleConnect();
+    toast('Google Drive connected');
+  } catch (x) {
+    if (!/cancel/i.test(x.message)) toast(x.message);
+  }
+  state.connecting = false;
+  refreshBackupInfo();
+}
+
+async function disconnectDrive() {
+  const ok = await confirmDialog({ title: 'Disconnect Google Drive?', text: 'Automatic backups to Google Drive will stop. Backups already in your Drive stay there.', ok: 'Disconnect' });
+  if (ok) { try { await api.googleDisconnect(); toast('Google Drive disconnected'); } catch (x) { toast(x.message); } }
+  await refreshBackupInfo();
+  if (ok) openSettings('backups');
+}
+
+async function chooseFolder(suggested) {
+  try { state.backup = await api.chooseBackupFolder(suggested); } catch (x) { toast(x.message); }
+  refreshBackupInfo();
+}
+
+async function backupNow() {
+  await saveNow();
+  const line = document.getElementById('backupLine');
+  if (line) line.textContent = 'Backing up…';
+  const r = await api.backupNow().catch(x => ({ ok: false, error: x.message }));
+  toast(r.ok ? `Backed up ${plainEntries(r.count)} to ${r.where}` : 'Backup failed: ' + r.error);
+  refreshBackupInfo();
+}
+
+api.onBackupResult(r => {
+  if (!r.ok && r.reason !== 'manual' && state.unlocked && !shownErrors.has(r.error)) {
+    shownErrors.add(r.error);
+    toast('Backup failed: ' + r.error);
+  }
+  refreshBackupInfo();
+});
+
+/** Pick a backup in Google Drive and restore it ('fresh' at setup) or merge it ('import'). */
+async function restoreFromDrive(mode) {
+  let info = await api.backupInfo().catch(() => null);
+  if (!info || !info.google.available) { toast('Google Drive is not available in this version'); return; }
+  if (!info.google.connected) {
+    const waiting = openDialog((f, done) => f.append(
+      el('h2', {}, 'Sign in to Google'),
+      el('p', {}, 'Finish signing in in the browser window that just opened, then come back here.'),
+      el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', autofocus: true, onclick: () => { api.googleCancel(); done(); } }, 'Cancel'))));
+    try { await api.googleConnect(); } catch (x) { $('#dlg').close(); if (!/cancel/i.test(x.message)) toast(x.message); return; }
+    $('#dlg').close(); await waiting;
+  }
+  let files;
+  try { files = await api.googleList(); } catch (x) { toast(x.message); return; }
+  if (!files.length) {
+    await confirmDialog({ title: 'No backups found', text: 'There are no Daybook backups in the "Daybook backups" folder of this Google account.', ok: 'OK' });
+    return;
+  }
+  const fmtSize = n => n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
+  return openDialog((f, done) => {
+    const list = el('div', { class: 'pick-list' }, ...files.map((x, i) => {
+      const r = el('input', { type: 'radio', name: 'bk', value: x.id }); if (!i) r.checked = true;
+      const d = new Date(x.created);
+      return el('label', { class: 'pick' }, r,
+        el('span', {}, d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })),
+        el('small', {}, fmtSize(x.size)));
+    }));
+    const pw = el('input', { type: 'password', autocomplete: 'off' });
+    const err = el('p', { class: 'err', role: 'alert' });
+    const go = el('button', { type: 'submit', class: 'btn-ink' }, mode === 'fresh' ? 'Restore' : 'Import');
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!pw.value) { err.textContent = 'Enter the password for this backup.'; pw.focus(); return; }
+      const id = list.querySelector('input:checked').value;
+      go.disabled = true; go.textContent = 'Downloading…';
+      try {
+        if (mode === 'fresh') {
+          const n = await api.googleRestoreFresh(id, pw.value);
+          done(); await enterApp(); toast(`Restored ${plainEntries(n)} from Google Drive`);
+        } else {
+          await saveNow();
+          const r = await api.googleImport(id, pw.value);
+          done(); state.metas = await api.list(); renderSidebar();
+          toast(r.added || r.updated ? `Imported: ${r.added} new, ${r.updated} updated` : 'Nothing new in that backup');
+        }
+      } catch (x) { err.textContent = x.message; go.disabled = false; go.textContent = mode === 'fresh' ? 'Restore' : 'Import'; }
+    });
+    f.append(
+      el('h2', {}, mode === 'fresh' ? 'Restore from Google Drive' : 'Import from Google Drive'),
+      el('p', {}, mode === 'fresh'
+        ? 'Choose a backup. Its password becomes your journal password.'
+        : 'Entries from the backup are added to this journal. Where both have the same entry, the newer version is kept.'),
+      list,
+      el('label', { class: 'field' }, 'Password used for that backup', pw), err,
+      el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', onclick: () => done() }, 'Cancel'), go));
   });
 }
 

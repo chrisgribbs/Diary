@@ -1,4 +1,5 @@
-node_modules/
+node_modules
 dist/
 shots/
 *.log
+src/google-config.json

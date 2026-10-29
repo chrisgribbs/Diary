@@ -1,9 +1,11 @@
 'use strict';
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu, powerMonitor, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu, powerMonitor, nativeTheme, safeStorage, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { Vault } = require('./src/vault');
 const { autoUpdater } = require('electron-updater');
+const { GoogleDrive } = require('./src/gdrive');
+const { BackupManager, suggestFolders } = require('./src/backup');
 
 app.setAppUserModelId('com.daybook.journal');
 if (!app.requestSingleInstanceLock()) { app.quit(); }
@@ -14,20 +16,68 @@ const vault = new Vault(DATA_DIR);
 let win = null;
 let quitting = false;
 
-const DEFAULT_SETTINGS = { autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true };
+const DEFAULT_SETTINGS = {
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true,
+  autoBackup: false, backupTarget: 'google', backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
+};
+const CHOICES = {
+  theme: ['system', 'light', 'dark'],
+  backupTarget: ['google', 'folder'],
+  backupEvery: ['daily', 'weekly', 'close'],
+  backupKeep: [5, 10, 30, 0],
+};
 
 function readSettings() {
   try { return { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')) }; }
   catch { return { ...DEFAULT_SETTINGS }; }
 }
-function writeSettings(s) {
+function writeSettings(s, { internal = false } = {}) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const clean = { ...readSettings() };
-  for (const k of Object.keys(DEFAULT_SETTINGS)) if (k in s && typeof s[k] === typeof DEFAULT_SETTINGS[k]) clean[k] = s[k];
+  for (const k of Object.keys(DEFAULT_SETTINGS)) {
+    if (!(k in s) || typeof s[k] !== typeof DEFAULT_SETTINGS[k]) continue;
+    if (k === 'backupDir' && !internal) continue; // only set through the folder picker
+    if (CHOICES[k] && !CHOICES[k].includes(s[k])) continue;
+    clean[k] = s[k];
+  }
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(clean, null, 2));
   nativeTheme.themeSource = ['light', 'dark'].includes(clean.theme) ? clean.theme : 'system';
   if (win) win.webContents.session.setSpellCheckerEnabled(!!clean.spellcheck);
   return clean;
+}
+
+// ---------- backups ----------
+function loadGoogleConfig() {
+  if (process.env.DAYBOOK_GOOGLE_CLIENT_ID) {
+    return { clientId: process.env.DAYBOOK_GOOGLE_CLIENT_ID, clientSecret: process.env.DAYBOOK_GOOGLE_CLIENT_SECRET || '' };
+  }
+  try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'google-config.json'), 'utf8')); } catch { return null; }
+}
+const canProtect = () => { try { return safeStorage.isEncryptionAvailable(); } catch { return false; } };
+const drive = new GoogleDrive({
+  config: loadGoogleConfig(),
+  storeFile: path.join(DATA_DIR, 'google.json'),
+  protect: t => (canProtect() ? 'os:' + safeStorage.encryptString(t).toString('base64') : 'plain:' + Buffer.from(t).toString('base64')),
+  unprotect: t => (t.startsWith('os:') ? safeStorage.decryptString(Buffer.from(t.slice(3), 'base64')) : Buffer.from(t.replace(/^plain:/, ''), 'base64').toString()),
+  openBrowser: url => shell.openExternal(url),
+  fetch: (...a) => (app.isReady() ? net.fetch(...a) : fetch(...a)),
+});
+const backups = new BackupManager({
+  vault, dataDir: DATA_DIR, drive, getSettings: readSettings, tmpDir: app.getPath('temp'),
+  onResult: r => { if (win && !win.isDestroyed()) win.webContents.send('backup:result', publicResult(r)); },
+});
+const publicResult = r => ({ ok: r.ok, reason: r.reason, error: r.error || '', code: r.code || '', count: r.count, where: r.where });
+
+function backupInfo() {
+  const s = readSettings();
+  return {
+    settings: { autoBackup: s.autoBackup, backupTarget: s.backupTarget, backupDir: s.backupDir, backupEvery: s.backupEvery, backupKeep: s.backupKeep, backupNudgeDismissed: s.backupNudgeDismissed },
+    status: (({ lastAt, lastCount, lastWhere, lastTarget, lastError, lastErrorAt, lastErrorCode, lastErrorTarget }) => ({ lastAt, lastCount, lastWhere, lastTarget, lastError, lastErrorAt, lastErrorCode, lastErrorTarget }))(backups.status()),
+    blocker: backups.blocker(s),
+    google: drive.status(),
+    suggestions: suggestFolders(),
+    running: !!backups.running,
+  };
 }
 
 function stripActive(html) {
@@ -86,8 +136,19 @@ function createWindow() {
     if (quitting || !vault.isUnlocked()) return;
     e.preventDefault();
     win.webContents.send('app:flush');
-    const t = setTimeout(() => { quitting = true; vault.lock(); win.close(); }, 2500);
-    ipcMain.once('app:flushed', () => { clearTimeout(t); quitting = true; vault.lock(); win.close(); });
+    let finished = false;
+    const finish = async () => {
+      if (finished) return; finished = true;
+      quitting = true;
+      vault.lock();
+      if (backups.isDue('close')) {
+        win.hide();
+        await Promise.race([backups.run('close'), new Promise(r => setTimeout(r, 45000))]).catch(() => {});
+      }
+      win.close();
+    };
+    const t = setTimeout(finish, 2500);
+    ipcMain.once('app:flushed', () => { clearTimeout(t); finish(); });
   });
 
   win.on('minimize', () => {
@@ -106,7 +167,11 @@ function handle(name, fn) {
 
 handle('vault:status', () => ({ exists: vault.exists(), unlocked: vault.isUnlocked(), dataDir: DATA_DIR }));
 handle('vault:create', pw => { vault.create(pw); return true; });
-handle('vault:unlock', pw => vault.unlock(pw));
+handle('vault:unlock', pw => {
+  const ok = vault.unlock(pw);
+  if (ok) setTimeout(() => backups.maybeRun('unlock').catch(() => {}), 5000);
+  return ok;
+});
 handle('vault:lock', () => { vault.lock(); return true; });
 handle('vault:changePassword', (a, b) => { vault.changePassword(a, b); return true; });
 handle('entries:list', () => vault.list());
@@ -181,6 +246,46 @@ handle('app:installUpdate', () => {
   return true;
 });
 
+handle('backup:info', () => backupInfo());
+handle('backup:now', async () => publicResult(await backups.run('manual')));
+handle('backup:chooseFolder', async suggested => {
+  let dir = null;
+  const ok = suggestFolders().find(f => f.path === suggested);
+  if (ok) dir = ok.path;
+  else {
+    const r = await dialog.showOpenDialog(win, { title: 'Choose a backup folder', properties: ['openDirectory', 'createDirectory'] });
+    if (r.canceled || !r.filePaths[0]) return backupInfo();
+    dir = r.filePaths[0];
+  }
+  if (path.resolve(dir).startsWith(path.resolve(DATA_DIR))) throw new Error("Choose a folder outside Daybook's own journal folder");
+  writeSettings({ backupDir: dir, backupTarget: 'folder' }, { internal: true });
+  return backupInfo();
+});
+handle('backup:showFolder', () => { const d = readSettings().backupDir; if (d) shell.openPath(d); return true; });
+handle('google:connect', async () => {
+  await drive.connect();
+  writeSettings({ backupTarget: 'google', autoBackup: true });
+  if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+  backups.maybeRun('connected').catch(() => {});
+  return backupInfo();
+});
+handle('google:cancel', () => { drive.cancelConnect(); return true; });
+handle('google:disconnect', async () => { await drive.disconnect(); return backupInfo(); });
+handle('google:list', () => drive.list());
+async function downloadDriveBackup(id) {
+  const tmp = path.join(app.getPath('temp'), `daybook-restore-${Date.now()}.daybook`);
+  await drive.download(id, tmp);
+  return tmp;
+}
+handle('google:import', async (id, pw) => {
+  const f = await downloadDriveBackup(id);
+  try { return vault.importBackup(f, pw); } finally { try { fs.unlinkSync(f); } catch {} }
+});
+handle('google:restoreFresh', async (id, pw) => {
+  const f = await downloadDriveBackup(id);
+  try { return vault.restoreFresh(f, pw); } finally { try { fs.unlinkSync(f); } catch {} }
+});
+
 handle('shell:openExternal', url => {
   if (/^https?:\/\//i.test(String(url))) shell.openExternal(url);
   return true;
@@ -193,6 +298,8 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   createWindow();
   setupUpdates();
+  setTimeout(() => backups.maybeRun('start').catch(() => {}), 60000);
+  setInterval(() => backups.maybeRun('timer').catch(() => {}), 30 * 60000);
   const lockAll = () => { if (win && vault.isUnlocked()) win.webContents.send('app:lock'); };
   powerMonitor.on('lock-screen', lockAll);
   powerMonitor.on('suspend', lockAll);

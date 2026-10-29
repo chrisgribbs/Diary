@@ -47,6 +47,20 @@ jobs:
       - if: steps.ver.outputs.skip != 'true'
         run: npm test
 
+      - name: Add Google sign-in settings
+        if: steps.ver.outputs.skip != 'true'
+        shell: bash
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: |
+          if [ -n "$GOOGLE_CLIENT_ID" ]; then
+            node -e "require('fs').writeFileSync('src/google-config.json', JSON.stringify({ clientId: process.env.GOOGLE_CLIENT_ID.trim(), clientSecret: (process.env.GOOGLE_CLIENT_SECRET || '').trim() }))"
+            echo "Google Drive backups are switched on for this build."
+          else
+            echo "::warning title=Google Drive off::The GOOGLE_CLIENT_ID secret isn't set, so this build can't connect to Google Drive."
+          fi
+
       - name: Build installer
         if: steps.ver.outputs.skip != 'true'
         shell: bash

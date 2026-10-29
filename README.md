@@ -17,7 +17,8 @@ Prefer no installer? **Daybook-Portable-1.0.0.exe** runs on its own (your journa
 - **Photos** — add with the toolbar button, paste, or drag in. Large photos are resized to keep the journal light. Double-click a photo to view it full size.
 - **Autosave** — saves as you type. Change an entry's date or time by clicking it.
 - **Lock** — locks after inactivity (you choose how long), when Windows locks or sleeps, and optionally when minimised. Ctrl+L locks now.
-- **Backups** — Settings → Save a backup makes one encrypted `.daybook` file. Import merges a backup into your journal (newer versions win). On a new computer, choose "Restore from a backup instead" at setup.
+- **Automatic backups** — to Google Drive (a "Daybook backups" folder in your Drive) or to any folder or USB drive. Daily, weekly or each time you close Daybook, only when something changed, keeping the newest 5, 10 or 30. They run even while the journal is locked, because backups are the already-encrypted files.
+- **Backup files** — Settings → Save a backup file makes one encrypted `.daybook` file. Import merges a backup into your journal (newer versions win). On a new computer, choose "Restore from a backup instead" at setup and pick Google Drive or a file.
 - **Readable export** — one web page with every entry and photo, for printing or keeping. It is not encrypted.
 - **Spell check** with right-click suggestions, light/dark themes, adjustable text size, writing streak and word counts.
 
@@ -53,6 +54,10 @@ npm run dist         # build the Windows installer into dist/
 ```
 
 Building the Windows installer on Linux/macOS needs Wine (64- and 32-bit).
+
+## Google Drive setup (for builds)
+
+Google Drive backups need an OAuth client from Google Cloud (type: Desktop app, scope `drive.file`, publishing status: In production). Add its values as repository secrets `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; the release workflow writes them into `src/google-config.json` (not committed). For local runs, set `DAYBOOK_GOOGLE_CLIENT_ID` and `DAYBOOK_GOOGLE_CLIENT_SECRET`. Without them, Daybook still works and offers folder backups only.
 
 ## Releasing an update
 

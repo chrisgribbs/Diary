@@ -209,10 +209,15 @@ class Vault {
 
   // ---------- backup ----------
   /** Encrypted backup: one file holding the wrapped key and all encrypted entries. */
+  /** Works while locked too: it copies the already-encrypted files. */
   exportBackup(file) {
-    this._requireKey();
+    if (!this.exists()) throw new Error('No journal found');
     const entries = {};
-    for (const id of this.index.keys()) entries[id] = fs.readFileSync(this._entryFile(id)).toString('base64');
+    const names = fs.existsSync(this.entriesDir) ? fs.readdirSync(this.entriesDir) : [];
+    for (const f of names) {
+      const id = f.endsWith('.enc') ? f.slice(0, -4) : '';
+      if (ID_RE.test(id)) entries[id] = fs.readFileSync(path.join(this.entriesDir, f)).toString('base64');
+    }
     const data = {
       app: 'Daybook', format: 1, exported: new Date().toISOString(),
       vault: JSON.parse(fs.readFileSync(this.vaultFile, 'utf8')),
