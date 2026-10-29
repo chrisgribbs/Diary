@@ -107,7 +107,7 @@ function makeDrive(g, dir) {
   vault.lock(); // backups must work while locked
 
   let clock = new Date('2026-10-30T08:00:00');
-  const settings = { autoBackup: true, backupTarget: 'folder', backupDir: path.join(tmp, 'usb', 'Daybook backups'), backupEvery: 'daily', backupKeep: 2 };
+  const settings = { backupToFolder: true, backupToGoogle: false, backupDir: path.join(tmp, 'usb', 'Daybook backups'), backupEvery: 'daily', backupKeep: 2 };
   const g = await fakeGoogle();
   const drive = makeDrive(g, dataDir);
   const results = [];
@@ -158,20 +158,22 @@ function makeDrive(g, dir) {
   settings.backupEvery = 'close';
   assert.equal(bm.isDue('timer'), false);
   assert.equal(bm.isDue('close'), true);
-  settings.autoBackup = false;
+  settings.backupToFolder = false;
   assert.equal(bm.isDue('close'), false);
-  settings.autoBackup = true; settings.backupEvery = 'daily';
+  r = await bm.run('manual');
+  assert.equal(r.ok, false); assert.equal(r.code, 'setup', 'nothing ticked');
+  settings.backupToFolder = true; settings.backupEvery = 'daily';
 
   // ---------- Google Drive ----------
-  settings.backupTarget = 'google';
-  assert.equal(bm.blocker(), 'Connect Google Drive to start backing up');
+  settings.backupToFolder = false; settings.backupToGoogle = true;
+  assert.equal(bm.blocker('google'), 'Connect Google Drive to start backing up');
   r = await bm.run('manual');
   assert.equal(r.ok, false); assert.equal(r.code, 'setup');
 
   const st = await drive.connect();
   assert.deepEqual(st, { available: true, connected: true, email: 'chris@example.com' });
   assert(!fs.readFileSync(path.join(dataDir, 'google.json'), 'utf8').includes('rt-good'), 'refresh token not stored in plain text');
-  assert.equal(bm.isDue('connected'), true, 'switching target makes a backup due');
+  assert.equal(bm.isDue('connected'), true, 'connecting makes a backup due');
 
   for (const t of ['2026-11-10T07:00:00', '2026-11-11T07:00:00', '2026-11-12T07:00:00']) {
     clock = new Date(t);
@@ -188,6 +190,43 @@ function makeDrive(g, dir) {
   assert.equal(listed[0].name, 'Daybook backup 2026-11-12 0700.daybook');
   assert(!fs.readdirSync(tmp).some(f => /^daybook-.*\.daybook$/.test(f)), 'temp upload file cleaned up');
 
+  // ---------- both at once ----------
+  settings.backupToFolder = true;
+  clock = new Date('2026-11-12T19:00:00');
+  vault.unlock('river-stone'); vault.save({ date: '2026-11-12', title: 'both', html: '', text: '' }); vault.lock();
+  assert.deepEqual(bm.dueDests('timer'), ['folder'], 'google already done today; folder last ran days ago');
+  clock = new Date('2026-11-13T07:00:00');
+  assert.deepEqual(bm.dueDests('timer'), ['google', 'folder']);
+  r = await bm.maybeRun('timer');
+  assert(r.ok, JSON.stringify(r));
+  assert.equal(r.where, 'Google Drive and ' + settings.backupDir);
+  assert(fs.existsSync(path.join(settings.backupDir, 'Daybook backup 2026-11-13 0700.daybook')));
+  assert(!fs.readdirSync(settings.backupDir).some(f => f.endsWith('.part')));
+  assert.equal((await drive.list())[0].name, 'Daybook backup 2026-11-13 0700.daybook');
+
+  // one destination failing doesn't stop the other
+  fs.rmSync(path.join(tmp, 'usb'), { recursive: true });
+  clock = new Date('2026-11-14T07:00:00');
+  vault.unlock('river-stone'); vault.save({ date: '2026-11-14', title: 'usb out', html: '', text: '' }); vault.lock();
+  r = await bm.maybeRun('timer');
+  assert.equal(r.ok, false);
+  assert.equal(r.where, 'Google Drive');
+  assert.match(r.error, /^This computer: Couldn't find the backup folder/);
+  assert.equal(bm.destStatus('google').lastAt, clock.toISOString());
+  assert(bm.destStatus('folder').lastError);
+  assert.deepEqual(bm.dueDests('timer'), [], 'google up to date, folder waiting after error');
+  fs.mkdirSync(path.join(tmp, 'usb'));
+  clock = new Date('2026-11-14T07:45:00');
+  assert.deepEqual(bm.dueDests('timer'), ['folder'], 'folder retried later on its own');
+  assert((await bm.maybeRun('timer')).ok);
+  settings.backupToFolder = false;
+
+  // changing the folder starts its history fresh
+  const old = settings.backupDir;
+  settings.backupDir = path.join(tmp, 'usb', 'elsewhere');
+  assert.deepEqual(bm.destStatus('folder'), {});
+  settings.backupDir = old;
+
   // new computer: fresh drive object finds the existing folder, restore works
   const pc2 = path.join(tmp, 'pc2'); fs.mkdirSync(pc2);
   const drive2 = makeDrive(g, pc2);
@@ -197,7 +236,7 @@ function makeDrive(g, dir) {
   const dl = path.join(pc2, 'dl.daybook');
   await drive2.download(got[0].id, dl);
   const v2 = new Vault(path.join(pc2, 'journal'));
-  assert.equal(v2.restoreFresh(dl, 'river-stone'), 9);
+  assert.equal(v2.restoreFresh(dl, 'river-stone'), 11);
   assert(v2.list().some(m => m.title === 'One edited'));
 
   // expired access token is refreshed transparently
@@ -207,8 +246,8 @@ function makeDrive(g, dir) {
 
   // revoked access -> reauth error surfaced
   g.tokens.refresh = 'rt-new'; g.tokens.valid.clear(); drive.access = null;
-  clock = new Date('2026-11-13T07:00:00');
-  vault.unlock('river-stone'); vault.save({ date: '2026-11-13', title: 'x', html: '', text: '' }); vault.lock();
+  clock = new Date('2026-11-15T07:00:00');
+  vault.unlock('river-stone'); vault.save({ date: '2026-11-15', title: 'x', html: '', text: '' }); vault.lock();
   r = await bm.maybeRun('timer');
   assert.equal(r.ok, false); assert.equal(r.code, 'reauth');
   assert.match(r.error, /Connect Google Drive again/);
@@ -223,7 +262,7 @@ function makeDrive(g, dir) {
 
   // disconnect forgets the sign-in
   assert.deepEqual(await drive.disconnect(), { available: true, connected: false, email: '' });
-  assert.equal(bm.blocker(), 'Connect Google Drive to start backing up');
+  assert.equal(bm.blocker('google'), 'Connect Google Drive to start backing up');
 
   // not configured
   const none = new GoogleDrive({ config: null, storeFile: path.join(tmp, 'n.json') });
@@ -231,8 +270,8 @@ function makeDrive(g, dir) {
   await assert.rejects(none.connect(), /not set up/);
 
   // folder suggestions on Windows
-  const sugg = suggestFolders({ platform: 'win32', env: { USERPROFILE: 'C:\\Users\\chris', OneDrive: 'C:\\Users\\chris\\OneDrive' }, exists: p => ['G:\\My Drive', 'C:\\Users\\chris\\OneDrive'].includes(p) });
-  assert.deepEqual(sugg.map(s => s.label), ['Google Drive', 'OneDrive']);
+  const sugg = suggestFolders({ env: { USERPROFILE: '/home/chris', OneDrive: '/home/chris/OneDrive' }, exists: p => ['/home/chris/OneDrive', '/home/chris/Dropbox'].includes(p) });
+  assert.deepEqual(sugg.map(s => s.label), ['OneDrive', 'Dropbox']);
 
   g.server.close();
   fs.rmSync(tmp, { recursive: true, force: true });

@@ -18,11 +18,10 @@ let quitting = false;
 
 const DEFAULT_SETTINGS = {
   autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true,
-  autoBackup: false, backupTarget: 'google', backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
+  backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
 };
 const CHOICES = {
   theme: ['system', 'light', 'dark'],
-  backupTarget: ['google', 'folder'],
   backupEvery: ['daily', 'weekly', 'close'],
   backupKeep: [5, 10, 30, 0],
 };
@@ -66,14 +65,15 @@ const backups = new BackupManager({
   vault, dataDir: DATA_DIR, drive, getSettings: readSettings, tmpDir: app.getPath('temp'),
   onResult: r => { if (win && !win.isDestroyed()) win.webContents.send('backup:result', publicResult(r)); },
 });
-const publicResult = r => ({ ok: r.ok, reason: r.reason, error: r.error || '', code: r.code || '', count: r.count, where: r.where });
+const publicResult = r => ({ ok: r.ok, reason: r.reason, error: r.error || '', code: r.code || '', count: r.count, where: r.where || '' });
 
 function backupInfo() {
   const s = readSettings();
+  const pick = st => ({ lastAt: st.lastAt || '', lastCount: st.lastCount || 0, lastWhere: st.lastWhere || '', lastError: st.lastError || '', lastErrorAt: st.lastErrorAt || '', lastErrorCode: st.lastErrorCode || '' });
   return {
-    settings: { autoBackup: s.autoBackup, backupTarget: s.backupTarget, backupDir: s.backupDir, backupEvery: s.backupEvery, backupKeep: s.backupKeep, backupNudgeDismissed: s.backupNudgeDismissed },
-    status: (({ lastAt, lastCount, lastWhere, lastTarget, lastError, lastErrorAt, lastErrorCode, lastErrorTarget }) => ({ lastAt, lastCount, lastWhere, lastTarget, lastError, lastErrorAt, lastErrorCode, lastErrorTarget }))(backups.status()),
-    blocker: backups.blocker(s),
+    settings: { backupToGoogle: s.backupToGoogle, backupToFolder: s.backupToFolder, backupDir: s.backupDir, backupEvery: s.backupEvery, backupKeep: s.backupKeep, backupNudgeDismissed: s.backupNudgeDismissed },
+    status: { google: pick(backups.destStatus('google', s)), folder: pick(backups.destStatus('folder', s)) },
+    blockers: { google: backups.blocker('google', s), folder: backups.blocker('folder', s) },
     google: drive.status(),
     suggestions: suggestFolders(),
     running: !!backups.running,
@@ -258,13 +258,14 @@ handle('backup:chooseFolder', async suggested => {
     dir = r.filePaths[0];
   }
   if (path.resolve(dir).startsWith(path.resolve(DATA_DIR))) throw new Error("Choose a folder outside Daybook's own journal folder");
-  writeSettings({ backupDir: dir, backupTarget: 'folder' }, { internal: true });
+  writeSettings({ backupDir: dir, backupToFolder: true }, { internal: true });
+  backups.maybeRun('connected').catch(() => {});
   return backupInfo();
 });
 handle('backup:showFolder', () => { const d = readSettings().backupDir; if (d) shell.openPath(d); return true; });
 handle('google:connect', async () => {
   await drive.connect();
-  writeSettings({ backupTarget: 'google', autoBackup: true });
+  writeSettings({ backupToGoogle: true });
   if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
   backups.maybeRun('connected').catch(() => {});
   return backupInfo();

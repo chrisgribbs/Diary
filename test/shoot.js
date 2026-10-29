@@ -123,18 +123,13 @@ app.whenReady().then(async () => {
   const sf = path.join(process.env.DAYBOOK_DATA_DIR, 'settings.json');
   let cur = {}; try { cur = JSON.parse(fs.readFileSync(sf, 'utf8')); } catch {}
   fs.writeFileSync(sf, JSON.stringify({ ...cur, backupDir: bdir }));
-  await js(`await window.daybook.setSettings({ autoBackup: true, backupTarget: 'folder' }); await refreshBackupInfo();`);
+  await js(`await window.daybook.setSettings({ backupToFolder: true }); await refreshBackupInfo();`);
   await wait(300);
   await js(`document.querySelector('.backup-status button').click();`);
   await wait(1500);
   await shot('7b-backed-up-folder');
   console.log('folder backups:', fs.readdirSync(bdir));
   fs.rmSync(bdir, { recursive: true, force: true });
-  await js(`await window.daybook.setSettings({ backupTarget: 'google' }); await refreshBackupInfo();`);
-  await wait(400);
-  await js(`document.getElementById('set-backups').scrollIntoView();`);
-  await wait(200);
-  await shot('7c-google');
   await js(`document.querySelector('#dlg').close();`);
 
   // Lock wipes the page

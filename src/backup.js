@@ -1,8 +1,9 @@
 'use strict';
 /**
- * Automatic backups: decides when one is due and writes it to Google Drive or
- * a folder (USB drive, OneDrive, network share...). Backups are the same
- * encrypted .daybook files as "Save a backup", so they are safe anywhere.
+ * Automatic backups to Google Drive, a folder on this computer (or USB/network
+ * drive), or both. Each destination keeps its own schedule state, so one being
+ * offline never holds up the other. Backups are the same encrypted .daybook
+ * files as "Save a backup file", so they are safe anywhere.
  */
 const fs = require('fs');
 const os = require('os');
@@ -14,6 +15,7 @@ const pad = n => String(n).padStart(2, '0');
 const localDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const backupName = d => `Daybook backup ${localDay(d)} ${pad(d.getHours())}${pad(d.getMinutes())}.daybook`;
 const RETRY_AFTER_ERROR_MS = 30 * 60 * 1000;
+const DESTS = ['google', 'folder'];
 
 class BackupManager {
   constructor({ vault, dataDir, drive, getSettings, onResult = () => {}, now = () => new Date(), tmpDir = os.tmpdir() }) {
@@ -28,14 +30,25 @@ class BackupManager {
     this.running = null;
   }
 
+  /** { google: {...}, folder: {...} } — per-destination history. */
   status() {
-    try { return JSON.parse(fs.readFileSync(this.statusFile, 'utf8')); } catch { return {}; }
+    let s = {};
+    try { s = JSON.parse(fs.readFileSync(this.statusFile, 'utf8')); } catch {}
+    return { google: s.google || {}, folder: s.folder || {} };
   }
-  _setStatus(patch) {
-    const s = { ...this.status(), ...patch };
+  _setStatus(dest, patch) {
+    const all = this.status();
+    all[dest] = { ...all[dest], ...patch };
     fs.mkdirSync(this.dataDir, { recursive: true });
-    fs.writeFileSync(this.statusFile, JSON.stringify(s, null, 2));
-    return s;
+    fs.writeFileSync(this.statusFile, JSON.stringify(all, null, 2));
+    return all;
+  }
+
+  /** History for a destination, ignoring folder history from a different folder. */
+  destStatus(dest, settings = this.getSettings()) {
+    const st = this.status()[dest];
+    if (dest === 'folder' && st.dir !== settings.backupDir) return {};
+    return st;
   }
 
   /** Fingerprint of the journal files, so unchanged journals aren't backed up again. */
@@ -49,24 +62,27 @@ class BackupManager {
     return h.update(String(names.length)).digest('hex');
   }
 
-  /** Why a backup can't run with the current settings, or '' if it can. */
-  blocker(settings = this.getSettings()) {
+  enabled(settings = this.getSettings()) {
+    return DESTS.filter(d => (d === 'google' ? settings.backupToGoogle : settings.backupToFolder));
+  }
+
+  /** Why a destination can't be backed up to right now, or '' if it can. */
+  blocker(dest, settings = this.getSettings()) {
     if (!this.vault.exists()) return 'No journal yet';
-    if (settings.backupTarget === 'google') {
+    if (dest === 'google') {
       if (!this.drive.available()) return 'Google Drive is not available in this version';
       if (!this.drive.status().connected) return 'Connect Google Drive to start backing up';
     } else if (!settings.backupDir) return 'Choose a folder to back up to';
     return '';
   }
 
-  isDue(reason, settings = this.getSettings()) {
-    if (!settings.autoBackup || this.blocker(settings)) return false;
-    const st = this.status();
-    if (st.lastSig && st.lastSig === this.signature() && st.lastTarget === targetKey(settings)) return false; // nothing new
+  isDueFor(dest, reason, settings = this.getSettings(), sig = this.signature()) {
+    if (!this.enabled(settings).includes(dest) || this.blocker(dest, settings)) return false;
+    const st = this.destStatus(dest, settings);
+    if (st.lastSig && st.lastSig === sig) return false; // nothing new since the last good backup
     const now = this.now();
     // After a failure, wait a while before trying the same thing again.
-    const sameProblem = st.lastError && st.lastErrorAt && st.lastErrorCode !== 'setup' && st.lastErrorTarget === targetKey(settings);
-    if (sameProblem && now - new Date(st.lastErrorAt) < RETRY_AFTER_ERROR_MS && !['close', 'connected'].includes(reason)) return false;
+    if (st.lastError && st.lastErrorAt && now - new Date(st.lastErrorAt) < RETRY_AFTER_ERROR_MS && !['close', 'connected'].includes(reason)) return false;
     if (!st.lastAt) return true;
     const last = new Date(st.lastAt);
     switch (settings.backupEvery) {
@@ -76,68 +92,96 @@ class BackupManager {
     }
   }
 
-  async maybeRun(reason) {
-    if (this.running || !this.isDue(reason)) return null;
-    return this.run(reason);
+  dueDests(reason, settings = this.getSettings()) {
+    const sig = this.signature();
+    return this.enabled(settings).filter(d => this.isDueFor(d, reason, settings, sig));
   }
 
-  /** Back up now, whatever the schedule says. Concurrent calls share one run. */
-  run(reason = 'manual') {
+  isDue(reason) { return this.dueDests(reason).length > 0; }
+
+  async maybeRun(reason) {
+    if (this.running) return null;
+    const dests = this.dueDests(reason);
+    return dests.length ? this.run(reason, dests) : null;
+  }
+
+  /** Back up now to the given destinations (default: every one switched on). */
+  run(reason = 'manual', dests) {
     if (this.running) return this.running;
-    this.running = this._run(reason).finally(() => { this.running = null; });
+    this.running = this._run(reason, dests).finally(() => { this.running = null; });
     return this.running;
   }
 
-  async _run(reason) {
+  async _run(reason, dests) {
     const settings = this.getSettings();
-    const target = targetKey(settings);
-    const why = this.blocker(settings);
-    if (why) return this._fail(why, reason, target, 'setup');
+    dests = dests || this.enabled(settings);
+    if (!dests.length) {
+      const r = { ok: false, reason, error: 'Choose Google Drive or a folder to back up to', code: 'setup', results: [] };
+      this.onResult(r); return r;
+    }
     const when = this.now();
     const name = backupName(when);
     const sig = this.signature();
+    const results = [];
+    let tmp = null, count = 0;
     try {
-      let count, where, pruned = 0;
-      if (settings.backupTarget === 'google') {
-        const tmp = path.join(this.tmpDir, `daybook-${crypto.randomBytes(6).toString('hex')}.daybook`);
+      for (const dest of dests) {
+        const why = this.blocker(dest, settings);
+        if (why) {
+          this._setStatus(dest, { lastError: why, lastErrorAt: when.toISOString(), lastErrorCode: 'setup', dir: dest === 'folder' ? settings.backupDir : undefined });
+          results.push({ dest, ok: false, error: why, code: 'setup' });
+          continue;
+        }
         try {
-          count = this.vault.exportBackup(tmp);
-          await this.drive.upload(tmp, name);
-        } finally { try { fs.unlinkSync(tmp); } catch {} }
-        try { pruned = await this.drive.prune(settings.backupKeep); } catch { /* keep going: the backup itself worked */ }
-        where = 'Google Drive';
-      } else {
-        const dir = settings.backupDir;
-        ensureFolder(dir);
-        count = this.vault.exportBackup(path.join(dir, name));
-        pruned = pruneFolder(dir, settings.backupKeep);
-        where = dir;
+          if (!tmp) {
+            tmp = path.join(this.tmpDir, `daybook-${crypto.randomBytes(6).toString('hex')}.daybook`);
+            count = this.vault.exportBackup(tmp);
+          }
+          let where;
+          if (dest === 'google') {
+            await this.drive.upload(tmp, name);
+            try { await this.drive.prune(settings.backupKeep); } catch { /* the backup itself worked */ }
+            where = 'Google Drive';
+          } else {
+            const dir = settings.backupDir;
+            ensureFolder(dir);
+            const part = path.join(dir, name + '.part');
+            fs.copyFileSync(tmp, part);
+            fs.renameSync(part, path.join(dir, name));
+            pruneFolder(dir, settings.backupKeep);
+            where = dir;
+          }
+          this._setStatus(dest, {
+            lastAt: when.toISOString(), lastCount: count, lastName: name, lastWhere: where, lastSig: sig,
+            lastError: '', lastErrorAt: '', lastErrorCode: '', dir: dest === 'folder' ? settings.backupDir : undefined,
+          });
+          results.push({ dest, ok: true, count, where });
+        } catch (e) {
+          const msg = friendly(e, dest, settings);
+          this._setStatus(dest, { lastError: msg, lastErrorAt: when.toISOString(), lastErrorCode: e.code === 'reauth' ? 'reauth' : (e.code || ''), dir: dest === 'folder' ? settings.backupDir : undefined });
+          results.push({ dest, ok: false, error: msg, code: e.code || '' });
+        }
       }
-      const s = this._setStatus({
-        lastAt: when.toISOString(), lastCount: count, lastName: name, lastWhere: where, lastTarget: target,
-        lastSig: sig, lastError: '', lastErrorAt: '', lastErrorCode: '',
-      });
-      const result = { ok: true, reason, count, where, pruned, status: s };
-      this.onResult(result);
-      return result;
-    } catch (e) {
-      return this._fail(friendly(e, settings), reason, target, e.code || '');
-    }
-  }
+    } finally { if (tmp) try { fs.unlinkSync(tmp); } catch {} }
 
-  _fail(message, reason, target, code) {
-    const s = this._setStatus({ lastError: message, lastErrorAt: this.now().toISOString(), lastErrorCode: code, lastErrorTarget: target });
-    const result = { ok: false, reason, error: message, code, status: s };
-    this.onResult(result);
-    return result;
+    const failed = results.filter(r => !r.ok);
+    const done = results.filter(r => r.ok);
+    const r = {
+      ok: failed.length === 0, reason, results, count,
+      where: done.map(x => x.where).join(' and '),
+      error: failed.map(f => (dests.length > 1 ? `${label(f.dest)}: ` : '') + f.error).join(' '),
+      code: (failed.find(f => f.code === 'reauth') || failed[0] || {}).code || '',
+    };
+    this.onResult(r);
+    return r;
   }
 }
 
-const targetKey = s => (s.backupTarget === 'google' ? 'google' : 'folder:' + (s.backupDir || ''));
+const label = d => (d === 'google' ? 'Google Drive' : 'This computer');
 
-function friendly(e, settings) {
+function friendly(e, dest, settings) {
   const m = e && e.message ? e.message : String(e);
-  if (settings.backupTarget !== 'google') {
+  if (dest === 'folder') {
     if (e.code === 'ENOENT' || /no such file|cannot find/i.test(m)) return `Couldn't find the backup folder ${settings.backupDir}. If it's on a USB or network drive, check it's connected.`;
     if (e.code === 'ENOSPC') return 'The backup drive is full.';
     if (e.code === 'EACCES' || e.code === 'EPERM') return `Daybook isn't allowed to write to ${settings.backupDir}. Choose another folder.`;
@@ -164,16 +208,11 @@ function pruneFolder(dir, keep) {
   return n;
 }
 
-/** Folders worth suggesting on Windows: Google Drive for desktop, OneDrive, Dropbox. */
-function suggestFolders({ env = process.env, exists = fs.existsSync, platform = process.platform } = {}) {
+/** Cloud-synced folders worth suggesting on Windows: OneDrive, Dropbox. */
+function suggestFolders({ env = process.env, exists = fs.existsSync } = {}) {
   const out = [];
   const add = (label, base) => { if (base && exists(base) && !out.some(o => o.base === base)) out.push({ label, base, path: path.join(base, 'Daybook backups') }); };
   const home = env.USERPROFILE || env.HOME || '';
-  if (platform === 'win32') {
-    for (const L of 'GHIJKLMNOPDEFQRSTUVWXYZ') add('Google Drive', `${L}:\\My Drive`);
-  }
-  add('Google Drive', home && path.join(home, 'Google Drive'));
-  add('Google Drive', home && path.join(home, 'My Drive'));
   add('OneDrive', env.OneDrive || env.OneDriveConsumer || env.OneDriveCommercial);
   add('Dropbox', home && path.join(home, 'Dropbox'));
   return out;

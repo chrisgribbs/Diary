@@ -295,6 +295,19 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .dlg .row-ctl { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .dlg .note { font-size: 13.5px; margin: 8px 0 4px; }
 .dlg .note .btn-link { color: var(--ribbon); font-size: inherit; }
+.dest-intro { margin: 4px 0 8px !important; color: var(--ink) !important; font-size: 14.5px; }
+.dest { border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+.dest-head { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.dest-head input { width: 18px; height: 18px; accent-color: var(--ribbon); }
+.dest-head input:disabled + span { opacity: .5; }
+.dest-body { margin: 6px 0 0 28px; }
+.dest-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.dest-row small { color: var(--pencil); font-size: 13px; overflow-wrap: anywhere; }
+.dest-row .btn-link { color: var(--ribbon); }
+.dest-row button { white-space: nowrap; flex-shrink: 0; }
+.dest-status { font-size: 13px; margin: 8px 0 0 !important; }
+.dest-status.ok { color: var(--ink) !important; }
+.dest-status.bad { color: var(--danger) !important; }
 .backup-status { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; padding: 12px 14px; border-radius: 8px; background: var(--paper-edge); font-size: 13.5px; }
 .backup-status.bad { color: var(--danger); }
 .backup-status button { white-space: nowrap; flex-shrink: 0; }
