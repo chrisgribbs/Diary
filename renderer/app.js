@@ -260,8 +260,13 @@ function renderList() {
   if (!items.length) {
     const box = el('div', { class: 'list-empty' });
     if (state.selectedDay) {
-      box.append(`Nothing written on ${fmt(state.selectedDay, { day: 'numeric', month: 'long' })}. `);
-      box.append(el('button', { class: 'btn-link', style: 'color:var(--foil)', onclick: () => newEntry(state.selectedDay) }, 'Write an entry for this day'));
+      const when = fmt(state.selectedDay, { day: 'numeric', month: 'long' });
+      const drafting = state.current && !state.current.saved && state.current.date === state.selectedDay;
+      if (drafting) box.append(`Nothing written on ${when} yet. The page on the right is ready for you.`);
+      else {
+        box.append(`Nothing written on ${when}. `);
+        box.append(el('button', { class: 'btn-link', style: 'color:var(--foil)', onclick: () => newEntry(state.selectedDay).then(renderList) }, 'Write an entry for this day'));
+      }
     } else if (state.query || state.tag) box.textContent = 'No entries match. Try fewer words, or clear the filter.';
     else box.textContent = 'Your entries will appear here.';
     list.append(box);
@@ -390,6 +395,9 @@ async function pickDay(iso) {
   renderSidebar();
   const onDay = sorted(state.metas.filter(m => m.date === iso));
   if (onDay.length) await openEntry(onDay[0].id);
+  // Nothing written that day: open a blank page for it. It's only saved once you type.
+  else if (!(state.current && !state.current.saved && state.current.date === iso)) await newEntry(iso);
+  renderList();
 }
 
 $('#calPrev').onclick = () => { state.viewMonth.setMonth(state.viewMonth.getMonth() - 1); renderCalendar(); };
