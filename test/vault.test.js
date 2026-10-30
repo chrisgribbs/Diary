@@ -79,7 +79,13 @@ assert.throws(() => v.get('../../etc'), /Bad entry id/);
   const j = new Vault(dir); j.create('pass-word');
   assert.deepEqual(j.getMeta().categories, []);
   j.setCategories([{ id: 'c-work', name: '  Work ', color: '#2f7d7a' }, { id: 'bad id!', name: 'x' }, { id: 'c-home', name: 'Home', color: 'red' }]);
-  assert.deepEqual(j.getMeta().categories, [{ id: 'c-work', name: 'Work', color: '#2f7d7a' }, { id: 'c-home', name: 'Home', color: '#6a7080' }], 'cleaned');
+  assert.deepEqual(j.getMeta().categories, [{ id: 'c-work', name: 'Work', color: '#2f7d7a', parent: '' }, { id: 'c-home', name: 'Home', color: '#6a7080', parent: '' }], 'cleaned');
+  // subcategories: two levels only, unknown parents dropped
+  const tree = Vault.cleanCategories([
+    { id: 'a', name: 'Work' }, { id: 'b', name: 'Projects', parent: 'a' }, { id: 'c', name: 'Deep', parent: 'b' },
+    { id: 'd', name: 'Lost', parent: 'nope' }, { id: 'e', name: 'Self', parent: 'e' },
+  ]);
+  assert.deepEqual(tree.map(c => [c.id, c.parent]), [['a', ''], ['b', 'a'], ['c', ''], ['d', ''], ['e', '']]);
   assert(!fs.readFileSync(path.join(dir, 'meta.enc')).includes('Work'), 'category names encrypted');
   const a = j.save({ date: '2026-10-01', title: 'A', category: 'c-work', html: '<p>x</p>', text: 'x' });
   const b = j.save({ date: '2026-10-02', title: 'B', category: 'c-work', html: `<p>see <a href="wellwrite:entry/${a.id}">A</a> and <a href="wellwrite:entry/${a.id}">A again</a></p>`, text: 'see A' });

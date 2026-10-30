@@ -13,7 +13,8 @@ Prefer no installer? **WellWrite-Portable.exe** runs on its own (your journal is
 - **Calendar** — gold dots mark days you wrote. Click a day to see its entries, or write one for that date.
 - **Search and tags** — search titles, tags and full text as you type. Click a tag to filter. Type `#tag` in search to match tags.
 - **On this day** — shows what you wrote on today's date in earlier years.
-- **Categories** — give each entry one category (like a section of a notebook), each with its own colour. Filter the sidebar by category, and edit or delete categories in Settings.
+- **Categories and subcategories** — the sidebar's Categories tab shows them as a tree (e.g. Work → Projects, Meetings) with entry counts; click one to see its entries, including those in its subcategories. Give an entry a category from the button under its title, or type "Work / Meetings" to create a subcategory on the spot. Rename, recolour, move or delete them under Edit.
+- **Tags tab** — every tag with its count, and a box to search them; click a tag to see its entries. The main search also matches #tags.
 - **Links between entries** — type `[[` (or use the toolbar button) to link to another entry, or create a new one on the spot. Links show the other entry's current title; click one to open it, then "Back" to return. Under every entry you'll see the entries that link to it, the ones it links to, and ones that share its tags.
 - **Tags** — click a tag on an entry to see every entry with that tag.
 - **Rich text** — bold, italic, underline, strikethrough, headings, quotes, lists, highlight, links, section breaks.

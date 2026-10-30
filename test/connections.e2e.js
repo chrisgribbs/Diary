@@ -17,7 +17,7 @@ app.whenReady().then(async () => {
   win.webContents.on('console-message', e => { const l = e.level ?? e.params?.level; if (l === 'error' || l === 3) errors.push(e.message ?? e.params?.message); });
   await new Promise(r => win.webContents.once('did-finish-load', r));
   await wait(400);
-  const js = c => win.webContents.executeJavaScript(`(async () => { ${c} })()`);
+  const js = c => win.webContents.executeJavaScript(`(async () => { ${c} })()`).catch(e => { throw new Error(e.message + "\n  in: " + c.slice(0, 160)); });
   const shot = async n => { await wait(350); fs.writeFileSync(path.join(OUT, n + '.png'), (await win.webContents.capturePage()).toPNG()); };
   const key = async k => { win.webContents.sendInputEvent({ type: 'keyDown', keyCode: k }); win.webContents.sendInputEvent({ type: 'keyUp', keyCode: k }); await wait(120); };
 
@@ -114,10 +114,11 @@ app.whenReady().then(async () => {
   assert(await js(`return [...document.querySelectorAll('#body a.xref')].some(a => a.textContent === 'Seed order (Diggers, spring)')`), 'chip follows renames');
 
   // --- sidebar category filter
-  await js(`[...document.querySelectorAll('.cat-chip')].find(b => b.textContent === 'Family').click();`); await wait(300);
+  await js(`document.querySelector('.sidetabs [data-view=categories]').click();`); await wait(200);
+  await js(`[...document.querySelectorAll('#viewCategories .side-row')].find(b => b.querySelector('.side-name').textContent === 'Family').click();`); await wait(300);
   assert.deepEqual(await js(`return [...document.querySelectorAll('#list .item')].map(i => i.dataset.id)`), [sam]);
   await shot('c5-category-filter');
-  await js(`document.querySelector('.cat-chip.on').click();`); await wait(200);
+  await js(`document.querySelector('#viewCategories .side-row.on').click();`); await wait(200);
 
   // --- survives lock/unlock (sanitiser keeps entry links)
   await js(`document.querySelector('#lockBtn').click();`); await wait(600);
@@ -133,11 +134,58 @@ app.whenReady().then(async () => {
   // --- categories dialog: delete Personal (two-step), entries keep existing
   await js(`manageCategories();`); await wait(300);
   await shot('c6-categories-dialog');
-  await js(`[...document.querySelectorAll('.cat-row')].find(r => r.querySelector('input').value === 'Personal').querySelector('.danger').click();`); await wait(100);
-  await js(`[...document.querySelectorAll('.cat-row')].find(r => r.querySelector('input').value === 'Personal').querySelector('.danger').click();`); await wait(1200);
+  await js(`[...document.querySelectorAll('.cat-row')].find(r => r.querySelector('input') && r.querySelector('input').value === 'Personal').querySelector('.danger').click();`); await wait(100);
+  await js(`[...document.querySelectorAll('.cat-row')].find(r => r.querySelector('input') && r.querySelector('input').value === 'Personal').querySelector('.danger').click();`); await wait(1200);
   assert.deepEqual((await js(`return await window.wellwrite.getCategories()`)).map(c => c.name), ['Family']);
   m = await js(`return (await window.wellwrite.list()).find(m => m.id === '${garden}')`);
   assert.equal(m.category, ''); assert.equal(m.title, 'Planning the garden');
+  await js(`document.querySelector('#dlg').close();`);
+
+  // --- subcategories: type "Family / Moving" in the sidebar tree, file Sam's entry there
+  await js(`const i = document.querySelector('#viewCategories input'); i.value = 'Family / Moving'; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));`);
+  await wait(1000);
+  let tree = await js(`return await window.wellwrite.getCategories()`);
+  const family = tree.find(c => c.name === 'Family'), moving = tree.find(c => c.name === 'Moving');
+  assert(moving && moving.parent === family.id, 'subcategory created under Family');
+  assert.equal(moving.color, family.color, 'takes the parent colour');
+  await js(`document.querySelector('.item[data-id="${sam}"]').click();`); await wait(400);
+  await js(`document.querySelector('#catPill').click();`); await wait(250);
+  await shot('c7-category-menu-tree');
+  await js(`[...document.querySelectorAll('#popover .menu-item.sub')].find(b => b.textContent === 'Moving').click();`); await wait(1200);
+  assert.equal(await js(`return document.querySelector('#catPill').textContent`), 'Family › Moving');
+  assert.equal((await js(`return (await window.wellwrite.list()).find(m => m.id === '${sam}')`)).category, moving.id);
+  // choosing Family shows entries in Moving too
+  await js(`[...document.querySelectorAll('#viewCategories .side-row')].find(b => b.querySelector('.side-name').textContent === 'Family').click();`); await wait(300);
+  assert.deepEqual(await js(`return [...document.querySelectorAll('#list .item')].map(i => i.dataset.id)`), [sam], 'parent includes subcategory entries');
+  assert.match(await js(`return [...document.querySelectorAll('#viewCategories .side-row')].map(r => r.innerText).join('|')`), /Family\s*1\|Moving\s*1/);
+  await shot('c8-categories-tab');
+  await js(`document.querySelector('#viewCategories .side-row.on').click();`); await wait(200);
+  // "Work / Meetings" from an entry's menu creates both levels at once
+  await js(`document.querySelector('.item[data-id="${compost}"]').click();`); await wait(400);
+  await js(`document.querySelector('#catPill').click();`); await wait(250);
+  await js(`const i = document.querySelector('#popover .pop-search'); i.value = 'Work / Meetings'; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));`); await wait(1200);
+  tree = await js(`return await window.wellwrite.getCategories()`);
+  const work = tree.find(c => c.name === 'Work'), meetings = tree.find(c => c.name === 'Meetings');
+  assert(work && !work.parent && meetings && meetings.parent === work.id);
+  assert.equal(await js(`return document.querySelector('#catPill').textContent`), 'Work › Meetings');
+
+  // --- tags tab: search for a tag, pick it
+  await js(`document.querySelector('.sidetabs [data-view=tags]').click();`); await wait(200);
+  assert.equal(await js(`return document.activeElement.id`), 'tagFind', 'tag search focused');
+  await js(`const i = document.querySelector('#tagFind'); i.value = 'gar'; i.dispatchEvent(new Event('input'));`); await wait(150);
+  assert.deepEqual(await js(`return [...document.querySelectorAll('#tagTree .side-name')].map(n => n.textContent)`), ['garden']);
+  await js(`document.querySelector('#tagFind').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));`); await wait(300);
+  const tagged = await js(`return [...document.querySelectorAll('#list .item')].map(i => i.dataset.id)`);
+  assert.deepEqual(tagged.sort(), [garden, seeds, compost].sort(), 'tag filter');
+  await shot('c9-tags-tab');
+  await js(`document.querySelector('#tagTree .side-row.on').click();`); await wait(200);
+
+  // --- dialog: deleting a subcategory moves its entries up to the parent
+  await js(`manageCategories();`); await wait(300);
+  await shot('c10-categories-dialog-tree');
+  await js(`[...document.querySelectorAll('.cat-row')].find(r => r.querySelector('input') && r.querySelector('input').value === 'Moving').querySelector('.danger').click();`); await wait(100);
+  await js(`[...document.querySelectorAll('.cat-row')].find(r => r.querySelector('input') && r.querySelector('input').value === 'Moving').querySelector('.danger').click();`); await wait(1200);
+  assert.equal((await js(`return (await window.wellwrite.list()).find(m => m.id === '${sam}')`)).category, family.id, 'moved up to Family');
   await js(`document.querySelector('#dlg').close();`);
 
   assert.deepEqual(errors, [], 'no console errors');

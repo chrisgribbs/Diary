@@ -181,11 +181,28 @@ class Vault {
     catch { return { categories: [] }; }
   }
 
+  /**
+   * Categories are a two-level tree: a category can have subcategories, but a
+   * subcategory can't have its own. `parent` is '' for top-level categories.
+   */
   static cleanCategories(list) {
     const seen = new Set();
-    return (Array.isArray(list) ? list : []).filter(c => c && CAT_ID_RE.test(c.id) && !seen.has(c.id) && seen.add(c.id))
-      .map(c => ({ id: c.id, name: String(c.name || '').trim().slice(0, 40) || 'Untitled', color: CATEGORY_COLORS.includes(c.color) ? c.color : CATEGORY_COLORS[7] }))
-      .slice(0, 60);
+    const out = (Array.isArray(list) ? list : []).filter(c => c && CAT_ID_RE.test(c.id) && !seen.has(c.id) && seen.add(c.id))
+      .map(c => ({
+        id: c.id,
+        name: String(c.name || '').trim().slice(0, 40) || 'Untitled',
+        color: CATEGORY_COLORS.includes(c.color) ? c.color : CATEGORY_COLORS[7],
+        parent: CAT_ID_RE.test(c.parent || '') && c.parent !== c.id ? c.parent : '',
+      }))
+      .slice(0, 200);
+    const byId = new Map(out.map(c => [c.id, c]));
+    for (const c of out) {
+      const p = byId.get(c.parent);
+      if (!p || p.parent) c.parent = ''; // unknown parent, or parent is itself a subcategory
+    }
+    // A category that has subcategories can't also be a subcategory.
+    for (const c of out) if (c.parent && out.some(x => x.parent === c.id)) c.parent = '';
+    return out;
   }
 
   setCategories(list) {

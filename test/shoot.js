@@ -42,6 +42,11 @@ app.whenReady().then(async () => {
   `);
   await wait(2500);
   await shot('2-first-run');
+  await js(`document.querySelector('.sidetabs [data-view=categories]').click();`);
+  await shot('2b-empty-categories');
+  await js(`document.querySelector('.sidetabs [data-view=tags]').click();`);
+  await shot('2c-empty-tags');
+  await js(`document.querySelector('.sidetabs [data-view=calendar]').click();`);
 
   // Seed some entries through the real API, with a generated photo.
   await js(`

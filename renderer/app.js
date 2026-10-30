@@ -53,7 +53,9 @@ const state = {
   query: '',
   tag: null,
   category: null,       // category filter (id, or '' for "no category")
-  categories: [],       // [{ id, name, color }]
+  categories: [],       // [{ id, name, color, parent }]
+  sideView: (() => { try { return localStorage.getItem('sideView') || 'calendar'; } catch { return 'calendar'; } })(),
+  openCats: new Set(),  // collapsed state of the category tree (ids that are folded)
   trail: [],            // entries visited by following links, for "Back"
   settings: { autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true },
   lastActivity: Date.now(),
@@ -270,10 +272,10 @@ const sorted = list => [...list].sort((a, b) => (b.date + b.time + b.created).lo
 function matches(m) {
   if (state.selectedDay && m.date !== state.selectedDay) return false;
   if (state.tag && !m.tags.includes(state.tag)) return false;
-  if (state.category != null && (catById(m.category) ? m.category : '') !== state.category) return false;
+  if (state.category != null && !inCategory(m, state.category)) return false;
   if (state.query) {
     const cat = catById(m.category);
-    const hay = (m.title + ' ' + m.tags.map(t => '#' + t).join(' ') + ' ' + (cat ? cat.name : '') + ' ' + m.text).toLowerCase();
+    const hay = (m.title + ' ' + m.tags.map(t => '#' + t).join(' ') + ' ' + (cat ? catPath(cat) : '') + ' ' + m.text).toLowerCase();
     return terms().every(t => hay.includes(t));
   }
   return true;
@@ -328,7 +330,7 @@ function renderList() {
     const title = el('div', { class: 'item-title' });
     title.innerHTML = highlight(m.title || dateTitle(m.date));
     const cat = catById(m.category);
-    if (cat) title.prepend(el('span', { class: 'dot', style: `background:${cat.color}`, title: cat.name }));
+    if (cat) title.prepend(el('span', { class: 'dot', style: `background:${cat.color}`, title: catPath(cat) }));
     const ex = el('div', { class: 'item-ex' }); ex.innerHTML = excerpt(m);
     const meta = el('div', { class: 'item-meta' });
     if (m.time) meta.append(el('span', {}, m.time));
@@ -345,22 +347,59 @@ function renderList() {
   }
 }
 
-function renderTags() {
+function tagCounts() {
   const counts = new Map();
   for (const m of state.metas) for (const t of m.tags) counts.set(t, (counts.get(t) || 0) + 1);
-  const top = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 14);
-  $('#tagbar').replaceChildren(...top.map(([t, n]) => el('button', {
-    class: state.tag === t ? 'on' : '', title: plainEntries(n),
-    onclick: () => { state.tag = state.tag === t ? null : t; renderSidebar(); },
-  }, '#' + t)));
+  return counts;
+}
+
+function renderTags() {
+  const counts = tagCounts();
   $('#tagList').replaceChildren(...[...counts.keys()].sort().map(t => el('option', { value: t })));
+  if (state.sideView !== 'tags') return;
+  const q = $('#tagFind').value.trim().toLowerCase().replace(/^#/, '');
+  const all = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const shown = all.filter(([t]) => !q || t.includes(q));
+  const box = $('#tagTree');
+  if (!all.length) {
+    box.replaceChildren(el('p', { class: 'side-empty' }, 'No tags yet. Add tags under an entry’s title, like #family or #ideas. They’ll be listed here so you can find every entry with that tag.'));
+    return;
+  }
+  box.replaceChildren(...shown.map(([t, n]) => el('button', {
+    class: 'side-row' + (state.tag === t ? ' on' : ''), 'aria-pressed': String(state.tag === t),
+    onclick: () => { state.tag = state.tag === t ? null : t; state.selectedDay = null; renderSidebar(); },
+  }, el('span', { class: 'hash' }, '#'), el('span', { class: 'side-name' }, t), el('small', {}, String(n)))));
+  if (!shown.length) box.append(el('p', { class: 'side-empty' }, `No tags match “${q}”.`));
+}
+$('#tagFind').addEventListener('input', renderTags);
+$('#tagFind').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.target.value = ''; renderTags(); }
+  if (e.key === 'Enter') { const first = $('#tagTree .side-row'); if (first) first.click(); }
+});
+
+function renderSideTabs() {
+  for (const b of document.querySelectorAll('.sidetabs [data-view]')) {
+    const on = b.dataset.view === state.sideView;
+    b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on));
+  }
+  $('#viewCalendar').hidden = state.sideView !== 'calendar';
+  $('#viewCategories').hidden = state.sideView !== 'categories';
+  $('#viewTags').hidden = state.sideView !== 'tags';
+}
+for (const b of document.querySelectorAll('.sidetabs [data-view]')) {
+  b.addEventListener('click', () => {
+    state.sideView = b.dataset.view;
+    try { localStorage.setItem('sideView', state.sideView); } catch {}
+    renderSidebar();
+    if (state.sideView === 'tags') $('#tagFind').focus();
+  });
 }
 
 function renderFilterNote() {
   const note = $('#filterNote');
   const parts = [];
   if (state.selectedDay) parts.push(fmt(state.selectedDay, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
-  if (state.category != null) parts.push(state.category ? (catById(state.category) || {}).name : 'no category');
+  if (state.category != null) parts.push(state.category ? catPath(catById(state.category)) : 'no category');
   if (state.tag) parts.push('#' + state.tag);
   if (state.query) parts.push(`“${state.query}”`);
   if (!parts.length) { note.hidden = true; return; }
@@ -457,7 +496,7 @@ $('#calPrev').onclick = () => { state.viewMonth.setMonth(state.viewMonth.getMont
 $('#calNext').onclick = () => { state.viewMonth.setMonth(state.viewMonth.getMonth() + 1); renderCalendar(); };
 $('#calTitle').onclick = () => { const d = new Date(); state.viewMonth = new Date(d.getFullYear(), d.getMonth(), 1); renderCalendar(); };
 
-function renderSidebar() { renderCalendar(); renderOnThisDay(); renderCategoryBar(); renderTags(); renderFilterNote(); renderList(); renderStats(); renderBackupCard(); }
+function renderSidebar() { renderSideTabs(); renderCalendar(); renderOnThisDay(); renderCategoryTree(); renderTags(); renderFilterNote(); renderList(); renderStats(); renderBackupCard(); }
 
 let searchTimer;
 $('#search').addEventListener('input', e => {
@@ -644,6 +683,16 @@ $('#deleteBtn').onclick = async () => {
 /* ---------- categories, entry links & connections ---------- */
 const CAT_COLORS = ['#a23b56', '#2f7d7a', '#b7862c', '#4f6aa8', '#6b7d3a', '#7a4f8f', '#b0563a', '#6a7080'];
 const catById = id => (id ? state.categories.find(c => c.id === id) : null) || null;
+const topCats = () => state.categories.filter(c => !c.parent);
+const subCats = id => state.categories.filter(c => c.parent === id);
+/** "Work › Projects" for a subcategory, "Work" for a category. */
+const catPath = cat => { if (!cat) return ''; const p = catById(cat.parent); return p ? `${p.name} › ${cat.name}` : cat.name; };
+/** Does entry m belong to category id (or one of its subcategories)? '' means "no category". */
+function inCategory(m, id) {
+  const own = catById(m.category);
+  if (id === '') return !own;
+  return !!own && (own.id === id || own.parent === id);
+}
 const metaById = id => state.metas.find(m => m.id === id);
 const entryLabel = m => (m ? m.title || dateTitle(m.date) : 'Deleted entry');
 
@@ -680,14 +729,33 @@ async function saveCategories(list) {
   if (state.current) renderCategoryPill();
 }
 
-function newCategory(name) {
+/** A new category object (not yet saved). Reuses an existing one with the same name and parent. */
+function newCategory(name, parent = '') {
   name = String(name || '').trim().slice(0, 40);
   if (!name) return null;
-  const existing = state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+  const existing = state.categories.find(c => c.name.toLowerCase() === name.toLowerCase() && (c.parent || '') === parent);
   if (existing) return existing;
+  const p = catById(parent);
   const used = state.categories.map(c => c.color);
-  const color = CAT_COLORS.find(c => !used.includes(c)) || CAT_COLORS[state.categories.length % CAT_COLORS.length];
-  return { id: 'c-' + crypto.randomUUID().slice(0, 8), name, color };
+  const color = p ? p.color : (CAT_COLORS.find(c => !used.includes(c)) || CAT_COLORS[state.categories.length % CAT_COLORS.length]);
+  return { id: 'c-' + crypto.randomUUID().slice(0, 8), name, color, parent: p ? p.id : '' };
+}
+
+/** Create from typed text. "Work / Meetings" makes Meetings a subcategory of Work (creating Work if needed). */
+async function createCategoryFromText(text) {
+  const [a, b] = String(text).split(/\s*[\/›>]\s*/).map(x => x.trim()).filter(Boolean);
+  if (!a) return null;
+  let list = [...state.categories];
+  let parent = list.find(c => !c.parent && c.name.toLowerCase() === a.toLowerCase()) || newCategory(a);
+  if (!list.includes(parent)) list.push(parent);
+  let target = parent;
+  if (b) {
+    target = list.find(c => c.parent === parent.id && c.name.toLowerCase() === b.toLowerCase()) || newCategory(b, parent.id);
+    if (!target.parent) target = { ...target, parent: parent.id, color: parent.color };
+    if (!list.some(c => c.id === target.id)) list.push(target);
+  }
+  if (list.length !== state.categories.length) await saveCategories(list);
+  return catById(target.id) || target;
 }
 
 function renderCategoryPill() {
@@ -695,7 +763,7 @@ function renderCategoryPill() {
   if (!pill || !c) return;
   const cat = catById(c.category);
   pill.classList.toggle('is-empty', !cat);
-  pill.replaceChildren(el('span', { class: 'dot', style: cat ? `background:${cat.color}` : '' }), cat ? cat.name : 'Add a category');
+  pill.replaceChildren(el('span', { class: 'dot', style: cat ? `background:${cat.color}` : '' }), cat ? catPath(cat) : 'Add a category');
 }
 
 function setEntryCategory(id) {
@@ -708,16 +776,22 @@ $('#catPill').addEventListener('click', () => {
   const c = state.current; if (!c) return;
   showPopover($('#catPill').getBoundingClientRect(), pop => {
     pop.classList.add('menu');
-    const opt = (cat, label) => el('button', {
-      type: 'button', class: 'menu-item' + ((cat ? cat.id : '') === (catById(c.category) ? c.category : '') ? ' on' : ''),
+    const current = catById(c.category) ? c.category : '';
+    const opt = (cat, label, sub) => el('button', {
+      type: 'button', class: 'menu-item' + (sub ? ' sub' : '') + ((cat ? cat.id : '') === current ? ' on' : ''),
       onclick: () => { setEntryCategory(cat ? cat.id : ''); closePopover(); },
     }, el('span', { class: 'dot', style: cat ? `background:${cat.color}` : '' }), label);
-    pop.append(...state.categories.map(cat => opt(cat, cat.name)));
+    const items = [];
+    for (const top of topCats()) {
+      items.push(opt(top, top.name));
+      for (const sub of subCats(top.id)) items.push(opt(sub, sub.name, true));
+    }
+    const box = el('div', { class: 'menu-scroll' }, ...items);
+    pop.append(box);
     if (state.categories.length) pop.append(opt(null, 'No category'), el('hr'));
-    const input = el('input', { class: 'pop-search', placeholder: state.categories.length ? 'New category' : 'Name your first category', maxlength: '40' });
-    const add = async name => {
-      const cat = newCategory(name); if (!cat) return;
-      if (!state.categories.some(x => x.id === cat.id)) await saveCategories([...state.categories, cat]);
+    const input = el('input', { class: 'pop-search', placeholder: state.categories.length ? 'New category, or Work / Meetings' : 'Name your first category', maxlength: '80' });
+    const add = async text => {
+      const cat = await createCategoryFromText(text); if (!cat) return;
       setEntryCategory(cat.id); closePopover();
     };
     input.addEventListener('keydown', e => { if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); add(input.value); } });
@@ -726,81 +800,122 @@ $('#catPill').addEventListener('click', () => {
       pop.append(el('div', { class: 'menu-suggest' }, 'Or pick one: ',
         ...['Personal', 'Work', 'Health', 'Family', 'Ideas'].map(n => el('button', { type: 'button', class: 'btn-link', onclick: () => add(n) }, n))));
     } else {
-      pop.append(el('button', { type: 'button', class: 'menu-item subtle', onclick: () => { closePopover(); manageCategories(); } }, 'Edit categories…'));
+      pop.append(el('p', { class: 'pop-hint' }, 'Type “Work / Meetings” to make a subcategory.'),
+        el('button', { type: 'button', class: 'menu-item subtle', onclick: () => { closePopover(); manageCategories(); } }, 'Edit categories…'));
     }
     setTimeout(() => input.focus());
   });
 });
 
-function renderCategoryBar() {
-  const bar = $('#catbar');
-  if (!state.categories.length) { bar.hidden = true; return; }
-  bar.hidden = false;
-  const count = id => state.metas.filter(m => (catById(m.category) ? m.category : '') === id).length;
-  const chip = (id, name, color) => el('button', {
-    class: 'cat-chip' + (state.category === id ? ' on' : ''), title: plainEntries(count(id)),
-    onclick: () => { state.category = state.category === id ? null : id; renderSidebar(); },
-  }, el('span', { class: 'dot', style: color ? `background:${color}` : '' }), name);
-  bar.replaceChildren(...state.categories.map(c => chip(c.id, c.name, c.color)),
-    el('button', { class: 'cat-edit', title: 'Edit categories', 'aria-label': 'Edit categories', onclick: manageCategories }, 'Edit'));
+function renderCategoryTree() {
+  if (state.sideView !== 'categories') return;
+  const box = $('#viewCategories');
+  const count = id => state.metas.filter(m => inCategory(m, id)).length;
+  const row = (id, name, color, { sub = false, kids = 0 } = {}) => {
+    const folded = state.openCats.has(id);
+    return el('div', { class: 'side-row-wrap' + (sub ? ' sub' : '') },
+      kids ? el('button', { class: 'fold', 'aria-label': folded ? `Show ${name}'s subcategories` : `Hide ${name}'s subcategories`, 'aria-expanded': String(!folded),
+        onclick: () => { folded ? state.openCats.delete(id) : state.openCats.add(id); renderCategoryTree(); } }, folded ? '▸' : '▾') : el('span', { class: 'fold-space' }),
+      el('button', {
+        class: 'side-row' + (state.category === id ? ' on' : ''), 'aria-pressed': String(state.category === id),
+        onclick: () => { state.category = state.category === id ? null : id; state.selectedDay = null; renderSidebar(); },
+      }, el('span', { class: 'dot', style: color ? `background:${color}` : '' }), el('span', { class: 'side-name' }, name), el('small', {}, String(count(id)))));
+  };
+  const rows = [];
+  for (const top of topCats()) {
+    const kids = subCats(top.id);
+    rows.push(row(top.id, top.name, top.color, { kids: kids.length }));
+    if (!state.openCats.has(top.id)) for (const k of kids) rows.push(row(k.id, k.name, k.color, { sub: true }));
+  }
+  const input = el('input', { type: 'text', placeholder: state.categories.length ? 'New category, or Work / Meetings' : 'Name your first category', maxlength: '80', 'aria-label': 'New category' });
+  input.addEventListener('keydown', async e => {
+    if (e.key !== 'Enter' || !input.value.trim()) return;
+    e.preventDefault();
+    const cat = await createCategoryFromText(input.value);
+    if (cat && cat.parent) state.openCats.delete(cat.parent);
+    renderCategoryTree();
+    $('#viewCategories input').focus();
+  });
+  box.replaceChildren(...[
+    el('div', { class: 'cattree' }, ...rows, state.categories.length ? row('', 'No category', '') : null),
+    !state.categories.length ? el('p', { class: 'side-empty' }, 'Categories are like sections of a notebook, such as Work, Health or Family, and each can have subcategories. Give each entry one category from the button under its title.') : null,
+    el('div', { class: 'catnew' }, input,
+      state.categories.length ? el('button', { class: 'cat-edit', onclick: manageCategories }, 'Edit') : null),
+  ].filter(Boolean));
 }
 
 function manageCategories() {
   return openDialog((f, done) => {
     const list = el('div', { class: 'cat-list' });
-    const count = id => state.metas.filter(m => m.category === id).length;
+    const count = id => state.metas.filter(m => inCategory(m, id)).length;
+    const update = async (id, patch) => { await saveCategories(state.categories.map(c => (c.id === id ? { ...c, ...patch } : c))); draw(); };
+    const remove = async cat => {
+      const kids = subCats(cat.id);
+      if (cat.parent) await api.moveCategory(cat.id, cat.parent);           // subcategory: its entries move up to the parent
+      else {
+        for (const k of kids) await api.moveCategory(k.id, '');            // category: everything inside becomes uncategorised
+        await api.moveCategory(cat.id, '');
+      }
+      state.metas = await api.list();
+      const gone = new Set([cat.id, ...kids.map(k => k.id)]);
+      if (state.current && gone.has(state.current.category)) state.current.category = cat.parent || '';
+      if (gone.has(state.category)) state.category = null;
+      await saveCategories(state.categories.filter(c => !gone.has(c.id))); draw();
+    };
+    const catRow = cat => {
+      const kids = subCats(cat.id);
+      const name = el('input', { type: 'text', value: cat.name, maxlength: '40', 'aria-label': 'Category name' });
+      name.addEventListener('change', () => { const v = name.value.trim(); if (v && v !== cat.name) update(cat.id, { name: v }); else name.value = cat.name; });
+      name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
+      // Where it sits: top level, or under another top-level category (only if it has no subcategories itself).
+      const under = el('select', { 'aria-label': `Where ${cat.name} sits`, title: kids.length ? 'This category has subcategories, so it stays at the top level' : 'Move under another category',
+        onchange: e => update(cat.id, { parent: e.target.value, ...(e.target.value ? { color: catById(e.target.value).color } : {}) }) },
+        el('option', { value: '' }, 'Top level'),
+        ...topCats().filter(t => t.id !== cat.id).map(t => el('option', { value: t.id }, `Under ${t.name}`)));
+      under.value = cat.parent || ''; under.disabled = kids.length > 0;
+      const n = count(cat.id);
+      const del = el('button', { type: 'button', class: 'btn-link danger', onclick: async e => {
+        const btn = e.currentTarget;
+        const what = cat.parent ? `${plainEntries(n)} will move to ${catById(cat.parent).name}` : kids.length ? `its ${kids.length} subcategor${kids.length === 1 ? 'y' : 'ies'} go too; ${plainEntries(n)} will have no category` : `${plainEntries(n)} will have no category`;
+        if ((n || kids.length) && !btn.dataset.armed) {
+          btn.dataset.armed = '1'; btn.textContent = `Delete? ${what}`;
+          setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = 'Delete'; } }, 5000);
+          return;
+        }
+        remove(cat);
+      } }, 'Delete');
+      return el('div', { class: 'cat-row' + (cat.parent ? ' sub' : '') },
+        el('button', { type: 'button', class: 'swatch', style: `background:${cat.color}`, title: 'Change colour', 'aria-label': `Change colour of ${cat.name}`,
+          onclick: () => update(cat.id, { color: CAT_COLORS[(CAT_COLORS.indexOf(cat.color) + 1) % CAT_COLORS.length] }) }),
+        name, under, el('small', {}, plainEntries(n)), del);
+    };
     const draw = () => {
-      list.replaceChildren(...state.categories.map(cat => {
-        const name = el('input', { type: 'text', value: cat.name, maxlength: '40', 'aria-label': 'Category name' });
-        const commit = () => {
-          const v = name.value.trim();
-          if (v && v !== cat.name) saveCategories(state.categories.map(c => (c.id === cat.id ? { ...c, name: v } : c)));
-          else name.value = cat.name;
-        };
-        name.addEventListener('change', commit);
-        name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
-        return el('div', { class: 'cat-row' },
-          el('button', {
-            type: 'button', class: 'swatch', style: `background:${cat.color}`, title: 'Change colour', 'aria-label': `Change colour of ${cat.name}`,
-            onclick: async () => {
-              const next = CAT_COLORS[(CAT_COLORS.indexOf(cat.color) + 1) % CAT_COLORS.length];
-              await saveCategories(state.categories.map(c => (c.id === cat.id ? { ...c, color: next } : c))); draw();
-            },
-          }),
-          name,
-          el('small', {}, plainEntries(count(cat.id))),
-          el('button', {
-            type: 'button', class: 'btn-link danger', onclick: async e => {
-              const n = count(cat.id), btn = e.currentTarget;
-              if (n && !btn.dataset.armed) {
-                // Ask once, in place: the entries are kept, they just lose this category.
-                btn.dataset.armed = '1';
-                btn.textContent = `Delete? ${plainEntries(n)} will have no category`;
-                setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = 'Delete'; } }, 4000);
-                return;
-              }
-              if (n) await api.moveCategory(cat.id, '');
-              state.metas = await api.list();
-              if (state.current && state.current.category === cat.id) state.current.category = '';
-              if (state.category === cat.id) state.category = null;
-              await saveCategories(state.categories.filter(c => c.id !== cat.id)); draw();
-            },
-          }, 'Delete'));
-      }));
+      const rows = [];
+      for (const top of topCats()) {
+        rows.push(catRow(top));
+        for (const k of subCats(top.id)) rows.push(catRow(k));
+        const subIn = el('input', { type: 'text', placeholder: `Add a subcategory to ${top.name}`, maxlength: '40', class: 'sub-add' });
+        subIn.addEventListener('keydown', async e => {
+          if (e.key !== 'Enter' || !subIn.value.trim()) return;
+          e.preventDefault();
+          const cat = newCategory(subIn.value, top.id);
+          if (cat && !state.categories.some(c => c.id === cat.id)) await saveCategories([...state.categories, cat]);
+          draw();
+        });
+        rows.push(el('div', { class: 'cat-row sub add' }, el('span'), subIn));
+      }
+      list.replaceChildren(...rows);
       if (!state.categories.length) list.append(el('p', {}, 'No categories yet.'));
     };
-    const add = el('input', { type: 'text', placeholder: 'New category', maxlength: '40' });
-    const addIt = async () => {
-      const cat = newCategory(add.value); if (!cat) return;
-      if (!state.categories.some(c => c.id === cat.id)) await saveCategories([...state.categories, cat]);
-      add.value = ''; draw(); add.focus();
-    };
+    const add = el('input', { type: 'text', placeholder: 'New category', maxlength: '80' });
+    const addIt = async () => { if (await createCategoryFromText(add.value)) { add.value = ''; draw(); add.focus(); } };
     add.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addIt(); } });
     draw();
+    f.classList.add('wide');
     f.append(el('h2', {}, 'Categories'),
-      el('p', {}, 'Each entry can have one category, like a section of a notebook. Use tags for everything else. Click a colour to change it.'),
+      el('p', {}, 'Each entry can have one category or subcategory, like a section of a notebook. Choosing a category also shows the entries in its subcategories. Click a colour to change it.'),
       list,
-      el('div', { class: 'cat-add' }, add, el('button', { type: 'button', class: 'btn-plain', onclick: addIt }, 'Add')),
+      el('div', { class: 'cat-add' }, add, el('button', { type: 'button', class: 'btn-plain', onclick: addIt }, 'Add category')),
       el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Done')));
   });
 }

@@ -45,6 +45,13 @@
       <button class="btn-foil btn-small" id="newBtn" title="New entry (Ctrl+N)">New entry</button>
     </header>
 
+    <div class="sidetabs" role="tablist" aria-label="Browse">
+      <button type="button" role="tab" data-view="calendar">Calendar</button>
+      <button type="button" role="tab" data-view="categories">Categories</button>
+      <button type="button" role="tab" data-view="tags">Tags</button>
+    </div>
+
+    <div class="sideview" id="viewCalendar">
     <div class="cal" id="cal">
       <div class="cal-head">
         <button class="icon-btn" id="calPrev" aria-label="Previous month"><svg viewBox="0 0 20 20"><path d="M12 4l-6 6 6 6"/></svg></button>
@@ -55,13 +62,17 @@
     </div>
 
     <button class="onthisday" id="onThisDay" hidden></button>
+    </div>
+    <div class="sideview" id="viewCategories" hidden></div>
+    <div class="sideview" id="viewTags" hidden>
+      <div class="tagfind"><input id="tagFind" type="search" placeholder="Find a tag" aria-label="Find a tag" spellcheck="false"></div>
+      <div class="tagtree" id="tagTree"></div>
+    </div>
 
     <div class="search">
       <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>
-      <input id="search" type="search" placeholder="Search entries" aria-label="Search entries" spellcheck="false">
+      <input id="search" type="search" placeholder="Search entries and #tags" aria-label="Search entries" spellcheck="false">
     </div>
-    <div class="catbar" id="catbar"></div>
-    <div class="tagbar" id="tagbar"></div>
     <div class="filter-note" id="filterNote" hidden></div>
 
     <nav class="list" id="list" aria-label="Entries"></nav>
