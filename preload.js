@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('wellwrite', {
   getQuotes: () => call('quotes:get'),
   setQuotes: list => call('quotes:set', list),
   pickQuotesFile: () => call('quotes:pickFile'),
+  exportQuotes: text => call('quotes:export', text),
   getSettings: () => call('settings:get'),
   setSettings: s => call('settings:set', s),
   showDataFolder: () => call('app:showDataFolder'),

@@ -59,6 +59,7 @@ const state = {
   trail: [],            // entries visited by following links, for "Back"
   quotes: [],           // [{ id, text, author, source, fav }]
   quoteSkip: {},        // date -> how many times "Another" was pressed today
+  promptSkip: {},       // date -> how many times "Another question" was pressed
   mode: (() => { try { return localStorage.getItem('mode') || 'journal'; } catch { return 'journal'; } })(),
   bible: null,          // { plans, translations, state: { plan, translation, start, done } }
   bibleDay: null,       // day of the plan being viewed (0-based); null = today's
@@ -1122,6 +1123,54 @@ function renderConnections() {
 /* ---------- daily quote ---------- */
 const strHash = str => { let h = 2166136261; for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 const dayNumber = iso => Math.round(dateOf(iso).getTime() / 864e5);
+/** [[theme, count], ...] most used first. */
+const quoteThemes = () => {
+  const m = new Map();
+  for (const q of state.quotes) for (const t of q.themes || []) m.set(t, (m.get(t) || 0) + 1);
+  return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+};
+const STOPWORDS = new Set(('the a an and or of to in is it its that this for on with as be are was were by at from your you yours my our we us me his her their they them not but if so what who when where how all any into than then there these those more most much can will would should may might do does did have has had been being one each other some such no nor only own same too very just also about over out up down off again once here why which while whom upon unto thee thou thy shall let every even still yet ever never always often perhaps').split(' '));
+const wordsOf = t => (String(t).toLowerCase().match(/[a-z’']+/g) || []).map(w => w.replace(/[’']s?$/, '')).filter(w => w.length > 2 && !STOPWORDS.has(w));
+const stemOf = w => w.replace(/(ings?|ness|ful|ly|ed|es|s)$/, '').slice(0, 7);
+
+/** Themes that fit a quote, judged by the words in quotes already given each theme. */
+function suggestThemes(text, exclude = []) {
+  const themes = quoteThemes();
+  if (!themes.length) return [];
+  const mine = new Set(wordsOf(text).map(stemOf));
+  if (!mine.size) return [];
+  const df = new Map(), bags = new Map();
+  for (const [th] of themes) {
+    const bag = new Map();
+    for (const q of state.quotes) if ((q.themes || []).includes(th)) for (const w of new Set(wordsOf(q.text).map(stemOf))) bag.set(w, (bag.get(w) || 0) + 1);
+    bags.set(th, bag);
+    for (const w of bag.keys()) df.set(w, (df.get(w) || 0) + 1);
+  }
+  return themes.map(([th, n]) => {
+    const bag = bags.get(th);
+    let score = 0;
+    for (const w of mine) if (bag.has(w)) score += (bag.get(w) / n) * Math.log(1 + themes.length / df.get(w));
+    for (const w of wordsOf(th).map(stemOf)) if (mine.has(w)) score += 1;   // the theme's own name appears
+    return [th, score];
+  }).filter(([th, sc]) => sc >= 0.5 && !exclude.includes(th)).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+}
+
+/** A comma-separated themes box with clickable suggestions underneath. */
+function themesField(initial, getText) {
+  const input = el('input', { type: 'text', value: (initial || []).join(', '), placeholder: 'Themes, e.g. Hope, True self', list: 'quoteThemeList', class: 'themes-in' });
+  const sugg = el('div', { class: 'theme-sugg' });
+  const current = () => input.value.split(',').map(x => x.trim()).filter(Boolean);
+  const refresh = () => {
+    const have = current().map(x => x.toLowerCase());
+    const list = suggestThemes(getText(), []).filter(t => !have.includes(t.toLowerCase()));
+    sugg.replaceChildren(...(list.length ? [el('span', {}, 'Suggested: '), ...list.map(t => el('button', { type: 'button', class: 'theme-chip add', onclick: () => {
+      input.value = [...current(), t].join(', '); refresh();
+    } }, '+ ' + t))] : []));
+  };
+  input.addEventListener('input', refresh);
+  return { el: el('div', { class: 'themes-field' }, input, sugg), get: current, refresh };
+}
+
 const quoteAuthors = () => [...new Set(state.quotes.map(q => q.author).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
 function quotePool() {
@@ -1129,11 +1178,44 @@ function quotePool() {
   let pool = state.quotes;
   if (from === 'fav') pool = pool.filter(q => q.fav);
   else if (from.startsWith('author:')) pool = pool.filter(q => q.author === from.slice(7));
+  else if (from.startsWith('theme:')) pool = pool.filter(q => (q.themes || []).includes(from.slice(6)));
   return pool.length ? pool : state.quotes;
 }
 
-/** The quote for a day: works through the whole collection in a shuffled order before repeating. */
+/* --- the year of themes --- */
+const quotePlan = () => state.settings.quotePlan || 'christian';
+/** The season for a date under the chosen plan (null when the plan is off). */
+function seasonOn(iso) {
+  const plan = quotePlan();
+  if (plan === 'off' || !window.WellWriteSeasons) return null;
+  return window.WellWriteSeasons.seasonOn(iso, plan);
+}
+/** Quotes that suit a season, best first: themes listed earlier in the season count for more. */
+function seasonPool(season) {
+  const n = season.themes.length;
+  return state.quotes.map(q => {
+    let score = 0;
+    (q.themes || []).forEach(t => { const i = season.themes.indexOf(t); if (i >= 0) score += n - i; });
+    return { q, score };
+  }).filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score || strHash(a.q.id + season.id) - strHash(b.q.id + season.id))
+    .map(x => x.q);
+}
+/** Today's writing question for a season. */
+function promptFor(iso) {
+  const s = seasonOn(iso);
+  if (!s) return '';
+  return s.prompts[(s.dayIndex + (state.promptSkip[iso] || 0)) % s.prompts.length];
+}
+
+/** The quote for a day. Following a season: the season's best-fitting quotes in order, then round again.
+ *  Otherwise: the whole collection (or the chosen part of it) in a shuffled order before repeating. */
 function quoteFor(iso) {
+  const season = seasonOn(iso);
+  if (season) {
+    const pool = seasonPool(season);
+    if (pool.length >= 3) return pool[(season.dayIndex + (state.quoteSkip[iso] || 0)) % pool.length];
+  }
   const pool = [...quotePool()].sort((a, b) => strHash(a.id) - strHash(b.id));
   if (!pool.length) return null;
   const n = dayNumber(iso) + (state.quoteSkip[iso] || 0);
@@ -1153,11 +1235,14 @@ function quoteCard(iso, where) {
   const btn = (label, fn, cls = 'q-btn') => el('button', { type: 'button', class: cls, onclick: fn }, label);
   const star = el('button', { type: 'button', class: 'q-star' + (q.fav ? ' on' : ''), title: q.fav ? 'Remove from favourites' : 'Add to favourites', 'aria-pressed': String(q.fav),
     onclick: async () => { await saveQuotes(state.quotes.map(x => (x.id === q.id ? { ...x, fav: !x.fav } : x))); refreshQuote(); } }, q.fav ? '★' : '☆');
+  const season = seasonOn(iso), prompt = promptFor(iso);
   return el('figure', { class: 'quote-card ' + where },
+    season ? el('p', { class: 'q-season' }, `${season.name}, day ${season.dayIndex + 1}`) : null,
     el('blockquote', {}, q.text),
     el('figcaption', {}, '— ' + (q.author || 'Unknown') + (q.source ? ', ' : ''), q.source ? el('cite', {}, q.source) : null),
+    prompt ? el('p', { class: 'q-prompt' }, prompt) : null,
     el('div', { class: 'q-actions' },
-      btn('Write about this', () => writeAboutQuote(q, iso), 'q-btn primary'),
+      btn('Write about this', () => writeAboutQuote(q, iso, prompt), 'q-btn primary'),
       state.quotes.length > 1 ? btn('Another', () => { state.quoteSkip[iso] = (state.quoteSkip[iso] || 0) + 1; refreshQuote(); }) : null,
       star,
       btn('Your quotes', () => manageQuotes()),
@@ -1223,7 +1308,7 @@ function refreshQuote() {
   else if (!$('#empty').hidden) showEmpty();
 }
 
-async function writeAboutQuote(q, iso) {
+async function writeAboutQuote(q, iso, prompt = '') {
   if (state.mode !== 'journal') setMode('journal');
   if (!state.current || state.current.date !== iso) {
     const existing = sorted(state.metas.filter(m => m.date === iso))[0];
@@ -1232,7 +1317,7 @@ async function writeAboutQuote(q, iso) {
   const quote = el('blockquote', {}, ...q.text.split('\n').flatMap((line, i) => (i ? [el('br'), line] : [line])),
     el('br'), '— ' + (q.author || 'Unknown') + (q.source ? `, ${q.source}` : ''));
   const after = el('p', {}, el('br'));
-  body.prepend(quote, after);
+  body.prepend(...[quote, prompt ? el('p', {}, el('i', {}, prompt)) : null, after].filter(Boolean));
   body.focus();
   const r = document.createRange(); r.setStart(after, 0); r.collapse(true);
   const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
@@ -1244,29 +1329,127 @@ async function saveQuotes(list) {
 }
 
 /* --- reading quotes from pasted text or a Kindle clippings file --- */
-/** Pasted quotes: separate them with a blank line; end one with "— Writer, Book" to say who wrote it. */
+/**
+ * Quotes from pasted text or a text file. Understands:
+ *  - quotes ending with a "— Writer, Book" line (the quote can run over several paragraphs)
+ *  - Goodreads quote pages copied straight from the browser (likes, tags and buttons are skipped)
+ *  - "Themes: Hope, Soul" after a quote
+ *  - otherwise, one quote per blank-line-separated block, using the default writer and book
+ */
+const ATTR_LINE = /^[—―–]{1,2}\s*(\S.*)$|^-{1,2}\s+(\S.*)$/;
+const JUNK_LINE = [/^showing \d+-\d+ of [\d,]+/i, /> quotes\s*$/i, /^\(\?\)$/, /^like$/i, /^[\d,]+ likes?$/i, /^tags:/i];
+const isJunk = l => JUNK_LINE.some(r => r.test(l));
+const themesLine = l => { const m = l.match(/^themes?:\s*(.*)$/i); return m ? m[1].split(',').map(t => t.trim()).filter(Boolean) : null; };
+/** "Some words — Writer, Book" on one line. The part after the dash must look like a name, not more sentence. */
+const inlineAttribution = line => {
+  const m = line.match(/^(.*\S)\s+[—―–]\s+([^—―–]+)$/) || line.match(/^(.*\S)\s+-\s+([^-]+)$/);
+  if (!m) return null;
+  const who = m[2].trim();
+  if (who.length > 90 || /[.!?;]$/.test(who) || who.split(',')[0].trim().split(/\s+/).length > 5) return null;
+  return [m[1], who];
+};
+/** Remove quote marks wrapped round the whole text, but not ones that belong to a word inside it ("“Hope” is the thing…"). */
+const stripQuoteMarks = t => {
+  t = t.trim();
+  const m = t.match(/^[“"]+([\s\S]*?)[”"]+$/);
+  if (m && !/[“”"]/.test(m[1])) return m[1].trim();
+  if (/^[“"]/.test(t) && !/[”"]/.test(t.slice(1))) return t.replace(/^[“"]+/, '').trim();   // opened, never closed
+  if (/[”"]$/.test(t) && !/[“"]/.test(t.slice(0, -1))) return t.replace(/[”"]+$/, '').trim(); // closed, never opened
+  return t;
+};
+
 function parsePastedQuotes(text, defAuthor = '', defSource = '') {
+  const lines = text.replace(/\r\n?/g, '\n').replace(/^\uFEFF/, '')
+    .replace(/\[([^\]]*)\]\((?:https?:|mailto:)[^)]*\)/g, '$1')   // Markdown links: keep the words
+    .replace(/^[ \t]*[*•][ \t]+/gm, '')                          // bullet points
+    .split('\n');
   const out = [];
-  for (const block of text.replace(/\r\n?/g, '\n').split(/\n\s*\n/)) {
-    let lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-    if (!lines.length) continue;
-    let author = defAuthor, source = defSource;
-    const last = lines[lines.length - 1];
-    const by = last.match(/^[—–~-]+\s*(.+)$/);
-    // A quote that names its own writer doesn't take the default book.
-    if (by && lines.length > 1) { [author, source = ''] = splitAttribution(by[1]); lines = lines.slice(0, -1); }
-    else if (lines.length === 1) {
-      const m = last.match(/^(.*\S)\s+[—–]\s+([^—–]+)$/) || last.match(/^(.*\S)\s+-\s+([^-]+)$/);
-      if (m) { lines = [m[1]]; [author, source = ''] = splitAttribution(m[2]); }
+  const push = (textLines, author, source, themes = []) => {
+    const t = stripQuoteMarks(textLines.join('\n').replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').trim());
+    // Long "Title: Subtitle" book names (as Goodreads gives them) keep just the title, without "Revised edition".
+    if (source && source.length > 40 && /^[^,“”]{3,}:\s/.test(source)) source = source.slice(0, source.indexOf(':')).trim();
+    if (source) source = source.replace(/\s*[-–(]\s*(revised|new|expanded|updated|anniversary)[^)]*\)?$/i, '').trim();
+    if (t) out.push({ text: trimCutShort(t), author: author || defAuthor, source, themes });
+  };
+  // Blocks with no writer line: one quote per block (an inline "text — Writer" works too).
+  const pushBlocks = blockLines => {
+    for (const block of blockLines.join('\n').split(/\n\s*\n/)) {
+      const ls = block.split('\n').map(l => l.trim()).filter(l => l && !isJunk(l));
+      if (!ls.length) continue;
+      let themes = [];
+      const th = themesLine(ls[ls.length - 1]);
+      if (th) { themes = th; ls.pop(); }
+      const m = ls.length === 1 && inlineAttribution(ls[0]);
+      if (m) { const [author, source = ''] = splitAttribution(m[1]); push([m[0]], author, source, themes); }
+      else push(ls, defAuthor, defSource, themes);
     }
-    const t = lines.join('\n').replace(/^["“”']+|["“”']+$/g, '').trim();
-    if (t) out.push({ text: t, author: author || defAuthor, source });
+  };
+
+  let buf = [];
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim();
+    const m = l.match(ATTR_LINE);
+    if (m && buf.some(x => x.trim() && !isJunk(x.trim()))) {
+      let [author, source = ''] = splitAttribution(m[1] || m[2]);
+      let j = i + 1, themes = [];
+      // Goodreads puts the book on its own line after a lone comma.
+      while (j < lines.length && !lines[j].trim()) j++;
+      if (!source && lines[j] && lines[j].trim() === ',' && lines[j + 1] && lines[j + 1].trim()) { source = lines[j + 1].trim(); j += 2; }
+      for (; j < lines.length; j++) {
+        const t = lines[j].trim();
+        if (!t || isJunk(t)) continue;
+        const th = themesLine(t);
+        if (th) { themes = th; continue; }
+        break;
+      }
+      // Any complete one-line "text — Writer" quotes before this one stand on their own.
+      const blocks = buf.join('\n').split(/\n\s*\n/);
+      while (blocks.length > 1 && !blocks[0].trim().includes('\n') && inlineAttribution(blocks[0].trim())) pushBlocks([blocks.shift()]);
+      push(blocks.join('\n\n').split('\n').filter(x => !isJunk(x.trim())), author, source, themes);
+      buf = []; i = j - 1;
+      continue;
+    }
+    buf.push(lines[i]);
   }
-  return out;
+  pushBlocks(buf);
+  return sameWriterNames(out);
+}
+
+/** Goodreads cuts long quotes off mid-word ("…on a jo..."): go back to the last full sentence or line, and mark it. */
+function trimCutShort(t) {
+  if (!/[A-Za-z’',;)]\.\.\.$/.test(t) && !/\s\.\.\.$/.test(t)) return t;
+  const body = t.replace(/\s*\.\.\.$/, '');
+  const ends = [...body.matchAll(/[.!?;:](?=["”’)]?\s)|\n/g)].map(m => m.index + (m[0] === '\n' ? 0 : 1));
+  const cut = ends.length ? ends[ends.length - 1] : -1;
+  if (cut < body.length * 0.4) return body.replace(/\s*\S*$/, '') + ' …'; // nothing sensible to go back to: drop the broken word
+  return body.slice(0, cut).trim() + ' …';
+}
+
+/** "Parker Palmer" and "Parker J. Palmer" are the same writer: use the fuller name (or the one already in your collection). */
+function sameWriterNames(list) {
+  const keyOf = a => {
+    const w = a.toLowerCase().replace(/[.’']/g, '').replace(/^(st|saint)\s+/, '').replace(/\s+of\s+\S+$/, '').split(/\s+/).filter(Boolean);
+    return w.length > 1 ? w[0] + ' ' + w[w.length - 1] : w.join(' ');
+  };
+  const best = new Map();
+  for (const a of [...state.quotes.map(q => q.author), ...list.map(q => q.author)]) {
+    if (!a) continue;
+    const k = keyOf(a), cur = best.get(k);
+    const caps = x => (x.match(/[A-Z]/g) || []).length;
+    if (!cur || (!state.quotes.some(q => q.author === cur) && (a.length > cur.length || (a.length === cur.length && caps(a) > caps(cur))))) best.set(k, a);
+  }
+  return list.map(q => (q.author ? { ...q, author: best.get(keyOf(q.author)) || q.author } : q));
 }
 function splitAttribution(s) {
-  const i = s.indexOf(',');
-  return i < 0 ? [s.trim(), ''] : [s.slice(0, i).trim(), s.slice(i + 1).trim().replace(/^["“”]|["“”]$/g, '')];
+  let depth = 0, i = -1;
+  for (let k = 0; k < s.length; k++) {
+    if (s[k] === '(') depth++; else if (s[k] === ')') depth--; else if (s[k] === ',' && depth <= 0) { i = k; break; }
+  }
+  if (i < 0) return [s.trim(), ''];
+  let src = s.slice(i + 1).trim();
+  if (/^["“][^"“”]*["”]$/.test(src)) src = src.slice(1, -1); // a source that is only a quoted title
+  src = src.replace(/\s*\([^()]*#\d+(\.\d+)?\)\s*$/, '');      // Goodreads series label
+  return [s.slice(0, i).trim(), src];
 }
 
 /** Kindle "My Clippings.txt": highlights only (not bookmarks or your own notes). */
@@ -1298,29 +1481,50 @@ function importPreview(found, fromLabel) {
   return openDialog((f, done) => {
     const groups = new Map();
     for (const q of found) {
-      const k = `${q.source || 'No book'}|${q.author}`;
-      if (!groups.has(k)) groups.set(k, { book: q.source, author: q.author, items: [] });
+      const book = (q.source || '').split(/,\s*“/)[0].trim(); // "To Bless…, “For Longing”" is from To Bless…
+      const k = `${book}|${q.author}`;
+      if (!groups.has(k)) groups.set(k, { book, author: q.author, items: [] });
       groups.get(k).items.push(q);
     }
     const existing = new Set(state.quotes.map(q => (q.text + '|' + q.author).toLowerCase().replace(/\s+/g, ' ')));
     const fresh = q => !existing.has((q.text + '|' + q.author).toLowerCase().replace(/\s+/g, ' '));
     const boxes = [];
-    const list = el('div', { class: 'imp-list' }, ...[...groups.values()].sort((a, b) => (a.author || '').localeCompare(b.author || '') || (a.book || '').localeCompare(b.book || '')).map(g => {
+    const list = el('div', { class: 'imp-list' }, ...[...groups.values()].sort((a, b) => (a.author || '').localeCompare(b.author || '') || (!a.book) - (!b.book) || (a.book || '').localeCompare(b.book || '')).map(g => {
       const n = g.items.filter(fresh).length;
-      const cb = el('input', { type: 'checkbox' }); cb.checked = n > 0; cb.disabled = !n;
+      const themed = g.items.some(q => !fresh(q) && (q.themes || []).length);
+      const cb = el('input', { type: 'checkbox' }); cb.checked = n > 0 || themed; cb.disabled = !n && !themed;
       boxes.push([cb, g]);
       return el('label', { class: 'imp-row' }, cb,
-        el('span', {}, el('b', {}, g.book || 'Untitled'), g.author ? ` — ${g.author}` : ''),
-        el('small', {}, n ? `${n} new` : 'already added'));
+        el('span', {}, g.book ? el('b', {}, g.book) : el('b', {}, g.author ? `Other quotes by ${g.author}` : 'Quotes with no writer'), g.book && g.author ? ` — ${g.author}` : ''),
+        el('small', {}, n ? `${n} new` : themed ? 'themes only' : 'already added'));
     }));
     const go = el('button', { type: 'submit', class: 'btn-ink' }, 'Import');
-    const count = () => { const n = boxes.filter(([c]) => c.checked).reduce((a, [, g]) => a + g.items.filter(fresh).length, 0); go.textContent = n ? `Import ${n} quote${n === 1 ? '' : 's'}` : 'Import'; go.disabled = !n; };
+    const count = () => {
+      const picked = boxes.filter(([c]) => c.checked);
+      const n = picked.reduce((a, [, g]) => a + g.items.filter(fresh).length, 0);
+      go.textContent = n ? `Import ${n} quote${n === 1 ? '' : 's'}` : 'Update themes';
+      go.disabled = !picked.length;
+    };
     list.addEventListener('change', count);
     f.addEventListener('submit', async e => {
       e.preventDefault();
-      const add = boxes.filter(([c]) => c.checked).flatMap(([, g]) => g.items.filter(fresh));
-      await saveQuotes([...state.quotes, ...add]);
-      done(); toast(`Added ${add.length} quote${add.length === 1 ? '' : 's'}`); refreshQuote(); manageQuotes();
+      const chosen = boxes.filter(([c]) => c.checked).flatMap(([, g]) => g.items);
+      const add = chosen.filter(fresh);
+      // Quotes you already have keep their place but pick up any new themes.
+      const keyOf = q => (q.text + '|' + q.author).toLowerCase().replace(/\s+/g, ' ');
+      const extra = new Map(chosen.filter(q => !fresh(q) && (q.themes || []).length).map(q => [keyOf(q), q.themes]));
+      let updated = 0;
+      const merged = state.quotes.map(q => {
+        const t = extra.get(keyOf(q));
+        if (!t) return q;
+        const themes = [...new Set([...(q.themes || []), ...t])];
+        if (themes.length !== (q.themes || []).length) updated++;
+        return { ...q, themes };
+      });
+      await saveQuotes([...merged, ...add]);
+      done();
+      toast(`Added ${add.length} quote${add.length === 1 ? '' : 's'}` + (updated ? `, updated themes on ${updated}` : ''));
+      refreshQuote(); manageQuotes();
     });
     f.classList.add('wide');
     f.append(el('h2', {}, `Import from ${fromLabel}`),
@@ -1344,7 +1548,7 @@ function pasteQuotes() {
     });
     f.classList.add('wide');
     f.append(el('h2', {}, 'Paste several quotes'),
-      el('p', {}, 'Copy passages from your notes, an ebook or a document. Separate them with a blank line.'),
+      el('p', {}, 'Paste from your notes, an ebook, or a Goodreads quotes page. End each quote with a line like “— Parker J. Palmer, Let Your Life Speak”, and add “Themes: Vocation, True self” if you like.'),
       ta,
       el('div', { class: 'q-two' },
         el('label', { class: 'field' }, 'Writer, if not given', who),
@@ -1357,22 +1561,27 @@ async function importQuotesFile() {
   let file;
   try { file = await api.pickQuotesFile(); } catch (x) { toast(x.message); return; }
   if (!file) return manageQuotes();
-  const kindle = /==========/.test(file.text);
+  const kindle = /^==========\s*$/m.test(file.text) && /Your Highlight/i.test(file.text);
   const found = kindle ? parseKindle(file.text) : parsePastedQuotes(file.text);
   if (!found.length) { toast(kindle ? 'No highlights found in that file.' : 'No quotes found in that file.'); return manageQuotes(); }
   importPreview(found, kindle ? 'Kindle highlights' : file.name);
 }
 
+let quoteThemeFilter = '';
 function manageQuotes() {
   return openDialog((f, done) => {
     const s = state.settings;
-    const find = el('input', { type: 'search', placeholder: 'Search your quotes or writers', 'aria-label': 'Search quotes' });
+    const find = el('input', { type: 'search', placeholder: 'Search your quotes, writers or themes', 'aria-label': 'Search quotes' });
+    const themeBar = el('div', { class: 'theme-bar' });
     const list = el('div', { class: 'q-list' });
     const summary = el('p', { class: 'q-summary' });
-    const from = el('select', { 'aria-label': 'Choose the daily quote from',
-      onchange: async e => { await updateSetting({ quoteFrom: e.target.value }); refreshQuote(); } },
+    const fromOptions = () => [
       el('option', { value: '' }, 'All my quotes'), el('option', { value: 'fav' }, 'Favourites only'),
-      ...quoteAuthors().map(a => el('option', { value: 'author:' + a }, a)));
+      ...(quoteThemes().length ? [el('optgroup', { label: 'A theme' }, ...quoteThemes().map(([t]) => el('option', { value: 'theme:' + t }, t)))] : []),
+      el('optgroup', { label: 'A writer' }, ...quoteAuthors().map(a => el('option', { value: 'author:' + a }, a))),
+    ];
+    const from = el('select', { 'aria-label': 'Choose the daily quote from',
+      onchange: async e => { await updateSetting({ quoteFrom: e.target.value }); refreshQuote(); } }, ...fromOptions());
     from.value = s.quoteFrom || '';
     const show = el('input', { type: 'checkbox', onchange: async e => {
       const c = dailyChoice();
@@ -1380,18 +1589,41 @@ function manageQuotes() {
       await updateSetting({ dailyCard: next, showQuote: true }); refreshQuote();
     } });
     show.checked = ['quote', 'both'].includes(dailyChoice());
+    const themeList = el('datalist', { id: 'quoteThemeList' });
+    const planSel = el('select', { 'aria-label': 'What the daily quote follows', onchange: async e => {
+      await updateSetting({ quotePlan: e.target.value }); fromRowShow(); refreshQuote();
+    } }, el('option', { value: 'christian' }, 'The Christian year'), el('option', { value: 'spiritual' }, 'A spiritual theme each month'), el('option', { value: 'off' }, 'My own choice'));
+    planSel.value = quotePlan();
+    const fromRowShow = () => { const r = document.getElementById('fromRow'); if (r) r.hidden = quotePlan() !== 'off'; };
+    setTimeout(fromRowShow);
 
     const draw = () => {
+      const themes = quoteThemes();
+      if (quoteThemeFilter && !themes.some(([t]) => t === quoteThemeFilter)) quoteThemeFilter = '';
+      themeList.replaceChildren(...themes.map(([t]) => el('option', { value: t })));
+      themeBar.replaceChildren(...(themes.length ? [
+        el('button', { type: 'button', class: 'theme-chip' + (!quoteThemeFilter ? ' on' : ''), onclick: () => { quoteThemeFilter = ''; draw(); } }, 'All'),
+        ...themes.map(([t, n]) => el('button', { type: 'button', class: 'theme-chip' + (quoteThemeFilter === t ? ' on' : ''),
+          onclick: () => { quoteThemeFilter = quoteThemeFilter === t ? '' : t; draw(); } }, t, el('small', {}, String(n)))),
+        state.quotes.some(q => !(q.themes || []).length)
+          ? el('button', { type: 'button', class: 'theme-chip' + (quoteThemeFilter === '\u0000none' ? ' on' : ''), onclick: () => { quoteThemeFilter = quoteThemeFilter === '\u0000none' ? '' : '\u0000none'; draw(); } },
+            'No theme yet', el('small', {}, String(state.quotes.filter(q => !(q.themes || []).length).length))) : null,
+      ].filter(Boolean) : []));
       const q = find.value.trim().toLowerCase();
-      const items = state.quotes.filter(x => !q || (x.text + ' ' + x.author + ' ' + x.source).toLowerCase().includes(q))
+      const items = state.quotes
+        .filter(x => !quoteThemeFilter || (quoteThemeFilter === '\u0000none' ? !(x.themes || []).length : (x.themes || []).includes(quoteThemeFilter)))
+        .filter(x => !q || (x.text + ' ' + x.author + ' ' + x.source + ' ' + (x.themes || []).join(' ')).toLowerCase().includes(q))
         .sort((a, b) => Number(b.fav) - Number(a.fav) || (a.author || '').localeCompare(b.author || ''));
-      summary.textContent = `${state.quotes.length} quote${state.quotes.length === 1 ? '' : 's'} from ${quoteAuthors().length} writer${quoteAuthors().length === 1 ? '' : 's'}`;
+      summary.textContent = `${state.quotes.length} quote${state.quotes.length === 1 ? '' : 's'} from ${quoteAuthors().length} writer${quoteAuthors().length === 1 ? '' : 's'}` +
+        (themes.length ? `, in ${themes.length} theme${themes.length === 1 ? '' : 's'}` : '') + (items.length !== state.quotes.length ? `. Showing ${items.length}.` : '.');
       list.replaceChildren(...items.slice(0, 300).map(x => {
         const row = el('div', { class: 'q-row' });
         const view = () => row.replaceChildren(
           el('button', { type: 'button', class: 'q-star' + (x.fav ? ' on' : ''), title: x.fav ? 'Remove from favourites' : 'Add to favourites',
             onclick: async () => { await saveQuotes(state.quotes.map(y => (y.id === x.id ? { ...y, fav: !y.fav } : y))); x = state.quotes.find(y => y.id === x.id); view(); refreshQuote(); } }, x.fav ? '★' : '☆'),
-          el('div', { class: 'q-main' }, el('p', { class: 'q-text' }, x.text), el('small', {}, (x.author || 'Unknown') + (x.source ? `, ${x.source}` : ''))),
+          el('div', { class: 'q-main' }, el('p', { class: 'q-text' }, x.text),
+            el('small', {}, (x.author || 'Unknown') + (x.source ? `, ${x.source}` : '')),
+            (x.themes || []).length ? el('div', { class: 'q-themes' }, ...x.themes.map(t => el('button', { type: 'button', class: 'theme-chip mini', onclick: () => { quoteThemeFilter = t; draw(); } }, t))) : null),
           el('div', { class: 'q-row-btns' },
             el('button', { type: 'button', class: 'btn-link', onclick: edit }, 'Edit'),
             el('button', { type: 'button', class: 'btn-link danger', onclick: async () => { await saveQuotes(state.quotes.filter(y => y.id !== x.id)); draw(); refreshQuote(); } }, 'Delete')));
@@ -1399,20 +1631,23 @@ function manageQuotes() {
           const t = el('textarea', { rows: '4' }); t.value = x.text;
           const a = el('input', { type: 'text', value: x.author, placeholder: 'Writer' });
           const b = el('input', { type: 'text', value: x.source, placeholder: 'Book or source' });
-          row.replaceChildren(el('div', { class: 'q-edit' }, t, el('div', { class: 'q-two' }, a, b),
+          const th = themesField(x.themes, () => t.value);
+          t.addEventListener('input', th.refresh);
+          row.replaceChildren(el('div', { class: 'q-edit' }, t, el('div', { class: 'q-two' }, a, b), th.el,
             el('div', { class: 'btns' },
               el('button', { type: 'button', class: 'btn-ink', onclick: async () => {
                 if (!t.value.trim()) return;
-                await saveQuotes(state.quotes.map(y => (y.id === x.id ? { ...y, text: t.value, author: a.value, source: b.value } : y)));
-                x = state.quotes.find(y => y.id === x.id) || x; view(); refreshQuote();
+                await saveQuotes(state.quotes.map(y => (y.id === x.id ? { ...y, text: t.value, author: a.value, source: b.value, themes: th.get() } : y)));
+                x = state.quotes.find(y => y.id === x.id) || x; draw(); refreshQuote();
               } }, 'Save'),
               el('button', { type: 'button', class: 'btn-plain', onclick: view }, 'Cancel'))));
+          th.refresh();
           t.focus();
         };
         view();
         return row;
       }));
-      if (!items.length) list.append(el('p', { class: 'q-summary' }, q ? `No quotes match “${q}”.` : 'No quotes yet. Add one below.'));
+      if (!items.length) list.append(el('p', { class: 'q-summary' }, q ? `No quotes match “${q}”.` : 'No quotes here yet.'));
       if (items.length > 300) list.append(el('p', { class: 'q-summary' }, `Showing 300 of ${items.length}. Search to narrow them down.`));
     };
     find.addEventListener('input', draw);
@@ -1420,32 +1655,51 @@ function manageQuotes() {
     const text = el('textarea', { rows: '3', placeholder: 'Type or paste a quote' });
     const author = el('input', { type: 'text', placeholder: 'Writer, e.g. John O’Donohue', list: 'quoteAuthorList' });
     const source = el('input', { type: 'text', placeholder: 'Book or source (optional)' });
+    const themes = themesField([], () => text.value);
+    let t0; text.addEventListener('input', () => { clearTimeout(t0); t0 = setTimeout(themes.refresh, 250); });
     const add = async () => {
       if (!text.value.trim()) { text.focus(); return; }
-      await saveQuotes([...state.quotes, { text: text.value, author: author.value, source: source.value }]);
-      text.value = ''; source.value = ''; draw(); refreshQuote(); toast('Quote added');
+      await saveQuotes([...state.quotes, { text: text.value, author: author.value, source: source.value, themes: themes.get() }]);
+      text.value = ''; source.value = ''; themes.el.querySelector('input').value = ''; themes.refresh();
+      draw(); refreshQuote(); toast('Quote added');
       text.focus();
     };
 
     f.classList.add('wide');
     f.append(
       el('h2', {}, 'Your quotes'),
-      el('p', {}, 'One of these appears at the top of each day. Add passages from writers you love; favourites (★) come first here.'),
+      el('p', {}, 'One of these appears at the top of each day. Give quotes themes to keep them organised; favourites (★) come first.'),
       el('div', { class: 'row' }, el('div', {}, 'Show the quote above my journal'), show),
-      el('div', { class: 'row' }, el('div', {}, 'Choose each day’s quote from'), from),
+      el('div', { class: 'row' }, el('div', {}, 'Each day’s quote and question follow', el('small', {}, 'The Christian year includes Advent, Christmas, Lent, Holy Week and Easter, with dates worked out each year.')), planSel),
+      el('div', { class: 'row', id: 'fromRow' }, el('div', {}, 'Choose each day’s quote from'), from),
       el('h3', {}, 'Add a quote'),
       text,
       el('div', { class: 'q-two' }, author, source),
+      themes.el,
       el('datalist', { id: 'quoteAuthorList' }, ...quoteAuthors().map(a => el('option', { value: a }))),
+      themeList,
       el('div', { class: 'btns', style: 'margin-top:8px' },
         el('button', { type: 'button', class: 'btn-ink', onclick: add }, 'Add quote'),
         el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); pasteQuotes(); } }, 'Paste several…'),
-        el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); importQuotesFile(); } }, 'Import Kindle highlights…')),
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); importQuotesFile(); } }, 'Import from a file…'),
+        el('button', { type: 'button', class: 'btn-link', onclick: exportQuotes }, 'Export')),
       el('h3', {}, 'Your collection'),
-      find, summary, list,
+      find, themeBar, summary, list,
       el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Done')));
     draw();
   });
+}
+
+/** Quotes as plain text in the same layout the importer reads, so they can be edited or shared and brought back. */
+function quotesAsText(list) {
+  return list.map(q => [q.text, '— ' + (q.author || 'Unknown') + (q.source ? `, ${q.source}` : ''), (q.themes || []).length ? 'Themes: ' + q.themes.join(', ') : null]
+    .filter(Boolean).join('\n')).join('\n\n\n') + '\n';
+}
+async function exportQuotes() {
+  try {
+    const r = await api.exportQuotes(quotesAsText(state.quotes));
+    if (r) toast(`Saved ${state.quotes.length} quotes`);
+  } catch (x) { toast(x.message); }
 }
 
 
@@ -1654,22 +1908,52 @@ function renderQuoteView() {
     return;
   }
   const btn = (label, fn, cls = 'btn-plain') => el('button', { type: 'button', class: cls, onclick: fn }, label);
+  const season = seasonOn(iso), prompt = promptFor(iso);
   const earlier = [1, 2, 3, 4, 5, 6].map(n => { const d = dateOf(iso); d.setDate(d.getDate() - n); return isoOf(d); })
     .map(d => ({ d, q: quoteFor(d) })).filter(x => x.q && x.q.id !== q.id);
-  box.replaceChildren(
+  box.replaceChildren(...[
+    season ? el('div', { class: 'season-head' },
+      el('p', { class: 'season-name' }, season.name),
+      el('p', { class: 'season-about' }, `${season.about}. Day ${season.dayIndex + 1} of ${season.length}.`)) : null,
     el('p', { class: 'rv-kicker' }, fmt(iso, { weekday: 'long', day: 'numeric', month: 'long' })),
     el('figure', { class: 'big-quote' },
       el('blockquote', {}, q.text),
-      el('figcaption', {}, '— ' + (q.author || 'Unknown') + (q.source ? ', ' : ''), q.source ? el('cite', {}, q.source) : null)),
+      el('figcaption', {}, '— ' + (q.author || 'Unknown') + (q.source ? ', ' : ''), q.source ? el('cite', {}, q.source) : null),
+      (q.themes || []).length ? el('div', { class: 'q-themes' }, ...q.themes.map(t => el('button', { type: 'button', class: 'theme-chip mini', title: `Show quotes about ${t}`,
+        onclick: () => { quoteThemeFilter = t; manageQuotes(); } }, t))) : null),
+    prompt ? el('div', { class: 'big-prompt' }, el('p', {}, prompt),
+      el('button', { type: 'button', class: 'btn-link', onclick: () => { state.promptSkip[iso] = (state.promptSkip[iso] || 0) + 1; renderQuoteView(); } }, 'Another question')) : null,
     el('div', { class: 'rv-actions center' },
-      btn('Write about this', () => writeAboutQuote(q, iso), 'btn-ink'),
+      btn('Write about this', () => writeAboutQuote(q, iso, prompt), 'btn-ink'),
       state.quotes.length > 1 ? btn('Another', () => { state.quoteSkip[iso] = (state.quoteSkip[iso] || 0) + 1; renderQuoteView(); }) : null,
       btn(q.fav ? '★ Favourite' : '☆ Favourite', async () => { await saveQuotes(state.quotes.map(x => (x.id === q.id ? { ...x, fav: !x.fav } : x))); renderQuoteView(); }),
       btn('Your quotes', () => manageQuotes(), 'btn-link')),
     earlier.length ? el('div', { class: 'earlier' }, el('h3', {}, 'Earlier this week'),
       ...earlier.map(({ d, q: e }) => el('button', { type: 'button', class: 'earlier-item', onclick: () => writeAboutQuote(e, iso), title: 'Write about this today' },
         el('small', {}, fmt(d, { weekday: 'long' })), el('span', {}, e.text.split('\n')[0]), el('em', {}, e.author)))) : null,
-  );
+    seasonYear(iso),
+  ].filter(Boolean));
+}
+
+/** This year's seasons, with dates and how many of your quotes suit each. */
+function seasonYear(iso) {
+  const plan = quotePlan();
+  if (plan === 'off' || !window.WellWriteSeasons) return el('div', { class: 'earlier' }, el('h3', {}, 'The year of themes'),
+    el('p', { class: 'season-note' }, 'Quotes are chosen from your whole collection. Choose the Christian year or monthly themes to have each day’s quote and question follow the seasons.'),
+    el('button', { type: 'button', class: 'btn-plain', onclick: () => manageQuotes() }, 'Choose'));
+  const y = +iso.slice(0, 4);
+  const list = window.WellWriteSeasons.seasonsFor(y, plan);
+  const short = d => fmt(d, { day: 'numeric', month: 'short' });
+  return el('div', { class: 'earlier season-year' },
+    el('h3', {}, plan === 'christian' ? `The Christian year, ${y}` : `Monthly themes, ${y}`),
+    ...list.map(s => {
+      const n = seasonPool(s).length;
+      return el('div', { class: 'season-row' + (s.start <= iso && iso <= s.end ? ' now' : '') },
+        el('small', {}, `${short(s.start)} – ${short(s.end)}`),
+        el('span', {}, el('b', {}, s.name), ` ${s.about}`),
+        el('em', { title: 'Quotes in your collection that suit this season' }, n ? `${n} quotes` : 'no quotes yet'));
+    }),
+    el('p', { class: 'season-note' }, 'Each day’s quote is picked from those whose themes suit the season, best fitting first, without repeats until the season’s quotes run out.'));
 }
 
 /* ---------- formatting toolbar ---------- */

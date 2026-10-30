@@ -25,7 +25,7 @@ let win = null;
 let quitting = false;
 
 const DEFAULT_SETTINGS = {
-  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'quote', quoteFrom: '',
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'quote', quoteFrom: '', quotePlan: 'christian',
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
 };
 const CHOICES = {
@@ -33,6 +33,7 @@ const CHOICES = {
   backupEvery: ['daily', 'weekly', 'close'],
   backupKeep: [5, 10, 30, 0],
   dailyCard: ['quote', 'verse', 'both', 'none'],
+  quotePlan: ['christian', 'spiritual', 'off'],
 };
 
 function readSettings() {
@@ -219,10 +220,19 @@ handle('bible:reading', (plan, day, translation) => bible.reading(plan, day, tra
 handle('bible:verseOfDay', (dayNumber, translation) => bible.verseOfDay(dayNumber, translation));
 handle('quotes:get', () => vault.getQuotes());
 handle('quotes:set', list => vault.setQuotes(list));
+handle('quotes:export', async text => {
+  const r = await dialog.showSaveDialog(win, {
+    title: 'Save your quotes', defaultPath: path.join(app.getPath('documents'), 'WellWrite quotes.txt'),
+    filters: [{ name: 'Text', extensions: ['txt'] }],
+  });
+  if (r.canceled || !r.filePath) return null;
+  fs.writeFileSync(r.filePath, '\uFEFF' + String(text).replace(/\n/g, '\r\n'));
+  return r.filePath;
+});
 // Read a text file the person picks (e.g. Kindle's "My Clippings.txt") so quotes can be imported from it.
 handle('quotes:pickFile', async () => {
   const r = await dialog.showOpenDialog(win, {
-    title: 'Choose your Kindle “My Clippings.txt”, or any text file of quotes', properties: ['openFile'],
+    title: 'Choose a text file of quotes, or your Kindle “My Clippings.txt”', properties: ['openFile'],
     filters: [{ name: 'Text', extensions: ['txt', 'md', 'csv'] }, { name: 'All files', extensions: ['*'] }],
   });
   if (r.canceled || !r.filePaths[0]) return null;

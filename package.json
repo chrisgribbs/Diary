@@ -1,14 +1,14 @@
 {
   "name": "wellwrite",
   "productName": "WellWrite",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "A private, encrypted desktop journal",
   "main": "main.js",
   "author": "Chris Gribble",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node test/vault.test.js && node test/backup.test.js && node test/migrate.test.js && node test/bible.test.js && node test/trust.test.js",
+    "test": "node test/vault.test.js && node test/backup.test.js && node test/migrate.test.js && node test/bible.test.js && node test/trust.test.js && node test/seasons.test.js",
     "assets": "node -e \"const f=require('fs');f.copyFileSync('node_modules/dompurify/dist/purify.min.js','renderer/purify.min.js')\"",
     "dist": "electron-builder --win nsis --x64 --publish never",
     "dist:portable": "electron-builder --win portable --x64 --publish never",

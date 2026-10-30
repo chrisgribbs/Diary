@@ -239,8 +239,22 @@ class Vault {
       out.push({
         id: /^[a-z0-9-]{1,40}$/.test(q.id || '') ? q.id : 'q-' + crypto.randomBytes(5).toString('hex'),
         text, author, source: String(q.source || '').trim().slice(0, 200), fav: !!q.fav,
+        themes: Vault.cleanThemes(q.themes),
       });
       if (out.length >= 5000) break;
+    }
+    return out;
+  }
+
+  /** Theme names: trimmed, first letter capitalised, no duplicates (ignoring case). */
+  static cleanThemes(list) {
+    const out = [];
+    for (const t of Array.isArray(list) ? list : String(list || '').split(',')) {
+      let v = String(t || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+      if (!v) continue;
+      v = v[0].toUpperCase() + v.slice(1);
+      if (!out.some(x => x.toLowerCase() === v.toLowerCase())) out.push(v);
+      if (out.length >= 12) break;
     }
     return out;
   }
@@ -250,7 +264,14 @@ class Vault {
     const meta = this.getMeta();
     if (!meta.quotesSeeded) {
       const { STARTER_QUOTES } = require('./quotes');
-      return this._writeMeta({ quotes: Vault.cleanQuotes([...(meta.quotes || []), ...STARTER_QUOTES]), quotesSeeded: true }).quotes;
+      return this._writeMeta({ quotes: Vault.cleanQuotes([...(meta.quotes || []), ...STARTER_QUOTES]), quotesSeeded: true, startersThemed: true }).quotes;
+    }
+    if (!meta.startersThemed) {
+      // Journals started before themes existed: give the starter quotes their themes once.
+      const { STARTER_QUOTES } = require('./quotes');
+      const byText = new Map(STARTER_QUOTES.map(q => [q.text, q.themes]));
+      const quotes = (meta.quotes || []).map(q => byText.has(q.text) && !(q.themes || []).length ? { ...q, themes: byText.get(q.text) } : q);
+      return this._writeMeta({ quotes: Vault.cleanQuotes(quotes), startersThemed: true }).quotes;
     }
     return meta.quotes || [];
   }

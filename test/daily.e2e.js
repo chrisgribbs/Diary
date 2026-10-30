@@ -94,10 +94,53 @@ app.whenReady().then(async () => {
 
   const pasted = await js(`return parsePastedQuotes(${JSON.stringify('First line of one.\nSecond line.\n— Ann Writer, Some Book\n\n"A one-liner." — Bob Poet\n\nNo attribution here.')}, 'Default Name', 'Default Book')`);
   assert.deepEqual(pasted, [
-    { text: 'First line of one.\nSecond line.', author: 'Ann Writer', source: 'Some Book' },
-    { text: 'A one-liner.', author: 'Bob Poet', source: '' },
-    { text: 'No attribution here.', author: 'Default Name', source: 'Default Book' },
+    { text: 'First line of one.\nSecond line.', author: 'Ann Writer', source: 'Some Book', themes: [] },
+    { text: 'A one-liner.', author: 'Bob Poet', source: '', themes: [] },
+    { text: 'No attribution here.', author: 'Default Name', source: 'Default Book', themes: [] },
   ]);
+
+  // A Goodreads page copied from the browser (both of its layouts), poems with stanzas, dashes inside sentences, themes
+  const goodreads = [
+    'Ann Writer > Quotes', ' ', '(?)', 'Showing 1-30 of 99',
+    '“First stanza line,', 'second line.', '', 'Second stanza — with a dash inside — and more.”',
+    '― Ann B. Writer, Long Book: A Subtitle That Goes On and On and On', 'tags: life, love12 likes', 'Like',
+    '“Short one.”', '― Ann Writer', '7 likes', 'Like',
+    '', 'A newer-layout quote,', 'over two lines.', '— Ann Writer', ',', 'Another Book: With Subtitle', '45 likes', '', '',
+    'Mine, with themes.', '— Me, Notebook', 'Themes: Hope, true self', '',
+  ].join('\n');
+  const gr = await js(`return parsePastedQuotes(${JSON.stringify(goodreads)})`);
+  assert.deepEqual(gr, [
+    { text: 'First stanza line,\nsecond line.\n\nSecond stanza — with a dash inside — and more.', author: 'Ann B. Writer', source: 'Long Book', themes: [] },
+    { text: 'Short one.', author: 'Ann B. Writer', source: '', themes: [] },
+    { text: 'A newer-layout quote,\nover two lines.', author: 'Ann B. Writer', source: 'Another Book: With Subtitle', themes: [] },
+    { text: 'Mine, with themes.', author: 'Me', source: 'Notebook', themes: ['Hope', 'true self'] },
+  ], 'Goodreads paste: clutter skipped, stanzas kept, long subtitle trimmed, one name per writer');
+  // cut-short quotes go back to a full sentence; edition labels dropped
+  const cut = await js(`return parsePastedQuotes(${JSON.stringify('A first full sentence here. A second one that is long enough to matter. Then it stops mid wo...\n— Ann Writer\n,\nGood Book - Revised edition: The Long Subtitle of the Good Book Goes Here\n9 likes')})`);
+  assert.equal(cut[0].text, 'A first full sentence here. A second one that is long enough to matter. …');
+  assert.equal(cut[0].source, 'Good Book');
+  assert.equal(await js(`return trimCutShort('Short line\\nanother line\\nand a broken wo...')`), 'Short line\nanother line …');
+  assert.equal(await js(`return trimCutShort('A whole quote that ends properly.')`), 'A whole quote that ends properly.');
+
+  // Goodreads copied as Markdown: links, bullets, series labels, several spellings of one name
+  const md = ['* Some saying here.', '[— St. Ann Writer](https://example.org/a)', '[8,519 likes](https://example.org/q)',
+    '* Another saying, with a comma.', '[— Ann Writer of Somewhere](https://example.org/a),[Big Book (The Series, #21)](https://example.org/b)', '[2,216 likes](https://example.org/q2)'].join('\n');
+  const mdq = await js(`return parsePastedQuotes(${JSON.stringify(md)})`);
+  assert.deepEqual(mdq.map(q => [q.text, q.author, q.source]), [['Some saying here.', 'Ann Writer of Somewhere', ''], ['Another saying, with a comma.', 'Ann Writer of Somewhere', 'Big Book']]);
+
+  // export and import again: identical
+  const round = await js(`return parsePastedQuotes(quotesAsText(${JSON.stringify(gr)}))`);
+  assert.deepEqual(round, gr, 'export → import round trip');
+
+  // theme suggestions learn from themed quotes
+  await js(`await saveQuotes([...state.quotes,
+    { text: 'Listen for your calling and the work your life is asking of you.', author: 'T', themes: ['Vocation'] },
+    { text: 'Your vocation is where your deep gladness meets the work in front of you.', author: 'T', themes: ['Vocation'] },
+    { text: 'Grief and loss come like winter; the dark teaches patience.', author: 'T', themes: ['Darkness'] },
+    { text: 'In the long dark of grief we learn to wait.', author: 'T', themes: ['Darkness'] }]);`);
+  assert.equal((await js(`return suggestThemes('What work is my life calling me toward?')`))[0], 'Vocation');
+  assert.equal((await js(`return suggestThemes('The winter of grief was long and dark.')`))[0], 'Darkness');
+  assert.deepEqual(await js(`return suggestThemes('Bananas are yellow.')`), []);
   const kindle = [
     'Anam Cara (O\'Donohue, John)', '- Your Highlight on page 12 | location 180-182 | Added on Monday, 3 March 2025 7:10:00 AM', '', 'A short highlight.', '==========',
     'Anam Cara (O\'Donohue, John)', '- Your Highlight on page 12 | location 180-185 | Added on Monday, 3 March 2025 7:11:00 AM', '', 'A short highlight. Made longer later.', '==========',
@@ -114,6 +157,33 @@ app.whenReady().then(async () => {
   await js(`document.querySelector('#dlgForm').requestSubmit();`); await wait(900);
   assert(await js(`return state.quotes.some(q => q.author === "John O'Donohue" && q.source === 'Anam Cara')`));
   await js(`document.querySelector('#dlg').close();`);
+
+  // --- the year of themes (on by default: the Christian year)
+  await js(`document.querySelector('.modeswitch [data-mode=quote]').click();`); await wait(400);
+  const today = await js(`return todayISO()`);
+  const season = await js(`return seasonOn(todayISO())`);
+  assert.ok(season && season.name, 'a season today');
+  assert.match(await text('#quoteView .season-name'), new RegExp(season.name));
+  assert.ok((await text('#quoteView .big-prompt p')).length > 10, 'a writing question');
+  const sq = await js(`return quoteFor(todayISO()).text`);
+  assert.ok(await js(`return seasonPool(seasonOn(todayISO())).some(q => q.text === ${JSON.stringify(sq)})`) || await js(`return seasonPool(seasonOn(todayISO())).length < 3`), 'quote suits the season');
+  // a week of Lent: quotes don't repeat, and they carry a Lent theme
+  const lent = await js(`const out = []; for (let d = 0; d < 7; d++) { const iso = '2027-02-1' + d; out.push(quoteFor(iso)); } return out.map(q => [q.text, q.themes]);`);
+  assert.equal(new Set(lent.map(x => x[0])).size, lent.length, 'no repeats within a week');
+  const lentThemes = await js(`return window.WellWriteSeasons.SEASONS.lent.themes`);
+  for (const [, th] of lent) assert.ok(th.some(t => lentThemes.includes(t)), 'Lent quote has a Lent theme');
+  // Another question changes the question
+  const p1 = await text('#quoteView .big-prompt p');
+  await js(`document.querySelector('#quoteView .big-prompt .btn-link').click();`); await wait(200);
+  assert.notEqual(await text('#quoteView .big-prompt p'), p1);
+  assert.ok(await js(`return document.querySelectorAll('#quoteView .season-row').length >= 12`), 'year of themes listed');
+  await shot('d8-season-quote');
+  await js(`await updateSetting({ quotePlan: 'spiritual' }); renderQuoteView();`); await wait(300);
+  assert.equal(await js(`return document.querySelectorAll('#quoteView .season-row').length`), 12);
+  await shot('d9-monthly-themes');
+  await js(`await updateSetting({ quotePlan: 'off' }); renderQuoteView();`); await wait(300);
+  assert.equal(await js(`return document.querySelectorAll('#quoteView .season-name').length`), 0);
+  void today;
 
   // only one writer's quotes
   await updateFrom(js, "author:John O'Donohue");
