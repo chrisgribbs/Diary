@@ -73,5 +73,44 @@ assert(fs.readFileSync(out, 'utf8').includes('silver'));
 v.remove(m1.id); assert.equal(v.list().length, 2);
 assert.throws(() => v.get('../../etc'), /Bad entry id/);
 
+// ---------- categories & links ----------
+{
+  const dir = path.join(tmp, 'links');
+  const j = new Vault(dir); j.create('pass-word');
+  assert.deepEqual(j.getMeta().categories, []);
+  j.setCategories([{ id: 'c-work', name: '  Work ', color: '#2f7d7a' }, { id: 'bad id!', name: 'x' }, { id: 'c-home', name: 'Home', color: 'red' }]);
+  assert.deepEqual(j.getMeta().categories, [{ id: 'c-work', name: 'Work', color: '#2f7d7a' }, { id: 'c-home', name: 'Home', color: '#6a7080' }], 'cleaned');
+  assert(!fs.readFileSync(path.join(dir, 'meta.enc')).includes('Work'), 'category names encrypted');
+  const a = j.save({ date: '2026-10-01', title: 'A', category: 'c-work', html: '<p>x</p>', text: 'x' });
+  const b = j.save({ date: '2026-10-02', title: 'B', category: 'c-work', html: `<p>see <a href="wellwrite:entry/${a.id}">A</a> and <a href="wellwrite:entry/${a.id}">A again</a></p>`, text: 'see A' });
+  assert.equal(a.category, 'c-work');
+  assert.deepEqual(b.links, [a.id], 'links found, de-duplicated');
+  assert.equal(j.save({ date: '2026-10-03', title: 'C', category: '../evil', html: '', text: '' }).category, '', 'bad category ignored');
+  const before = j.get(b.id).updated;
+  assert.equal(j.recategorize('c-work', 'c-home'), 2);
+  assert.equal(j.get(b.id).category, 'c-home');
+  assert.equal(j.get(b.id).updated, before, 'moving category keeps edit time');
+
+  // backups carry categories; fresh restore and merge import both bring them
+  const bk = path.join(tmp, 'links.wellwrite');
+  j.exportBackup(bk);
+  const r = new Vault(path.join(tmp, 'links-restored'));
+  r.restoreFresh(bk, 'pass-word');
+  assert.deepEqual(r.getMeta().categories.map(c => c.id), ['c-work', 'c-home']);
+  assert.deepEqual(r.list().find(m => m.title === 'B').links, [a.id]);
+  const other = new Vault(path.join(tmp, 'links-other')); other.create('second-pass');
+  other.setCategories([{ id: 'c-home', name: 'My home', color: '#a23b56' }]);
+  other.importBackup(bk, 'pass-word');
+  assert.deepEqual(other.getMeta().categories.map(c => c.name), ['My home', 'Work'], 'merge keeps own names, adds new ones');
+
+  // journals from before categories/links: index is rebuilt with the new fields
+  const idx = path.join(dir, 'index.enc');
+  const { _internal } = require('../src/vault');
+  const old = JSON.parse(_internal.open(j.key, fs.readFileSync(idx)).toString()).map(({ links, category, ...m }) => m);
+  fs.writeFileSync(idx, _internal.seal(j.key, Buffer.from(JSON.stringify(old))));
+  j.lock(); assert(j.unlock('pass-word'));
+  assert.deepEqual(j.list().find(m => m.title === 'B').links, [a.id], 'old index upgraded');
+}
+
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`vault tests passed in ${Date.now() - t0} ms`);

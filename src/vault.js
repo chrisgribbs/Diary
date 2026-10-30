@@ -18,6 +18,10 @@ const MAGIC = Buffer.from('DBK1');
 const KDF = { N: 1 << 17, r: 8, p: 1, keyLen: 32 };
 const MAXMEM = 512 * 1024 * 1024;
 const ID_RE = /^[a-z0-9-]{8,64}$/;
+const CAT_ID_RE = /^[a-z0-9-]{1,40}$/;
+const LINK_RE = /href="wellwrite:entry\/([a-z0-9-]{8,64})"/g;
+// Category colours (chosen to read on both the paper and the dark theme).
+const CATEGORY_COLORS = ['#a23b56', '#2f7d7a', '#b7862c', '#4f6aa8', '#6b7d3a', '#7a4f8f', '#b0563a', '#6a7080'];
 
 function deriveKey(password, salt, kdf = KDF) {
   return crypto.scryptSync(String(password).normalize('NFKC'), salt, kdf.keyLen || 32, {
@@ -76,6 +80,7 @@ class Vault {
     this.entriesDir = path.join(dir, 'entries');
     this.vaultFile = path.join(dir, 'vault.json');
     this.indexFile = path.join(dir, 'index.enc');
+    this.metaFile = path.join(dir, 'meta.enc'); // categories (encrypted: names can be personal)
     this.key = null;
     this.index = null; // Map id -> meta
   }
@@ -133,7 +138,8 @@ class Vault {
     const files = fs.existsSync(this.entriesDir)
       ? fs.readdirSync(this.entriesDir).filter(f => f.endsWith('.enc')).map(f => f.slice(0, -4))
       : [];
-    if (!this.index || files.length !== this.index.size || files.some(id => !this.index.has(id))) {
+    // Rebuild if out of step with the entry files, or written before categories/links existed.
+    if (!this.index || files.length !== this.index.size || files.some(id => !this.index.has(id)) || [...this.index.values()].some(m => !('links' in m))) {
       this._rebuildIndex(files);
     }
   }
@@ -154,10 +160,51 @@ class Vault {
     const text = String(e.text || '');
     return {
       id: e.id, date: e.date, time: e.time || '', title: e.title || '', tags: e.tags || [],
+      category: e.category || '', links: Vault.linksIn(e.html, e.id),
       text, words: (text.match(/\S+/g) || []).length,
       images: (String(e.html || '').match(/<img\b/gi) || []).length,
       created: e.created, updated: e.updated,
     };
+  }
+
+  /** Ids of the entries an entry's text links to. */
+  static linksIn(html, selfId) {
+    const out = new Set();
+    for (const m of String(html || '').matchAll(LINK_RE)) if (m[1] !== selfId) out.add(m[1]);
+    return [...out];
+  }
+
+  // ---------- categories ----------
+  getMeta() {
+    this._requireKey();
+    try { return JSON.parse(open(this.key, fs.readFileSync(this.metaFile)).toString('utf8')); }
+    catch { return { categories: [] }; }
+  }
+
+  static cleanCategories(list) {
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).filter(c => c && CAT_ID_RE.test(c.id) && !seen.has(c.id) && seen.add(c.id))
+      .map(c => ({ id: c.id, name: String(c.name || '').trim().slice(0, 40) || 'Untitled', color: CATEGORY_COLORS.includes(c.color) ? c.color : CATEGORY_COLORS[7] }))
+      .slice(0, 60);
+  }
+
+  setCategories(list) {
+    this._requireKey();
+    const meta = { ...this.getMeta(), categories: Vault.cleanCategories(list) };
+    writeAtomic(this.metaFile, seal(this.key, Buffer.from(JSON.stringify(meta))));
+    return meta;
+  }
+
+  /** Move every entry in one category to another ('' = none). Keeps their "last edited" time. */
+  recategorize(fromId, toId = '') {
+    this._requireKey();
+    let n = 0;
+    for (const m of [...this.index.values()]) {
+      if (m.category !== fromId) continue;
+      this.save({ ...this._readEntry(m.id), category: toId, keepUpdated: true });
+      n++;
+    }
+    return n;
   }
 
   // ---------- entries ----------
@@ -186,6 +233,7 @@ class Vault {
       time: String(input.time || '').slice(0, 5),
       title: String(input.title || '').slice(0, 300),
       tags,
+      category: CAT_ID_RE.test(input.category || '') ? input.category : '',
       html: String(input.html || ''),
       text: String(input.text || ''),
       created: prev ? prev.created : (input.created || now),
@@ -221,6 +269,7 @@ class Vault {
     const data = {
       app: 'WellWrite', format: 1, exported: new Date().toISOString(),
       vault: JSON.parse(fs.readFileSync(this.vaultFile, 'utf8')),
+      meta: fs.existsSync(this.metaFile) ? fs.readFileSync(this.metaFile).toString('base64') : undefined,
       entries,
     };
     writeAtomic(file, JSON.stringify(data));
@@ -243,6 +292,13 @@ class Vault {
     const { data, key } = Vault.readBackup(file, password);
     let added = 0, updated = 0;
     try {
+      if (data.meta) {
+        // Bring across categories this journal doesn't have yet.
+        const theirs = JSON.parse(open(key, Buffer.from(data.meta, 'base64')).toString('utf8')).categories || [];
+        const mine = this.getMeta().categories;
+        const extra = theirs.filter(c => !mine.some(x => x.id === c.id));
+        if (extra.length) this.setCategories([...mine, ...extra]);
+      }
       for (const [id, b64] of Object.entries(data.entries)) {
         if (!ID_RE.test(id)) continue;
         const e = JSON.parse(open(key, Buffer.from(b64, 'base64')).toString('utf8'));
@@ -264,6 +320,7 @@ class Vault {
     for (const [id, b64] of Object.entries(data.entries)) {
       if (ID_RE.test(id)) writeAtomic(this._entryFile(id), Buffer.from(b64, 'base64'));
     }
+    if (data.meta) writeAtomic(this.metaFile, Buffer.from(data.meta, 'base64'));
     this.key = key;
     this._rebuildIndex(Object.keys(data.entries).filter(id => ID_RE.test(id)));
     return this.index.size;
@@ -274,22 +331,25 @@ class Vault {
     this._requireKey();
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const list = this.list().sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    const cats = new Map(this.getMeta().categories.map(c => [c.id, c]));
     const body = list.map(m => {
       const e = this._readEntry(m.id);
       const d = new Date(e.date + 'T00:00:00');
       const when = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + (e.time ? ', ' + e.time : '');
-      return `<article><p class="d">${esc(when)}</p>${e.title ? `<h2>${esc(e.title)}</h2>` : ''}` +
-        `${e.tags.length ? `<p class="t">${e.tags.map(t => '#' + esc(t)).join(' ')}</p>` : ''}<div>${sanitize(e.html)}</div></article>`;
+      const cat = cats.get(e.category);
+      const html = sanitize(e.html).replace(/<a href="wellwrite:entry\/[^"]*"[^>]*>([\s\S]*?)<\/a>/g, '<span class="x">$1</span>');
+      return `<article><p class="d">${esc(when)}${cat ? ` <span class="c" style="color:${cat.color}">${esc(cat.name)}</span>` : ''}</p>${e.title ? `<h2>${esc(e.title)}</h2>` : ''}` +
+        `${e.tags.length ? `<p class="t">${e.tags.map(t => '#' + esc(t)).join(' ')}</p>` : ''}<div>${html}</div></article>`;
     }).join('\n');
     const html = `<!doctype html><meta charset="utf-8"><title>WellWrite journal</title><style>
 body{font:17px/1.65 Georgia,serif;max-width:42em;margin:3em auto;padding:0 1.2em;color:#222}
 article{page-break-after:always;border-bottom:1px solid #ccc;padding-bottom:2em;margin-bottom:2em}
 .d{color:#666;font-style:italic;margin:0}.t{color:#666;font-size:.9em}img{max-width:100%;height:auto}
-blockquote{border-left:3px solid #ccc;margin-left:0;padding-left:1em;color:#555}</style>
+blockquote{border-left:3px solid #ccc;margin-left:0;padding-left:1em;color:#555}.c{font-style:normal;font-weight:bold;margin-left:.6em}.x{text-decoration:underline dotted}</style>
 <h1>Journal</h1><p>${list.length} entries, exported ${esc(new Date().toLocaleString())}</p>${body}`;
     writeAtomic(file, html);
     return list.length;
   }
 }
 
-module.exports = { Vault, _internal: { seal, open, deriveKey } };
+module.exports = { Vault, CATEGORY_COLORS, _internal: { seal, open, deriveKey } };

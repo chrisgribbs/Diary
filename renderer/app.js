@@ -37,6 +37,8 @@ const ICON = {
   hr: '<svg viewBox="0 0 20 20"><circle cx="5" cy="10" r=".9" fill="currentColor"/><circle cx="10" cy="10" r=".9" fill="currentColor"/><circle cx="15" cy="10" r=".9" fill="currentColor"/></svg>',
   clear: '<svg viewBox="0 0 20 20"><path d="M5 5h10M10 5l-2.5 11M4 16l12-12"/></svg>',
   photo: '<svg viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="1.5"/><circle cx="7.5" cy="8.5" r="1.4"/><path d="M3.5 14.5l4-4 3 3 2-2 4 4"/></svg>',
+  xref: '<svg viewBox="0 0 20 20"><path d="M3.5 3.5h6v8h-6zM10.5 8.5h6v8h-6z"/><path d="M9.5 6h2.5a2 2 0 0 1 2 2v.5M10.5 14H8a2 2 0 0 1-2-2v-.5"/></svg>',
+  back: '<svg viewBox="0 0 20 20"><path d="M11 5l-5 5 5 5"/></svg>',
 };
 
 /* ---------- state ---------- */
@@ -48,6 +50,9 @@ const state = {
   selectedDay: null,
   query: '',
   tag: null,
+  category: null,       // category filter (id, or '' for "no category")
+  categories: [],       // [{ id, name, color }]
+  trail: [],            // entries visited by following links, for "Back"
   settings: { autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true },
   lastActivity: Date.now(),
   unlocked: false,
@@ -59,10 +64,12 @@ const ALLOWED = {
   ALLOWED_TAGS: ['p', 'div', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'strike', 'del', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'li', 'hr', 'a', 'img', 'mark', 'sub', 'sup', 'code', 'pre', 'span'],
   ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
   ALLOW_DATA_ATTR: false,
+  // Web links, email, and links to other entries. (Photos are data: images, which DOMPurify allows on <img>.)
+  ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|wellwrite:entry\/)/i,
 };
 DOMPurify.addHook('afterSanitizeAttributes', node => {
   if (node.tagName === 'IMG' && !/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(node.getAttribute('src') || '')) node.remove();
-  if (node.tagName === 'A' && !/^(https?:|mailto:)/i.test(node.getAttribute('href') || '')) node.removeAttribute('href');
+  if (node.tagName === 'A' && !/^(https?:|mailto:|wellwrite:entry\/[a-z0-9-]{8,64}$)/i.test(node.getAttribute('href') || '')) node.removeAttribute('href');
 });
 const clean = html => DOMPurify.sanitize(html, ALLOWED);
 function cleanPaste(html) {
@@ -228,7 +235,8 @@ async function enterApp() {
   state.unlocked = true;
   state.lastActivity = Date.now();
   state.metas = await api.list();
-  state.selectedDay = null; state.query = ''; state.tag = null; $('#search').value = '';
+  try { state.categories = await api.getCategories(); } catch { state.categories = []; }
+  state.selectedDay = null; state.query = ''; state.tag = null; state.category = null; state.trail = []; $('#search').value = '';
   const d = new Date(); state.viewMonth = new Date(d.getFullYear(), d.getMonth(), 1);
   $('#lock').hidden = true;
   $('#app').hidden = false;
@@ -244,7 +252,8 @@ async function lockNow() {
   state.unlocked = false;
   try { await api.lock(); } catch {}
   // Wipe everything readable from the page.
-  state.metas = []; state.current = null;
+  state.metas = []; state.current = null; state.categories = []; state.trail = [];
+  closePopover();
   $('#body').innerHTML = ''; $('#title').value = ''; $('#tagChips').replaceChildren();
   $('#list').replaceChildren(); $('#calGrid').replaceChildren(); $('#search').value = '';
   if ($('#dlg').open) $('#dlg').close();
@@ -259,8 +268,10 @@ const sorted = list => [...list].sort((a, b) => (b.date + b.time + b.created).lo
 function matches(m) {
   if (state.selectedDay && m.date !== state.selectedDay) return false;
   if (state.tag && !m.tags.includes(state.tag)) return false;
+  if (state.category != null && (catById(m.category) ? m.category : '') !== state.category) return false;
   if (state.query) {
-    const hay = (m.title + ' ' + m.tags.map(t => '#' + t).join(' ') + ' ' + m.text).toLowerCase();
+    const cat = catById(m.category);
+    const hay = (m.title + ' ' + m.tags.map(t => '#' + t).join(' ') + ' ' + (cat ? cat.name : '') + ' ' + m.text).toLowerCase();
     return terms().every(t => hay.includes(t));
   }
   return true;
@@ -302,7 +313,7 @@ function renderList() {
         box.append(`Nothing written on ${when}. `);
         box.append(el('button', { class: 'btn-link', style: 'color:var(--foil)', onclick: () => newEntry(state.selectedDay).then(renderList) }, 'Write an entry for this day'));
       }
-    } else if (state.query || state.tag) box.textContent = 'No entries match. Try fewer words, or clear the filter.';
+    } else if (state.query || state.tag || state.category != null) box.textContent = 'No entries match. Try fewer words, or clear the filter.';
     else box.textContent = 'Your entries will appear here.';
     list.append(box);
     return;
@@ -314,11 +325,15 @@ function renderList() {
     if (mk !== month) { month = mk; list.append(el('div', { class: 'list-month' }, fmt(m.date, { month: 'long', year: 'numeric' }))); }
     const title = el('div', { class: 'item-title' + (m.title ? '' : ' untitled') });
     title.innerHTML = m.title ? highlight(m.title) : 'Untitled';
+    const cat = catById(m.category);
+    if (cat) title.prepend(el('span', { class: 'dot', style: `background:${cat.color}`, title: cat.name }));
     const ex = el('div', { class: 'item-ex' }); ex.innerHTML = excerpt(m);
     const meta = el('div', { class: 'item-meta' });
     if (m.time) meta.append(el('span', {}, m.time));
     if (m.images) { const s = el('span'); s.innerHTML = ICON.photo + ' ' + m.images; meta.append(s); }
     if (m.tags.length) meta.append(el('span', {}, m.tags.slice(0, 3).map(t => '#' + t).join(' ')));
+    const links = (m.links || []).length + state.metas.filter(x => x.links && x.links.includes(m.id)).length;
+    if (links) { const s = el('span', { title: 'Connected entries' }); s.innerHTML = ICON.xref + ' ' + links; meta.append(s); }
     list.append(el('button', {
       class: 'item' + (state.current && state.current.id === m.id ? ' active' : ''),
       'data-id': m.id, onclick: () => openEntry(m.id),
@@ -343,13 +358,14 @@ function renderFilterNote() {
   const note = $('#filterNote');
   const parts = [];
   if (state.selectedDay) parts.push(fmt(state.selectedDay, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+  if (state.category != null) parts.push(state.category ? (catById(state.category) || {}).name : 'no category');
   if (state.tag) parts.push('#' + state.tag);
   if (state.query) parts.push(`“${state.query}”`);
   if (!parts.length) { note.hidden = true; return; }
   const n = state.metas.filter(matches).length;
   note.hidden = false;
   note.replaceChildren(el('span', {}, `${plainEntries(n)} for ${parts.join(', ')}`),
-    el('button', { onclick: () => { state.selectedDay = null; state.tag = null; state.query = ''; $('#search').value = ''; renderSidebar(); } }, 'Show all'));
+    el('button', { onclick: () => { state.selectedDay = null; state.tag = null; state.category = null; state.query = ''; $('#search').value = ''; renderSidebar(); } }, 'Show all'));
 }
 
 function streak() {
@@ -439,7 +455,7 @@ $('#calPrev').onclick = () => { state.viewMonth.setMonth(state.viewMonth.getMont
 $('#calNext').onclick = () => { state.viewMonth.setMonth(state.viewMonth.getMonth() + 1); renderCalendar(); };
 $('#calTitle').onclick = () => { const d = new Date(); state.viewMonth = new Date(d.getFullYear(), d.getMonth(), 1); renderCalendar(); };
 
-function renderSidebar() { renderCalendar(); renderOnThisDay(); renderTags(); renderFilterNote(); renderList(); renderStats(); renderBackupCard(); }
+function renderSidebar() { renderCalendar(); renderOnThisDay(); renderCategoryBar(); renderTags(); renderFilterNote(); renderList(); renderStats(); renderBackupCard(); }
 
 let searchTimer;
 $('#search').addEventListener('input', e => {
@@ -484,19 +500,24 @@ function renderStamp() {
 
 function renderChips() {
   const c = state.current;
-  $('#tagChips').replaceChildren(...c.tags.map(t => el('span', { class: 'chip' }, t,
+  $('#tagChips').replaceChildren(...c.tags.map(t => el('span', { class: 'chip' },
+    el('button', { type: 'button', class: 'chip-name', title: `Show every entry tagged #${t}`, onclick: () => { state.tag = t; state.selectedDay = null; renderSidebar(); } }, t),
     el('button', { type: 'button', 'aria-label': `Remove tag ${t}`, onclick: () => { c.tags = c.tags.filter(x => x !== t); renderChips(); markDirty(); } }, '×'))));
 }
 
-async function openEntry(id) {
+async function openEntry(id, { via } = {}) {
   if (state.current && state.current.id === id) { showSheet(); return; }
+  const from = state.current && state.current.saved ? state.current.id : null;
   await saveNow();
   let e;
   try { e = await api.get(id); } catch (x) { toast('This entry could not be opened: ' + x.message); return; }
-  state.current = { id: e.id, date: e.date, time: e.time, title: e.title, tags: [...e.tags], saved: true };
+  if (via === 'link' && from) state.trail.push(from);
+  else if (via !== 'back') state.trail = [];
+  state.current = { id: e.id, date: e.date, time: e.time, title: e.title, tags: [...e.tags], category: e.category || '', saved: true };
   titleIn.value = e.title;
   body.innerHTML = clean(e.html);
-  renderStamp(); renderChips(); showSheet(); updateCounts();
+  decorateLinks();
+  renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink();
   $('#saveState').textContent = 'Saved';
   $('#sheetScroll').scrollTop = 0;
   const d = dateOf(e.date);
@@ -508,9 +529,10 @@ async function openEntry(id) {
 
 async function newEntry(date = todayISO()) {
   await saveNow();
-  state.current = { id: crypto.randomUUID(), date, time: date === todayISO() ? nowTime() : '', title: '', tags: [], saved: false };
+  state.current = { id: crypto.randomUUID(), date, time: date === todayISO() ? nowTime() : '', title: '', tags: [], category: catById(state.category) ? state.category : '', saved: false };
+  state.trail = [];
   titleIn.value = ''; body.innerHTML = '';
-  renderStamp(); renderChips(); showSheet(); updateCounts();
+  renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink();
   $('#saveState').textContent = 'Not saved yet';
   document.querySelectorAll('#list .item.active').forEach(n => n.classList.remove('active'));
   body.focus();
@@ -536,7 +558,7 @@ function saveNow() {
   if (!c.saved && isBlank()) { state.dirty = false; return saving; }
   state.dirty = false;
   const snap = {
-    id: c.id, date: c.date, time: c.time, title: titleIn.value.trim(), tags: c.tags,
+    id: c.id, date: c.date, time: c.time, title: titleIn.value.trim(), tags: c.tags, category: c.category,
     html: clean(body.innerHTML), text: body.innerText,
   };
   saving = saving.then(() => api.save(snap)).then(meta => {
@@ -545,6 +567,7 @@ function saveNow() {
     if (i >= 0) state.metas[i] = meta; else state.metas.push(meta);
     if (state.current === c && !state.dirty) $('#saveState').textContent = 'Saved';
     renderSidebar();
+    if (state.current === c) renderConnections();
   }).catch(err => {
     state.dirty = true;
     $('#saveState').textContent = 'Not saved: ' + err.message;
@@ -604,6 +627,326 @@ $('#deleteBtn').onclick = async () => {
   showEmpty(); renderSidebar(); toast('Entry deleted');
 };
 
+
+/* ---------- categories, entry links & connections ---------- */
+const CAT_COLORS = ['#a23b56', '#2f7d7a', '#b7862c', '#4f6aa8', '#6b7d3a', '#7a4f8f', '#b0563a', '#6a7080'];
+const catById = id => (id ? state.categories.find(c => c.id === id) : null) || null;
+const metaById = id => state.metas.find(m => m.id === id);
+const entryLabel = m => (m ? m.title || `Untitled, ${fmt(m.date, { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Deleted entry');
+
+// --- popover (category menu, link picker)
+let popClose = null;
+function showPopover(rect, build, onClose) {
+  closePopover();
+  const pop = $('#popover');
+  pop.replaceChildren(); pop.hidden = false;
+  build(pop);
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  const x = Math.max(12, Math.min(rect.left, innerWidth - w - 12));
+  let y = rect.bottom + 6;
+  if (y + h > innerHeight - 12) y = Math.max(12, rect.top - h - 6);
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+  const outside = e => { if (!pop.contains(e.target)) closePopover(); };
+  const esc = e => { if (e.key === 'Escape') { e.stopPropagation(); closePopover(); } };
+  setTimeout(() => document.addEventListener('mousedown', outside, true));
+  pop.addEventListener('keydown', esc);
+  popClose = () => {
+    document.removeEventListener('mousedown', outside, true);
+    pop.removeEventListener('keydown', esc);
+    pop.hidden = true; pop.replaceChildren();
+    if (onClose) onClose();
+  };
+}
+function closePopover() { if (popClose) { const f = popClose; popClose = null; f(); } }
+
+// --- categories
+async function saveCategories(list) {
+  try { state.categories = await api.setCategories(list); }
+  catch (x) { toast(x.message); }
+  renderSidebar();
+  if (state.current) renderCategoryPill();
+}
+
+function newCategory(name) {
+  name = String(name || '').trim().slice(0, 40);
+  if (!name) return null;
+  const existing = state.categories.find(c => c.name.toLowerCase() === name.toLowerCase());
+  if (existing) return existing;
+  const used = state.categories.map(c => c.color);
+  const color = CAT_COLORS.find(c => !used.includes(c)) || CAT_COLORS[state.categories.length % CAT_COLORS.length];
+  return { id: 'c-' + crypto.randomUUID().slice(0, 8), name, color };
+}
+
+function renderCategoryPill() {
+  const pill = $('#catPill'), c = state.current;
+  if (!pill || !c) return;
+  const cat = catById(c.category);
+  pill.classList.toggle('is-empty', !cat);
+  pill.replaceChildren(el('span', { class: 'dot', style: cat ? `background:${cat.color}` : '' }), cat ? cat.name : 'Add a category');
+}
+
+function setEntryCategory(id) {
+  if (!state.current) return;
+  state.current.category = id || '';
+  renderCategoryPill(); markDirty();
+}
+
+$('#catPill').addEventListener('click', () => {
+  const c = state.current; if (!c) return;
+  showPopover($('#catPill').getBoundingClientRect(), pop => {
+    pop.classList.add('menu');
+    const opt = (cat, label) => el('button', {
+      type: 'button', class: 'menu-item' + ((cat ? cat.id : '') === (catById(c.category) ? c.category : '') ? ' on' : ''),
+      onclick: () => { setEntryCategory(cat ? cat.id : ''); closePopover(); },
+    }, el('span', { class: 'dot', style: cat ? `background:${cat.color}` : '' }), label);
+    pop.append(...state.categories.map(cat => opt(cat, cat.name)));
+    if (state.categories.length) pop.append(opt(null, 'No category'), el('hr'));
+    const input = el('input', { class: 'pop-search', placeholder: state.categories.length ? 'New category' : 'Name your first category', maxlength: '40' });
+    const add = async name => {
+      const cat = newCategory(name); if (!cat) return;
+      if (!state.categories.some(x => x.id === cat.id)) await saveCategories([...state.categories, cat]);
+      setEntryCategory(cat.id); closePopover();
+    };
+    input.addEventListener('keydown', e => { if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); add(input.value); } });
+    pop.append(input);
+    if (!state.categories.length) {
+      pop.append(el('div', { class: 'menu-suggest' }, 'Or pick one: ',
+        ...['Personal', 'Work', 'Health', 'Family', 'Ideas'].map(n => el('button', { type: 'button', class: 'btn-link', onclick: () => add(n) }, n))));
+    } else {
+      pop.append(el('button', { type: 'button', class: 'menu-item subtle', onclick: () => { closePopover(); manageCategories(); } }, 'Edit categories…'));
+    }
+    setTimeout(() => input.focus());
+  });
+});
+
+function renderCategoryBar() {
+  const bar = $('#catbar');
+  if (!state.categories.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const count = id => state.metas.filter(m => (catById(m.category) ? m.category : '') === id).length;
+  const chip = (id, name, color) => el('button', {
+    class: 'cat-chip' + (state.category === id ? ' on' : ''), title: plainEntries(count(id)),
+    onclick: () => { state.category = state.category === id ? null : id; renderSidebar(); },
+  }, el('span', { class: 'dot', style: color ? `background:${color}` : '' }), name);
+  bar.replaceChildren(...state.categories.map(c => chip(c.id, c.name, c.color)),
+    el('button', { class: 'cat-edit', title: 'Edit categories', 'aria-label': 'Edit categories', onclick: manageCategories }, 'Edit'));
+}
+
+function manageCategories() {
+  return openDialog((f, done) => {
+    const list = el('div', { class: 'cat-list' });
+    const count = id => state.metas.filter(m => m.category === id).length;
+    const draw = () => {
+      list.replaceChildren(...state.categories.map(cat => {
+        const name = el('input', { type: 'text', value: cat.name, maxlength: '40', 'aria-label': 'Category name' });
+        const commit = () => {
+          const v = name.value.trim();
+          if (v && v !== cat.name) saveCategories(state.categories.map(c => (c.id === cat.id ? { ...c, name: v } : c)));
+          else name.value = cat.name;
+        };
+        name.addEventListener('change', commit);
+        name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
+        return el('div', { class: 'cat-row' },
+          el('button', {
+            type: 'button', class: 'swatch', style: `background:${cat.color}`, title: 'Change colour', 'aria-label': `Change colour of ${cat.name}`,
+            onclick: async () => {
+              const next = CAT_COLORS[(CAT_COLORS.indexOf(cat.color) + 1) % CAT_COLORS.length];
+              await saveCategories(state.categories.map(c => (c.id === cat.id ? { ...c, color: next } : c))); draw();
+            },
+          }),
+          name,
+          el('small', {}, plainEntries(count(cat.id))),
+          el('button', {
+            type: 'button', class: 'btn-link danger', onclick: async e => {
+              const n = count(cat.id), btn = e.currentTarget;
+              if (n && !btn.dataset.armed) {
+                // Ask once, in place: the entries are kept, they just lose this category.
+                btn.dataset.armed = '1';
+                btn.textContent = `Delete? ${plainEntries(n)} will have no category`;
+                setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = 'Delete'; } }, 4000);
+                return;
+              }
+              if (n) await api.moveCategory(cat.id, '');
+              state.metas = await api.list();
+              if (state.current && state.current.category === cat.id) state.current.category = '';
+              if (state.category === cat.id) state.category = null;
+              await saveCategories(state.categories.filter(c => c.id !== cat.id)); draw();
+            },
+          }, 'Delete'));
+      }));
+      if (!state.categories.length) list.append(el('p', {}, 'No categories yet.'));
+    };
+    const add = el('input', { type: 'text', placeholder: 'New category', maxlength: '40' });
+    const addIt = async () => {
+      const cat = newCategory(add.value); if (!cat) return;
+      if (!state.categories.some(c => c.id === cat.id)) await saveCategories([...state.categories, cat]);
+      add.value = ''; draw(); add.focus();
+    };
+    add.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addIt(); } });
+    draw();
+    f.append(el('h2', {}, 'Categories'),
+      el('p', {}, 'Each entry can have one category, like a section of a notebook. Use tags for everything else. Click a colour to change it.'),
+      list,
+      el('div', { class: 'cat-add' }, add, el('button', { type: 'button', class: 'btn-plain', onclick: addIt }, 'Add')),
+      el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Done')));
+  });
+}
+
+// --- links between entries
+/** Turn stored entry links into clickable chips showing the linked entry's current title. */
+function decorateLinks(root = body) {
+  for (const a of root.querySelectorAll('a[href^="wellwrite:entry/"]')) {
+    const id = a.getAttribute('href').slice('wellwrite:entry/'.length);
+    const m = metaById(id);
+    a.className = 'xref' + (m ? '' : ' broken');
+    a.contentEditable = 'false';
+    if (m) a.textContent = entryLabel(m);
+    a.title = m ? `Open “${entryLabel(m)}”, ${fmt(m.date, { day: 'numeric', month: 'long', year: 'numeric' })}` : 'This entry has been deleted';
+  }
+}
+
+function followLink(a) {
+  const id = a.getAttribute('href').slice('wellwrite:entry/'.length);
+  if (!metaById(id)) { toast('That entry has been deleted'); return; }
+  openEntry(id, { via: 'link' });
+}
+
+function renderBackLink() {
+  const b = $('#backLink');
+  const prev = metaById(state.trail[state.trail.length - 1]);
+  if (!prev) { b.hidden = true; return; }
+  b.hidden = false;
+  b.innerHTML = ICON.back;
+  b.append(`Back to ${entryLabel(prev)}`);
+  b.onclick = () => openEntry(state.trail.pop(), { via: 'back' });
+}
+
+function caretRect(range) {
+  const r = range.getBoundingClientRect();
+  if (r && (r.top || r.left)) return r;
+  const tmp = document.createElement('span'); tmp.textContent = '​';
+  const rr = range.cloneRange(); rr.insertNode(tmp);
+  const out = tmp.getBoundingClientRect(); tmp.remove();
+  return out;
+}
+
+function openLinkPicker() {
+  if (!state.current) return;
+  const sel = getSelection();
+  let range = sel.rangeCount && body.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
+  if (!range) { range = document.createRange(); range.selectNodeContents(body); range.collapse(false); }
+  const query0 = range.collapsed ? '' : range.toString().trim();
+  const rect = caretRect(range.cloneRange());
+
+  const insert = (id, label) => {
+    closePopover();
+    body.focus();
+    // A plain space right before the link would be swallowed by the browser; make it a fixed one.
+    const n = range.startContainer, o = range.startOffset;
+    if (range.collapsed && n.nodeType === 3 && o > 0 && n.data[o - 1] === ' ') {
+      n.replaceData(o - 1, 1, '\u00a0');
+      range.setStart(n, o); range.collapse(true); // replaceData moves the caret back one; put it after the space
+    }
+    sel.removeAllRanges(); sel.addRange(range);
+    document.execCommand('insertHTML', false, `<a href="wellwrite:entry/${id}">${esc(label)}</a>&nbsp;`);
+    decorateLinks(); markDirty();
+  };
+
+  showPopover(rect, pop => {
+    pop.classList.add('picker');
+    const input = el('input', { class: 'pop-search', placeholder: 'Find an entry to link to', value: query0, 'aria-label': 'Find an entry' });
+    const list = el('div', { class: 'pop-list', role: 'listbox' });
+    let items = [], active = 0;
+    const draw = () => {
+      const q = input.value.trim().toLowerCase();
+      const scored = state.metas.filter(m => m.id !== state.current.id).map(m => {
+        const t = (m.title || '').toLowerCase();
+        const s = !q ? 1 : t.startsWith(q) ? 4 : t.includes(q) ? 3 : m.tags.some(x => x.includes(q)) ? 2 : m.text.toLowerCase().includes(q) ? 1 : 0;
+        return { m, s };
+      }).filter(x => x.s).sort((a, b) => b.s - a.s || (b.m.date + b.m.time).localeCompare(a.m.date + a.m.time)).slice(0, 8);
+      items = scored.map(x => ({ kind: 'entry', m: x.m }));
+      if (q && !state.metas.some(m => (m.title || '').toLowerCase() === q)) items.push({ kind: 'new', title: input.value.trim() });
+      active = Math.min(active, Math.max(0, items.length - 1));
+      list.replaceChildren(...items.map((it, i) => {
+        const b = el('button', { type: 'button', class: 'pop-item' + (i === active ? ' on' : ''), role: 'option', onmousemove: () => { if (active !== i) { active = i; draw(); } }, onclick: () => choose(it) });
+        if (it.kind === 'new') b.append(el('span', { class: 'pop-new' }, '+'), el('span', { class: 'pop-title' }, `Create “${it.title}” and link to it`));
+        else {
+          const cat = catById(it.m.category);
+          b.append(el('span', { class: 'dot', style: cat ? `background:${cat.color}` : '' }), el('span', { class: 'pop-title' }, entryLabel(it.m)),
+            el('small', {}, fmt(it.m.date, { day: 'numeric', month: 'short', year: 'numeric' })));
+        }
+        return b;
+      }));
+      if (!items.length) list.append(el('p', { class: 'pop-empty' }, state.metas.length > 1 ? 'No entries match.' : 'Write a few more entries, then you can link them together.'));
+    };
+    const choose = async it => {
+      if (!it) return;
+      if (it.kind === 'entry') return insert(it.m.id, entryLabel(it.m));
+      // Create a new, empty entry to link to (it opens when you click the link).
+      try {
+        const meta = await api.save({ id: crypto.randomUUID(), date: todayISO(), time: nowTime(), title: it.title, tags: [], category: state.current.category || '', html: '', text: '' });
+        state.metas.push(meta);
+        insert(meta.id, entryLabel(meta));
+        renderSidebar();
+      } catch (x) { toast(x.message); }
+    };
+    input.addEventListener('input', () => { active = 0; draw(); });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); active = (active + 1) % Math.max(1, items.length); draw(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); active = (active - 1 + items.length) % Math.max(1, items.length); draw(); }
+      else if (e.key === 'Enter') { e.preventDefault(); choose(items[active]); }
+      else if (e.key === 'Escape') { e.preventDefault(); closePopover(); body.focus(); sel.removeAllRanges(); sel.addRange(range); }
+    });
+    pop.append(input, list, el('p', { class: 'pop-hint' }, '↑ ↓ to choose, Enter to link, Esc to cancel'));
+    draw();
+    setTimeout(() => { input.focus(); input.select(); });
+  });
+}
+
+// Typing [[ opens the link picker.
+body.addEventListener('input', e => {
+  if (e.inputType !== 'insertText' || !e.data || !e.data.endsWith('[')) return;
+  const sel = getSelection(); if (!sel.rangeCount) return;
+  const r = sel.getRangeAt(0), node = r.startContainer, off = r.startOffset;
+  if (node.nodeType !== 3 || off < 2 || node.data.slice(off - 2, off) !== '[[') return;
+  const del = document.createRange(); del.setStart(node, off - 2); del.setEnd(node, off);
+  del.deleteContents();
+  openLinkPicker();
+});
+
+// --- connections panel under each entry
+function renderConnections() {
+  const box = $('#connections'), c = state.current;
+  if (!c) { box.hidden = true; return; }
+  const self = metaById(c.id);
+  const out = (self ? self.links : []).map(metaById).filter(Boolean);
+  const outIds = new Set(out.map(m => m.id));
+  const from = sorted(state.metas.filter(m => m.id !== c.id && m.links && m.links.includes(c.id)));
+  const fromIds = new Set(from.map(m => m.id));
+  const related = c.tags.length ? state.metas
+    .filter(m => m.id !== c.id && !outIds.has(m.id) && !fromIds.has(m.id))
+    .map(m => ({ m, shared: m.tags.filter(t => c.tags.includes(t)) }))
+    .filter(x => x.shared.length)
+    .sort((a, b) => b.shared.length - a.shared.length || (b.m.date + b.m.time).localeCompare(a.m.date + a.m.time))
+    .slice(0, 5) : [];
+
+  const item = (m, note) => {
+    const cat = catById(m.category);
+    return el('button', { type: 'button', class: 'conn-item', onclick: () => openEntry(m.id, { via: 'link' }) },
+      el('span', { class: 'dot', style: cat ? `background:${cat.color}` : '' }),
+      el('span', { class: 'conn-title' }, entryLabel(m)),
+      el('small', {}, note || fmt(m.date, { day: 'numeric', month: 'short', year: 'numeric' })));
+  };
+  const group = (title, list) => list.length ? el('div', { class: 'conn-group' }, el('h3', {}, title), ...list) : null;
+  const groups = [
+    group(from.length === 1 ? 'Linked from 1 entry' : `Linked from ${from.length} entries`, from.map(m => item(m))),
+    group('Links to', out.map(m => item(m))),
+    group('Shares tags with', related.map(x => item(x.m, x.shared.map(t => '#' + t).join(' ')))),
+  ].filter(Boolean);
+  box.hidden = !groups.length;
+  box.replaceChildren(...groups);
+}
+
 /* ---------- formatting toolbar ---------- */
 const exec = (cmd, val = null) => { body.focus(); document.execCommand(cmd, false, val); markDirty(); refreshToolbar(); };
 const blockIs = tag => (document.queryCommandValue('formatBlock') || '').toLowerCase() === tag;
@@ -620,7 +963,8 @@ const TOOLS = [
   { k: 'ol', title: 'Numbered list', run: () => exec('insertOrderedList'), on: () => document.queryCommandState('insertOrderedList') },
   '|',
   { k: 'mark', title: 'Highlight', run: toggleMark, on: () => !!closest('MARK') },
-  { k: 'link', title: 'Link (Ctrl+K)', run: insertLink, on: () => !!closest('A') },
+  { k: 'link', title: 'Web link (Ctrl+K)', run: insertLink, on: () => !!closest('A') },
+  { k: 'xref', title: 'Link to another entry (type [[)', run: () => openLinkPicker() },
   { k: 'image', title: 'Add photos', run: () => $('#imgFile').click() },
   { k: 'hr', title: 'Section break', run: () => exec('insertHorizontalRule') },
   '|',
@@ -676,6 +1020,8 @@ async function insertLink() {
 }
 
 body.addEventListener('click', e => {
+  const x = e.target.closest('a.xref');
+  if (x) { e.preventDefault(); followLink(x); return; }
   const a = e.target.closest('a');
   if (a && (e.ctrlKey || e.metaKey) && a.href) { e.preventDefault(); api.openExternal(a.href); }
   if (e.target.tagName === 'IMG') {
@@ -683,7 +1029,7 @@ body.addEventListener('click', e => {
     const s = document.getSelection(); s.removeAllRanges(); s.addRange(r);
   }
 });
-body.addEventListener('mouseover', e => { const a = e.target.closest('a'); if (a) a.title = 'Ctrl+click to open ' + a.getAttribute('href'); });
+body.addEventListener('mouseover', e => { const a = e.target.closest('a:not(.xref)'); if (a) a.title = 'Ctrl+click to open ' + a.getAttribute('href'); });
 body.addEventListener('dblclick', e => {
   if (e.target.tagName !== 'IMG') return;
   const lb = $('#lightbox'); lb.querySelector('img').src = e.target.src; lb.hidden = false;
@@ -780,6 +1126,7 @@ function openSettings(section) {
       el('h3', {}, 'Writing'),
       row('Theme', null, select(s.theme, [['system', 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
       row('Text size', null, size),
+      row('Categories', 'Group entries into sections, like a notebook.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageCategories(); } }, 'Edit categories')),
       row('Check spelling', 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
 
       el('h3', {}, 'Privacy'),

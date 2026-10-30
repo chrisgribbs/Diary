@@ -57,6 +57,7 @@ class BackupManager {
     const h = crypto.createHash('sha256');
     const add = f => { try { const st = fs.statSync(f); h.update(`${path.basename(f)}:${st.size}:${st.mtimeMs}\n`); } catch {} };
     add(this.vault.vaultFile);
+    if (this.vault.metaFile) add(this.vault.metaFile);
     let names = [];
     try { names = fs.readdirSync(this.vault.entriesDir).filter(f => f.endsWith('.enc')).sort(); } catch {}
     for (const n of names) add(path.join(this.vault.entriesDir, n));
