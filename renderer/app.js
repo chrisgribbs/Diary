@@ -1200,7 +1200,7 @@ function quotePool() {
 
 /* --- the year of themes --- */
 /** Prayers and blessings of your own have their own places on the weekly page, so they aren't daily readings. */
-const isReading = q => q.kind !== 'prayer' && q.kind !== 'blessing' && !(q.mine && q.text.length > 600);  // your longer pieces are the week's Reflection
+const isReading = q => q.kind !== 'prayer' && q.kind !== 'blessing' && !(q.mine && (q.kind === 'psalm' || q.text.length > 600));  // your psalms and longer pieces are the week's Reflection
 const quotePlan = () => state.settings.quotePlan || 'christian';
 /** The season for a date under the chosen plan (null when the plan is off). */
 function seasonOn(iso) {
@@ -1658,8 +1658,19 @@ function manageQuotes() {
         .filter(x => !quoteThemeFilter || (quoteThemeFilter === '\u0000none' ? !(x.themes || []).length : quoteThemeFilter === '\u0000mine' ? x.mine : (x.themes || []).includes(quoteThemeFilter)))
         .filter(x => !q || (x.text + ' ' + x.author + ' ' + x.source + ' ' + (x.title || '') + ' ' + (x.themes || []).join(' ')).toLowerCase().includes(q))
         .sort((a, b) => Number(b.fav) - Number(a.fav) || (a.author || '').localeCompare(b.author || ''));
-      summary.textContent = `${state.quotes.length} quote${state.quotes.length === 1 ? '' : 's'} from ${quoteAuthors().length} writer${quoteAuthors().length === 1 ? '' : 's'}` +
-        (themes.length ? `, in ${themes.length} theme${themes.length === 1 ? '' : 's'}` : '') + (items.length !== state.quotes.length ? `. Showing ${items.length}.` : '.');
+      summary.replaceChildren(`${state.quotes.length} quote${state.quotes.length === 1 ? '' : 's'} from ${quoteAuthors().length} writer${quoteAuthors().length === 1 ? '' : 's'}` +
+        (themes.length ? `, in ${themes.length} theme${themes.length === 1 ? '' : 's'}` : '') + (items.length !== state.quotes.length ? `. Showing ${items.length}.` : '.'));
+      // Clear out everything shown (e.g. all of "My own writing" before importing a new selection). Two clicks, no pop-up.
+      if (items.length && items.length !== state.quotes.length) {
+        const del = el('button', { type: 'button', class: 'btn-link danger', id: 'deleteShown' }, `Delete these ${items.length}`);
+        del.addEventListener('click', async () => {
+          if (!del.dataset.armed) { del.dataset.armed = '1'; del.textContent = `Click again to delete ${items.length}`; return; }
+          const gone = new Set(items.map(x => x.id));
+          await saveQuotes(state.quotes.filter(x => !gone.has(x.id)));
+          toast(`Deleted ${gone.size}`); quoteThemeFilter = ''; find.value = ''; draw(); refreshQuote();
+        });
+        summary.append(' ', del);
+      }
       list.replaceChildren(...items.slice(0, 300).map(x => {
         const row = el('div', { class: 'q-row' });
         const view = () => row.replaceChildren(

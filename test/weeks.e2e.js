@@ -132,6 +132,14 @@ app.whenReady().then(async () => {
   if (!real) assert.equal(await js(`return document.querySelectorAll('#dlg .q-row').length`), 4);
   assert.match(await text('#dlg .q-row .q-kind'), /my own writing/);
   await shot('w11-my-writing-filter');
+  // delete everything shown, in two clicks
+  const before = await js(`return state.quotes.length`), mineN = await js(`return state.quotes.filter(q => q.mine).length`);
+  await js(`document.querySelector('#deleteShown').click();`); await wait(100);
+  assert.match(await text('#deleteShown'), /Click again/);
+  assert.equal(await js(`return state.quotes.length`), before, 'nothing deleted on the first click');
+  await js(`document.querySelector('#deleteShown').click();`); await wait(600);
+  assert.equal(await js(`return state.quotes.length`), before - mineN);
+  assert.equal(await js(`return state.quotes.filter(q => q.mine).length`), 0);
   await js(`document.querySelector('#dlg').close(); quoteThemeFilter = '';`);
 
   // --- monthly themes use the same layout
