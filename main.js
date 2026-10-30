@@ -239,7 +239,8 @@ function setupUpdates() {
   setTimeout(check, 8000);
   setInterval(check, 6 * 60 * 60 * 1000);
 }
-handle('app:version', () => ({ version: app.getVersion(), updateReady }));
+const APP_VERSION = require('./package.json').version;
+handle('app:version', () => ({ version: APP_VERSION, updateReady }));
 handle('app:checkUpdates', async () => {
   if (!app.isPackaged) return { status: 'dev' };
   if (updateReady) return { status: 'ready', version: updateReady };

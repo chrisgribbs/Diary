@@ -1505,7 +1505,25 @@ setInterval(() => { if (state.unlocked && todayISO() !== lastDay) { lastDay = to
 
 api.onFlush(() => saveNow());
 api.onUpdateReady(showUpdate);
-api.version().then(v => { state.version = v.version; if (v.updateReady) showUpdate(v.updateReady); }).catch(() => {});
+api.version().then(v => {
+  state.version = v.version;
+  const b = $('#versionBtn'); b.textContent = 'v' + v.version; b.hidden = false;
+  if (v.updateReady) showUpdate(v.updateReady);
+}).catch(() => {});
+$('#versionBtn').addEventListener('click', async () => {
+  const b = $('#versionBtn');
+  b.textContent = 'Checking…';
+  const r = await api.checkUpdates().catch(() => ({ status: 'offline' }));
+  b.textContent = 'v' + state.version;
+  if (r.status === 'ready') showUpdate(r.version);
+  toast({
+    dev: `WellWrite ${state.version}. Updates are only checked in the installed app.`,
+    ready: `WellWrite ${r.version} is ready. Restart to install it.`,
+    downloading: `Downloading WellWrite ${r.version}. You'll be asked to restart when it's ready.`,
+    latest: `You have the latest version, WellWrite ${state.version}.`,
+    offline: "Couldn't check for updates. Check your internet connection.",
+  }[r.status]);
+});
 api.onLock(() => lockNow());
 window.addEventListener('blur', () => saveNow());
 
