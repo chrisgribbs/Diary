@@ -34,7 +34,9 @@ app.whenReady().then(async () => {
   p = await page();
   assert(p.sheet, 'page visible');
   assert.equal(p.day, String(empty.getDate()), 'shows the clicked empty day, not the previous entry');
-  assert.equal(p.title, '');
+  const expected = await js(`return dateTitle('${iso(empty)}')`);
+  assert.equal(p.title, expected, 'new entry is titled with its date');
+  assert.match(expected, new RegExp(String(empty.getDate())));
   const n0 = (await js(`return (await window.wellwrite.list()).length`));
   await clickDay(d2); await wait(500);
   assert.equal((await js(`return (await window.wellwrite.list()).length`)), n0, 'blank page was not saved');
@@ -46,6 +48,26 @@ app.whenReady().then(async () => {
   await wait(1500);
   const list = await js(`return (await window.wellwrite.list()).map(m => m.date)`);
   assert(list.includes(iso(empty)), 'typing saves it on the clicked day');
+  let saved = await js(`return (await window.wellwrite.list()).find(m => m.date === '${iso(empty)}')`);
+  assert.equal(saved.title, expected, 'date title saved');
+
+  // add to the date title: cursor lands at the end
+  await js(`document.querySelector('#title').focus();`); await wait(100);
+  await win.webContents.insertText(' – beach trip');
+  await wait(1500);
+  saved = await js(`return (await window.wellwrite.list()).find(m => m.date === '${iso(empty)}')`);
+  assert.equal(saved.title, expected + ' – beach trip', 'appended to the date');
+
+  // a new entry: change its date and the default title follows
+  await js(`document.querySelector('#newBtn').click();`); await wait(400);
+  await js(`const d = document.querySelector('#dateInput'); d.value = '${iso(d2)}'; d.dispatchEvent(new Event('change'));`); await wait(200);
+  assert.equal(await js(`return document.querySelector('#title').value`), await js(`return dateTitle('${iso(d2)}')`), 'default title follows the date');
+  // a custom title is left alone when the date changes
+  await js(`const t = document.querySelector('#title'); t.value = 'My own title'; t.dispatchEvent(new Event('input'));`);
+  await js(`const d = document.querySelector('#dateInput'); d.value = '${iso(today)}'; d.dispatchEvent(new Event('change'));`); await wait(1500);
+  assert.equal(await js(`return document.querySelector('#title').value`), 'My own title');
+  saved = await js(`return (await window.wellwrite.list()).find(m => m.title === 'My own title')`);
+  assert(saved && saved.date === iso(today), 'custom title saved with its date');
 
   const img = await win.webContents.capturePage();
   fs.writeFileSync(path.join(os.tmpdir(), 'wellwrite-calendar.png'), img.toPNG());

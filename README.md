@@ -18,6 +18,7 @@ Prefer no installer? **WellWrite-Portable.exe** runs on its own (your journal is
 - **Tags** — click a tag on an entry to see every entry with that tag.
 - **Rich text** — bold, italic, underline, strikethrough, headings, quotes, lists, highlight, links, section breaks.
 - **Photos** — add with the toolbar button, paste, or drag in. Large photos are resized to keep the journal light. Double-click a photo to view it full size.
+- **Titles** — every new entry starts with its date as the title (e.g. "Friday 30 October 2026"). Add to it, or replace it with your own.
 - **Autosave** — saves as you type. Change an entry's date or time by clicking it.
 - **Lock** — locks after inactivity (you choose how long), when Windows locks or sleeps, and optionally when minimised. Ctrl+L locks now.
 - **Automatic backups** — to Google Drive (a "WellWrite backups" folder in your Drive), to a folder on this computer or a USB drive, or both. Daily, weekly or each time you close WellWrite, only when something changed, keeping the newest 5, 10 or 30 in each place. Each place keeps its own schedule, so an unplugged USB drive doesn't stop Drive backups. They run even while the journal is locked, because backups are the already-encrypted files.

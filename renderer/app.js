@@ -20,6 +20,8 @@ const todayISO = () => isoOf(new Date());
 const dateOf = iso => new Date(iso + 'T00:00:00');
 const nowTime = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const fmt = (iso, o) => dateOf(iso).toLocaleDateString(undefined, o);
+/** The default title for an entry: its date, e.g. "Friday 30 October 2026". */
+const dateTitle = iso => fmt(iso, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const plural = (n, w) => `${n.toLocaleString()} ${w}${n === 1 ? '' : 's'}`;
 
 const ICON = {
@@ -323,8 +325,8 @@ function renderList() {
   for (const m of items) {
     const mk = m.date.slice(0, 7);
     if (mk !== month) { month = mk; list.append(el('div', { class: 'list-month' }, fmt(m.date, { month: 'long', year: 'numeric' }))); }
-    const title = el('div', { class: 'item-title' + (m.title ? '' : ' untitled') });
-    title.innerHTML = m.title ? highlight(m.title) : 'Untitled';
+    const title = el('div', { class: 'item-title' });
+    title.innerHTML = highlight(m.title || dateTitle(m.date));
     const cat = catById(m.category);
     if (cat) title.prepend(el('span', { class: 'dot', style: `background:${cat.color}`, title: cat.name }));
     const ex = el('div', { class: 'item-ex' }); ex.innerHTML = excerpt(m);
@@ -514,7 +516,7 @@ async function openEntry(id, { via } = {}) {
   if (via === 'link' && from) state.trail.push(from);
   else if (via !== 'back') state.trail = [];
   state.current = { id: e.id, date: e.date, time: e.time, title: e.title, tags: [...e.tags], category: e.category || '', saved: true };
-  titleIn.value = e.title;
+  titleIn.value = e.title || dateTitle(e.date);
   body.innerHTML = clean(e.html);
   decorateLinks();
   renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink();
@@ -531,7 +533,7 @@ async function newEntry(date = todayISO()) {
   await saveNow();
   state.current = { id: crypto.randomUUID(), date, time: date === todayISO() ? nowTime() : '', title: '', tags: [], category: catById(state.category) ? state.category : '', saved: false };
   state.trail = [];
-  titleIn.value = ''; body.innerHTML = '';
+  titleIn.value = dateTitle(date); body.innerHTML = '';
   renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink();
   $('#saveState').textContent = 'Not saved yet';
   document.querySelectorAll('#list .item.active').forEach(n => n.classList.remove('active'));
@@ -539,7 +541,8 @@ async function newEntry(date = todayISO()) {
 }
 
 function isBlank() {
-  return !titleIn.value.trim() && !body.innerText.trim() && !body.querySelector('img') && !state.current.tags.length;
+  const t = titleIn.value.trim();
+  return (!t || t === dateTitle(state.current.date)) && !body.innerText.trim() && !body.querySelector('img') && !state.current.tags.length;
 }
 
 let saveTimer, saving = Promise.resolve();
@@ -584,6 +587,12 @@ function updateCounts() {
 body.addEventListener('input', () => { markDirty(); updateCounts(); });
 titleIn.addEventListener('input', markDirty);
 titleIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#tagInput').focus(); } });
+// While the title is still just the date, clicking into it puts the cursor at the end, ready to add to it.
+titleIn.addEventListener('focus', () => {
+  if (state.current && titleIn.value.trim() === dateTitle(state.current.date)) {
+    setTimeout(() => { const n = titleIn.value.length; titleIn.setSelectionRange(n, n); });
+  }
+});
 body.addEventListener('focus', () => document.execCommand('defaultParagraphSeparator', false, 'p'));
 
 // Tags
@@ -610,7 +619,11 @@ const pickDate = () => { dateInput.value = state.current.date; dateInput.showPic
 $('#stampDay').onclick = pickDate; $('#stampWeekday').onclick = pickDate;
 dateInput.addEventListener('change', () => {
   if (!dateInput.value) return;
-  state.current.date = dateInput.value; renderStamp(); markDirty();
+  // If the title is still just the date, keep it in step with the new date.
+  const wasDefault = titleIn.value.trim() === dateTitle(state.current.date);
+  state.current.date = dateInput.value;
+  if (wasDefault) titleIn.value = dateTitle(state.current.date);
+  renderStamp(); markDirty();
 });
 $('#stampTime').onclick = () => { timeInput.value = state.current.time || nowTime(); timeInput.showPicker(); };
 timeInput.addEventListener('change', () => { state.current.time = timeInput.value; renderStamp(); markDirty(); });
@@ -632,7 +645,7 @@ $('#deleteBtn').onclick = async () => {
 const CAT_COLORS = ['#a23b56', '#2f7d7a', '#b7862c', '#4f6aa8', '#6b7d3a', '#7a4f8f', '#b0563a', '#6a7080'];
 const catById = id => (id ? state.categories.find(c => c.id === id) : null) || null;
 const metaById = id => state.metas.find(m => m.id === id);
-const entryLabel = m => (m ? m.title || `Untitled, ${fmt(m.date, { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Deleted entry');
+const entryLabel = m => (m ? m.title || dateTitle(m.date) : 'Deleted entry');
 
 // --- popover (category menu, link picker)
 let popClose = null;
