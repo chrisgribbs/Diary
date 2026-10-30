@@ -6,6 +6,7 @@ const { Vault } = require('./src/vault');
 const { autoUpdater } = require('electron-updater');
 const { migrateJournal } = require('./src/migrate');
 const bible = require('./src/bible');
+const { Trust } = require('./src/trust');
 const { GoogleDrive } = require('./src/gdrive');
 const { BackupManager, suggestFolders } = require('./src/backup');
 
@@ -62,6 +63,15 @@ function loadGoogleConfig() {
   try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'google-config.json'), 'utf8')); } catch { return null; }
 }
 const canProtect = () => { try { return safeStorage.isEncryptionAvailable(); } catch { return false; } };
+// "Remember my password". Only offered where Windows can protect the saved key.
+const testTrust = process.env.WELLWRITE_TEST_TRUST === '1' && !app.isPackaged;
+const trust = new Trust({
+  file: path.join(DATA_DIR, 'trusted.json'),
+  available: () => canProtect() || testTrust,
+  protect: t => (canProtect() ? 'os:' + safeStorage.encryptString(t).toString('base64') : 'test:' + t),
+  unprotect: t => (t.startsWith('os:') ? safeStorage.decryptString(Buffer.from(t.slice(3), 'base64')) : testTrust ? t.replace(/^test:/, '') : ''),
+});
+
 const drive = new GoogleDrive({
   config: loadGoogleConfig(),
   storeFile: path.join(DATA_DIR, 'google.json'),
@@ -174,13 +184,26 @@ function handle(name, fn) {
   });
 }
 
-handle('vault:status', () => ({ exists: vault.exists(), unlocked: vault.isUnlocked(), dataDir: DATA_DIR }));
+handle('vault:status', () => ({ exists: vault.exists(), unlocked: vault.isUnlocked(), dataDir: DATA_DIR, trust: trust.status() }));
 handle('vault:create', pw => { vault.create(pw); return true; });
 handle('vault:unlock', pw => {
   const ok = vault.unlock(pw);
-  if (ok) setTimeout(() => backups.maybeRun('unlock').catch(() => {}), 5000);
+  if (ok) {
+    try { trust.refresh(vault.key); } catch {}
+    setTimeout(() => backups.maybeRun('unlock').catch(() => {}), 5000);
+  }
   return ok;
 });
+handle('vault:unlockTrusted', () => {
+  if (vault.isUnlocked()) return true;
+  if (!vault.exists()) return false;
+  const key = trust.key();
+  if (!key) return false;
+  vault.unlockWithKey(key);
+  setTimeout(() => backups.maybeRun('unlock').catch(() => {}), 5000);
+  return true;
+});
+handle('vault:setTrust', mode => trust.save(mode, vault.key));
 handle('vault:lock', () => { vault.lock(); return true; });
 handle('vault:changePassword', (a, b) => { vault.changePassword(a, b); return true; });
 handle('entries:list', () => vault.list());

@@ -104,6 +104,8 @@ function openDialog(build) {
   const dlg = $('#dlg');
   // Fresh form each time so old submit handlers never linger.
   const form = el('form', { method: 'dialog', id: 'dlgForm' });
+  // Let dialog builders pass null for optional parts without it showing up as text.
+  form.append = (...kids) => HTMLFormElement.prototype.append.apply(form, kids.filter(k => k != null));
   $('#dlgForm').replaceWith(form);
   return new Promise(resolve => {
     const done = v => { resolve(v); dlg.close(); };
@@ -177,20 +179,41 @@ async function boot() {
   applySettings();
   const s = await api.status();
   state.dataDir = s.dataDir;
+  // Remembered password: open straight away.
+  if (s.exists && s.trust && s.trust.active) {
+    try { if (await api.unlockTrusted()) { await enterApp(); return; } } catch {}
+  }
   showLock(s.exists);
 }
 
-function showLock(exists) {
+function showLock(exists, trust) {
   state.unlocked = false;
   $('#app').hidden = true;
   $('#lock').hidden = false;
-  $('#unlockForm').hidden = !exists;
+  const remembered = exists && trust && trust.active;
+  $('#trustForm').hidden = !remembered;
+  $('#unlockForm').hidden = !exists || remembered;
   $('#setupForm').hidden = exists;
-  $('#unlockErr').textContent = $('#setupErr').textContent = '';
+  $('#unlockErr').textContent = $('#setupErr').textContent = $('#trustErr').textContent = '';
   $('#unlockPw').value = $('#setupPw').value = $('#setupPw2').value = '';
   hideAllPasswords($('#lock'));
-  setTimeout(() => (exists ? $('#unlockPw') : $('#setupPw')).focus(), 50);
+  if (remembered) {
+    $('#trustText').textContent = trust.mode === 'hour'
+      ? `No password needed until ${new Date(trust.until).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}.`
+      : 'This computer is trusted, so no password is needed.';
+  }
+  setTimeout(() => (remembered ? $('#trustOpen') : exists ? $('#unlockPw') : $('#setupPw')).focus(), 50);
 }
+
+$('#trustOpen').addEventListener('click', async () => {
+  try {
+    if (await api.unlockTrusted()) { await enterApp(); return; }
+  } catch {}
+  // The remembered password has run out (or no longer matches): ask for it.
+  showLock(true);
+  $('#unlockErr').textContent = 'Please enter your password.';
+});
+$('#trustUsePw').addEventListener('click', () => { showLock(true); });
 
 $('#unlockForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -275,7 +298,9 @@ async function lockNow() {
   $('#list').replaceChildren(); $('#calGrid').replaceChildren(); $('#search').value = '';
   if ($('#dlg').open) $('#dlg').close();
   $('#lightbox').hidden = true;
-  showLock(true);
+  let trust = null;
+  try { trust = (await api.status()).trust; } catch {}
+  showLock(true, trust);
 }
 
 /* ---------- entries: list + filtering ---------- */
@@ -1832,6 +1857,7 @@ function openSettings(section) {
 
       el('h3', {}, 'Privacy'),
       row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),
+      row('Remember my password', 'When WellWrite locks, your writing is hidden either way. With these, you open it again with one click.', trustSelect()),
       row('Lock when minimised', 'Also locks when Windows locks or the computer sleeps.', check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
       row('Password', null, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); changePassword(); } }, 'Change password')),
 
@@ -1856,6 +1882,35 @@ function openSettings(section) {
     renderBackupSection();
     refreshBackupInfo();
   });
+}
+
+function trustSelect() {
+  const sel = el('select', { 'aria-label': 'Remember my password' },
+    el('option', { value: 'ask' }, 'No, ask every time'),
+    el('option', { value: 'hour' }, 'For an hour after I type it'),
+    el('option', { value: 'trust' }, 'Always, on this computer'));
+  api.status().then(st => {
+    const t = st.trust || { mode: 'ask' };
+    sel.value = t.active || t.mode === 'hour' ? t.mode : 'ask';
+    if (!t.available) { sel.disabled = true; sel.title = 'Windows can’t protect a saved password on this computer'; }
+  }).catch(() => {});
+  sel.addEventListener('change', async () => {
+    const mode = sel.value;
+    if (mode === 'trust') {
+      const ok = await confirmDialog({
+        title: 'Trust this computer?',
+        text: 'WellWrite will open without your password whenever you’re signed in to Windows on this computer. Anyone who can use your Windows account could read your journal. Your password is still needed on any other computer and to restore backups.',
+        ok: 'Trust this computer',
+      });
+      if (!ok) { openSettings(); return; }
+    }
+    try {
+      await api.setTrust(mode);
+      toast({ ask: 'WellWrite will ask for your password every time', hour: 'No password needed for the next hour', trust: 'This computer is trusted' }[mode]);
+    } catch (x) { toast(x.message); }
+    if (mode === 'trust') openSettings();
+  });
+  return sel;
 }
 
 async function checkUpdates() {

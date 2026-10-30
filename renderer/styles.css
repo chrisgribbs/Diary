@@ -582,3 +582,9 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .quote-card.empty { border-left: 0; border-radius: 10px; text-align: center; padding: 20px 26px 14px; }
 .quote-card.empty .q-actions { justify-content: center; }
 .quote-card.empty .q-btn.subtle { margin-left: 0; }
+
+.trust-form { text-align: center; }
+.trust-form .btn-foil { padding: 12px 18px; font-size: 16px; }
+.trust-form .lock-note { text-align: center; margin-top: 6px; }
+.trust-form .btn-link { justify-self: center; }
+.dlg .row > button, .dlg .row > select { flex-shrink: 0; white-space: nowrap; }

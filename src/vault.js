@@ -110,6 +110,14 @@ class Vault {
     return true;
   }
 
+  /** Open with a key remembered by "Remember my password" (see trust.js). */
+  unlockWithKey(key) {
+    if (!this.exists()) throw new Error('No journal found');
+    this.key = Buffer.from(key);
+    this._loadIndex();
+    return true;
+  }
+
   lock() {
     if (this.key) this.key.fill(0);
     this.key = null;

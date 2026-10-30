@@ -23,6 +23,13 @@
       <button class="btn-foil" type="submit" id="unlockBtn">Open journal</button>
     </form>
 
+    <div id="trustForm" class="lock-form trust-form" hidden>
+      <button class="btn-foil" type="button" id="trustOpen">Open journal</button>
+      <p class="lock-note" id="trustText"></p>
+      <p class="lock-error" id="trustErr" role="alert"></p>
+      <button class="btn-link" type="button" id="trustUsePw">Use my password instead</button>
+    </div>
+
     <form id="setupForm" class="lock-form" hidden>
       <p class="lock-intro">Choose a password for your journal. Every entry is encrypted with it on this computer.</p>
       <label for="setupPw">New password</label>

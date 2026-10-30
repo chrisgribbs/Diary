@@ -24,7 +24,8 @@ Prefer no installer? **WellWrite-Portable.exe** runs on its own (your journal is
 - **Photos** — add with the toolbar button, paste, or drag in. Large photos are resized to keep the journal light. Double-click a photo to view it full size.
 - **Titles** — every new entry starts with its date as the title (e.g. "Friday 30 October 2026"). Add to it, or replace it with your own.
 - **Autosave** — saves as you type. Change an entry's date or time by clicking it.
-- **Lock** — locks after inactivity (you choose how long), when Windows locks or sleeps, and optionally when minimised. Ctrl+L locks now.
+- **Lock** — locks after inactivity (1 minute to 1 hour, or never), when Windows locks or sleeps, and optionally when minimised. Ctrl+L locks now.
+- **Remember my password** — Settings → Privacy: ask every time, only once an hour, or trust this computer. Remembered passwords are protected by Windows for your account only; locking still hides your writing, and opening again is one click.
 - **Automatic backups** — to Google Drive (a "WellWrite backups" folder in your Drive), to a folder on this computer or a USB drive, or both. Daily, weekly or each time you close WellWrite, only when something changed, keeping the newest 5, 10 or 30 in each place. Each place keeps its own schedule, so an unplugged USB drive doesn't stop Drive backups. They run even while the journal is locked, because backups are the already-encrypted files.
 - **Backup files** — Settings → Save a backup file makes one encrypted `.wellwrite` file (backups from when the app was called Daybook, `.daybook`, still work). Import merges a backup into your journal (newer versions win). On a new computer, choose "Restore from a backup instead" at setup and pick Google Drive or a file.
 - **Readable export** — one web page with every entry and photo, for printing or keeping. It is not encrypted.

@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('wellwrite', {
   create: pw => call('vault:create', pw),
   unlock: pw => call('vault:unlock', pw),
   lock: () => call('vault:lock'),
+  unlockTrusted: () => call('vault:unlockTrusted'),
+  setTrust: mode => call('vault:setTrust', mode),
   changePassword: (a, b) => call('vault:changePassword', a, b),
   list: () => call('entries:list'),
   get: id => call('entries:get', id),
