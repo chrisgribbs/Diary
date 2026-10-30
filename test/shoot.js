@@ -81,6 +81,12 @@ app.whenReady().then(async () => {
   `);
   await wait(1800);
   await shot('3b-wrong-password');
+  await js(`document.querySelector('#unlockPw').value = 'river-stone'; document.querySelector('#unlockForm .pw-eye').click();`);
+  await wait(200);
+  const shown = await js(`return document.querySelector('#unlockPw').type`);
+  await shot('3c-show-password');
+  await js(`document.querySelector('#unlockForm .pw-eye').click();`);
+  console.log('reveal toggles:', shown, '->', await js(`return document.querySelector('#unlockPw').type`));
   await js(`
     document.querySelector('#unlockPw').value = 'river-stone';
     document.querySelector('#unlockForm').requestSubmit();

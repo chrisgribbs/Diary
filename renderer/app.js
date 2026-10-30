@@ -91,6 +91,7 @@ function openDialog(build) {
   return new Promise(resolve => {
     const done = v => { resolve(v); dlg.close(); };
     build(form, done);
+    addReveal(form);
     // The close event is async; ignore a stale one that lands after a new dialog opened.
     dlg.onclose = () => { if (!dlg.open) resolve(undefined); };
     dlg.showModal();
@@ -120,8 +121,41 @@ function promptDialog({ title, text, label, type = 'text', value = '', ok }) {
   });
 }
 
+
+/* ---------- show / hide password ---------- */
+const EYE = '<svg viewBox="0 0 20 20"><path d="M1.8 10S4.8 4.2 10 4.2 18.2 10 18.2 10 15.2 15.8 10 15.8 1.8 10 1.8 10z"/><circle cx="10" cy="10" r="2.6"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 20 20"><path d="M3 3l14 14M8.2 4.4A8.6 8.6 0 0 1 10 4.2c5.2 0 8.2 5.8 8.2 5.8a14 14 0 0 1-2.6 3.3M5.6 5.7A14.3 14.3 0 0 0 1.8 10s3 5.8 8.2 5.8a8 8 0 0 0 3.8-1"/><path d="M8.1 8.2a2.6 2.6 0 0 0 3.7 3.6"/></svg>';
+function setReveal(input, show) {
+  input.type = show ? 'text' : 'password';
+  const b = input.parentNode.querySelector('.pw-eye');
+  if (!b) return;
+  b.innerHTML = show ? EYE_OFF : EYE;
+  b.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  b.title = show ? 'Hide password' : 'Show password';
+  b.setAttribute('aria-pressed', String(show));
+}
+/** Give every password box in `root` a show/hide button. */
+function addReveal(root = document) {
+  for (const input of root.querySelectorAll('input[type=password]:not([data-reveal])')) {
+    input.dataset.reveal = '1';
+    input.spellcheck = false;
+    const wrap = el('span', { class: 'pw-wrap' });
+    input.replaceWith(wrap);
+    const btn = el('button', { type: 'button', class: 'pw-eye' });
+    btn.addEventListener('mousedown', e => e.preventDefault()); // keep the cursor in the box
+    btn.addEventListener('click', () => { setReveal(input, input.type === 'password'); input.focus(); });
+    wrap.append(input, btn);
+    setReveal(input, false);
+  }
+}
+/** Hide every password again (on lock, and when a dialog closes). */
+function hideAllPasswords(root = document) {
+  for (const input of root.querySelectorAll('input[data-reveal]')) setReveal(input, false);
+}
+
 /* ---------- lock screen ---------- */
 async function boot() {
+  addReveal($('#lock'));
   try { state.settings = await api.getSettings(); } catch {}
   applySettings();
   const s = await api.status();
@@ -137,6 +171,7 @@ function showLock(exists) {
   $('#setupForm').hidden = exists;
   $('#unlockErr').textContent = $('#setupErr').textContent = '';
   $('#unlockPw').value = $('#setupPw').value = $('#setupPw2').value = '';
+  hideAllPasswords($('#lock'));
   setTimeout(() => (exists ? $('#unlockPw') : $('#setupPw')).focus(), 50);
 }
 

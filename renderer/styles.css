@@ -38,6 +38,8 @@
   --danger: #a3343a;
   --write-size: 19px;
   --serif: 'Newsreader', Georgia, serif;
+  /* The WellWrite name: Calibri ships with Windows; Carlito is its metric twin elsewhere. */
+  --brand: Calibri, Carlito, 'Segoe UI', sans-serif;
   --sans: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
@@ -99,8 +101,8 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 @keyframes lockIn { from { opacity: 0; transform: translateY(6px); } }
 .foil-mark { color: var(--foil); width: 64px; margin: 0 auto 6px; }
 .lock-title {
-  font: italic 500 54px/1 var(--serif); font-variation-settings: 'opsz' 72; color: var(--foil);
-  margin: 0 0 34px; letter-spacing: -.01em;
+  font: 700 58px/1 var(--brand); color: var(--foil);
+  margin: 0 0 34px; letter-spacing: -.005em;
   text-shadow: 0 1px 0 rgba(0,0,0,.35), 0 -1px 0 rgba(255,240,200,.12);
 }
 .lock-form { display: grid; gap: 8px; text-align: left; }
@@ -109,6 +111,18 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
   background: rgba(0,0,0,.22); border: 1px solid var(--cloth-line); border-radius: 6px;
   padding: 11px 12px; color: var(--on-cloth); font-size: 16px; margin-bottom: 6px;
 }
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { width: 100%; padding-right: 46px !important; }
+.pw-eye {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%); width: 36px; height: 34px;
+  display: grid; place-items: center; border-radius: 6px; color: var(--on-cloth-dim);
+}
+.lock-form .pw-wrap { margin-bottom: 6px; }
+.lock-form .pw-wrap input { margin-bottom: 0; }
+.pw-eye:hover { color: var(--foil); background: rgba(255,255,255,.06); }
+.dlg .pw-eye { color: var(--pencil); }
+.dlg .pw-eye:hover { color: var(--ink); background: var(--paper-edge); }
+.pw-eye svg { width: 19px; height: 19px; }
 .lock-form input:focus { outline: none; border-color: var(--foil-dim); }
 .lock-form .btn-foil { margin-top: 6px; }
 .lock-form .btn-link { color: var(--on-cloth-dim); justify-self: center; margin-top: 10px; }
@@ -122,7 +136,7 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .app { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
 .cloth { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid rgba(0,0,0,.35); }
 .cloth-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 18px 10px; }
-.wordmark { font: italic 500 26px/1 var(--serif); font-variation-settings: 'opsz' 48; color: var(--foil); }
+.wordmark { font: 700 27px/1 var(--brand); color: var(--foil); letter-spacing: -.005em; }
 
 /* Calendar */
 .cal { padding: 6px 14px 4px; }
