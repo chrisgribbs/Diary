@@ -86,3 +86,31 @@ v.setQuotes(qs.map(q => q.text.startsWith('All shall') ? { ...q, themes: ['Praye
 assert.deepEqual(v.getQuotes().find(q => q.text.startsWith('All shall')).themes, ['Prayer']);
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log('seasons tests passed');
+
+// ---- weekly pages
+require('../renderer/weeks.js');
+const WK = window.WellWriteWeeks;
+const bible = require('../src/bible');
+for (const [id, list] of Object.entries(WK.WEEKS)) {
+  assert.ok(W.SEASONS[id], 'weeks for a known season: ' + id);
+  for (const w of list) {
+    assert.ok(w.title && w.prayer.endsWith('Amen.') && w.verses.length >= 4, id + ' ' + w.title);
+    for (const r of [...w.verses, w.blessing]) assert.ok(bible.verseText(r, 'web') && bible.verseText(r, 'kjv'), `${id} ${w.title}: ${r}`);
+  }
+}
+for (const id of Object.keys(W.SEASONS)) assert.ok(WK.WEEKS[id] && WK.WEEKS[id].length, 'season has weeks: ' + id);
+// Every week of the season has its own page until the season is longer than the weeks written for it
+for (const mode of ['christian', 'spiritual']) for (let y = 2025; y <= 2040; y++) {
+  for (const piece of W.seasonsFor(y, mode)) {
+    const s = W.seasonOn(piece.start, mode);   // the whole season (Christmas runs across New Year)
+    const n = Math.ceil(s.length / 7);
+    const titles = new Set();
+    for (let i = 0; i < n; i++) titles.add(WK.weekOf({ ...s, dayIndex: i * 7 }).title);
+    assert.equal(titles.size, Math.min(n, WK.WEEKS[s.id].length), `${mode} ${y} ${s.id}: ${n} weeks`);
+  }
+}
+const adv = WK.weekOf(W.seasonOn('2026-12-20', 'christian'));
+assert.equal(adv.number, 4); assert.equal(adv.title, 'Let it be'); assert.equal(adv.key, 'advent-3');
+assert.equal(WK.weekOf(W.seasonOn('2027-01-03', 'christian')).title, 'Pondering in the heart'); // Christmas week 2, across New Year
+assert.equal(WK.weekOf(W.seasonOn('2027-03-28', 'christian')).title, 'He is not here');       // Easter Day
+console.log('weekly pages tests passed');

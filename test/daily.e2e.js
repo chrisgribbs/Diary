@@ -75,11 +75,11 @@ app.whenReady().then(async () => {
 
   // --- quote view
   await js(`document.querySelector('.modeswitch [data-mode=quote]').click();`); await wait(500);
-  const q1 = await text('#quoteView .big-quote blockquote');
+  const q1 = await text('#quoteView .wk-today blockquote');
   assert(q1 && q1.length > 5);
   await shot('d5-quote-view');
-  await js(`[...document.querySelectorAll('#quoteView button')].find(b => b.textContent === 'Another').click();`); await wait(300);
-  const q2 = await text('#quoteView .big-quote blockquote');
+  await js(`[...document.querySelectorAll('#quoteView button')].find(b => b.textContent === 'Another quote').click();`); await wait(500);
+  const q2 = await text('#quoteView .wk-today blockquote');
   assert.notEqual(q1, q2, 'Another shows a different quote');
   await js(`[...document.querySelectorAll('#quoteView button')].find(b => b.textContent === 'Write about this').click();`); await wait(1200);
   assert.equal(await js(`return state.mode`), 'journal');
@@ -163,7 +163,7 @@ app.whenReady().then(async () => {
   const today = await js(`return todayISO()`);
   const season = await js(`return seasonOn(todayISO())`);
   assert.ok(season && season.name, 'a season today');
-  assert.match(await text('#quoteView .season-name'), new RegExp(season.name));
+  assert.match(await text('#quoteView .wk-running'), new RegExp(season.name));
   assert.ok((await text('#quoteView .big-prompt p')).length > 10, 'a writing question');
   const sq = await js(`return quoteFor(todayISO()).text`);
   assert.ok(await js(`return seasonPool(seasonOn(todayISO())).some(q => q.text === ${JSON.stringify(sq)})`) || await js(`return seasonPool(seasonOn(todayISO())).length < 3`), 'quote suits the season');

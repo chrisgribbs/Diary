@@ -15,6 +15,9 @@ const path = require('path');
 const crypto = require('crypto');
 
 const MAGIC = Buffer.from('DBK1');
+// What a piece in the quote collection is: a quote ('') or a piece of the person's own writing.
+const QUOTE_KINDS = ['', 'poem', 'psalm', 'prayer', 'blessing', 'reflection', 'fieldnote'];
+const PICTURE_KEY_RE = /^[a-z]{2,20}-\d{1,2}$/;
 const KDF = { N: 1 << 17, r: 8, p: 1, keyLen: 32 };
 const MAXMEM = 512 * 1024 * 1024;
 const ID_RE = /^[a-z0-9-]{8,64}$/;
@@ -80,6 +83,7 @@ class Vault {
     this.entriesDir = path.join(dir, 'entries');
     this.vaultFile = path.join(dir, 'vault.json');
     this.indexFile = path.join(dir, 'index.enc');
+    this.picturesDir = path.join(dir, 'pictures'); // a picture for each week of the year of themes
     this.metaFile = path.join(dir, 'meta.enc'); // categories (encrypted: names can be personal)
     this.key = null;
     this.index = null; // Map id -> meta
@@ -240,6 +244,9 @@ class Vault {
         id: /^[a-z0-9-]{1,40}$/.test(q.id || '') ? q.id : 'q-' + crypto.randomBytes(5).toString('hex'),
         text, author, source: String(q.source || '').trim().slice(0, 200), fav: !!q.fav,
         themes: Vault.cleanThemes(q.themes),
+        kind: QUOTE_KINDS.includes(q.kind) ? q.kind : '',
+        title: String(q.title || '').replace(/\s+/g, ' ').trim().slice(0, 120),
+        mine: !!q.mine,
       });
       if (out.length >= 5000) break;
     }
@@ -354,6 +361,48 @@ class Vault {
     this._writeIndex();
   }
 
+  // ---------- pictures for the weekly pages (encrypted like everything else) ----------
+  static pictureKeyOk(key) { return typeof key === 'string' && PICTURE_KEY_RE.test(key); }
+  _pictureFile(key) {
+    if (!Vault.pictureKeyOk(key)) throw new Error('Bad picture name');
+    return path.join(this.picturesDir, key + '.enc');
+  }
+  pictureKeys() {
+    this._requireKey();
+    if (!fs.existsSync(this.picturesDir)) return [];
+    return fs.readdirSync(this.picturesDir).filter(f => f.endsWith('.enc')).map(f => f.slice(0, -4)).filter(k => Vault.pictureKeyOk(k));
+  }
+  getPicture(key) {
+    this._requireKey();
+    const f = this._pictureFile(key);
+    if (!fs.existsSync(f)) return null;
+    return open(this.key, fs.readFileSync(f)).toString('utf8');
+  }
+  /** dataUrl: a JPEG, PNG or WebP picture as a data: URL (the app shrinks it first). */
+  setPicture(key, dataUrl) {
+    this._requireKey();
+    if (typeof dataUrl !== 'string' || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(dataUrl)) throw new Error('That is not a picture WellWrite can use');
+    if (dataUrl.length > 12 * 1024 * 1024) throw new Error('That picture is too large');
+    fs.mkdirSync(this.picturesDir, { recursive: true });
+    writeAtomic(this._pictureFile(key), seal(this.key, Buffer.from(dataUrl)));
+    return true;
+  }
+  removePicture(key) {
+    this._requireKey();
+    const f = this._pictureFile(key);
+    if (fs.existsSync(f)) fs.unlinkSync(f);
+    return true;
+  }
+  _rawPictures() {
+    const out = {};
+    if (!fs.existsSync(this.picturesDir)) return out;
+    for (const f of fs.readdirSync(this.picturesDir)) {
+      const k = f.endsWith('.enc') ? f.slice(0, -4) : '';
+      if (Vault.pictureKeyOk(k)) out[k] = fs.readFileSync(path.join(this.picturesDir, f)).toString('base64');
+    }
+    return out;
+  }
+
   // ---------- backup ----------
   /** Encrypted backup: one file holding the wrapped key and all encrypted entries. */
   /** Works while locked too: it copies the already-encrypted files. */
@@ -370,6 +419,7 @@ class Vault {
       vault: JSON.parse(fs.readFileSync(this.vaultFile, 'utf8')),
       meta: fs.existsSync(this.metaFile) ? fs.readFileSync(this.metaFile).toString('base64') : undefined,
       entries,
+      pictures: this._rawPictures(),
     };
     writeAtomic(file, JSON.stringify(data));
     return Object.keys(entries).length;
@@ -409,6 +459,11 @@ class Vault {
         this.save({ ...e, keepUpdated: true });
         cur ? updated++ : added++;
       }
+      // Week pictures this journal doesn't have yet.
+      for (const [k, b64] of Object.entries(data.pictures || {})) {
+        if (!Vault.pictureKeyOk(k) || fs.existsSync(this._pictureFile(k))) continue;
+        this.setPicture(k, open(key, Buffer.from(b64, 'base64')).toString('utf8'));
+      }
     } finally { key.fill(0); }
     return { added, updated };
   }
@@ -423,6 +478,11 @@ class Vault {
       if (ID_RE.test(id)) writeAtomic(this._entryFile(id), Buffer.from(b64, 'base64'));
     }
     if (data.meta) writeAtomic(this.metaFile, Buffer.from(data.meta, 'base64'));
+    for (const [k, b64] of Object.entries(data.pictures || {})) {
+      if (!Vault.pictureKeyOk(k)) continue;
+      fs.mkdirSync(this.picturesDir, { recursive: true });
+      writeAtomic(this._pictureFile(k), Buffer.from(b64, 'base64'));
+    }
     this.key = key;
     this._rebuildIndex(Object.keys(data.entries).filter(id => ID_RE.test(id)));
     return this.index.size;

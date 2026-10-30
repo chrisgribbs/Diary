@@ -622,3 +622,61 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .season-year .season-row em { color: var(--pencil); font-style: normal; font-size: 12px; white-space: nowrap; }
 .season-year .season-row.now { background: color-mix(in srgb, var(--foil) 14%, transparent); }
 .season-note { font-size: 12.5px; color: var(--pencil); margin: 10px 10px 0; }
+
+/* the weekly page: a devotional book */
+.week-page { max-width: 36em; margin: 0 auto; padding: 8px 4px 60px; font-family: var(--serif); color: var(--ink); }
+.wk-nav { display: flex; justify-content: space-between; align-items: center; font: 12.5px var(--sans, inherit); color: var(--pencil); margin-bottom: 14px; }
+.wk-nav span { color: var(--pencil); }
+.wk-picture { margin: 0 0 22px; position: relative; }
+.wk-picture img { display: block; width: 100%; max-height: 360px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.08); }
+.wk-picture-tools { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
+.wk-picture:hover .wk-picture-tools, .wk-picture:focus-within .wk-picture-tools { opacity: 1; }
+.pic-btn { font-size: 12px; padding: 5px 10px; border-radius: 6px; border: 0; background: rgba(20,20,20,.62); color: #fff; cursor: pointer; }
+.wk-add-picture { display: block; width: 100%; margin: 0 0 22px; padding: 18px; border: 1.5px dashed color-mix(in srgb, var(--pencil) 40%, transparent); border-radius: 6px; background: transparent; color: var(--pencil); font-size: 13px; cursor: pointer; }
+.wk-add-picture:hover { color: var(--ink); border-color: var(--foil); }
+.wk-running { font-style: italic; font-size: 13px; color: var(--pencil); margin: 0 0 6px; }
+.wk-head { text-align: center; }
+.wk-label { margin: 0; font-size: 12px; letter-spacing: .28em; text-transform: uppercase; color: var(--pencil); }
+.wk-number { display: flex; align-items: center; justify-content: center; gap: 14px; line-height: 1; margin: 2px 0 6px; }
+.wk-number b { font: 500 64px/1 var(--serif); color: var(--ink); }
+.wk-flourish { font-size: 30px; color: var(--foil); }
+.wk-flourish:not(.flip) { transform: scaleX(-1); display: inline-block; }
+.wk-title { font: 700 30px/1.15 var(--serif); margin: 0; letter-spacing: -.005em; }
+.wk-about { margin: 6px 0 0; font-size: 13.5px; font-style: italic; color: var(--pencil); }
+.wk-rule { border: 0; border-top: 1.5px solid color-mix(in srgb, var(--ink) 55%, transparent); margin: 22px 0; }
+.wk-rule.swash { border-top-width: 2px; border-radius: 50%/2px; }
+.wk-scripture p { margin: 0; text-indent: 1.4em; font-size: calc(var(--write-size) * 1.02); line-height: 1.6; white-space: pre-line; }
+.wk-scripture p:first-child { text-indent: 0; }
+.wk-refs { text-indent: 0 !important; font-size: 13px !important; color: var(--pencil); margin-top: 10px !important; line-height: 1.45 !important; }
+.wk-today { text-align: center; }
+.wk-day { margin: 0 0 10px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ribbon); }
+.wk-today blockquote { margin: 0 auto; font: italic 400 24px/1.45 var(--serif); white-space: pre-line; max-width: 28em; }
+.wk-today .wk-sign { text-align: center; margin-top: 10px; }
+.wk-today .big-prompt { margin: 20px auto 18px; }
+.wk-readings { margin-top: 36px; }
+.wk-readings h3 { font: italic 500 19px/1.2 var(--serif); color: var(--ribbon); margin: 0 0 14px; }
+.wk-reading { padding: 4px 0 16px; }
+.wk-reading.now { border-left: 3px solid var(--foil); padding-left: 14px; margin-left: -17px; }
+.wk-when { margin: 0 0 4px; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--pencil); }
+.wk-reading blockquote { margin: 0; font-size: calc(var(--write-size) * .98); line-height: 1.55; white-space: pre-line; }
+.wk-sign { margin: 6px 0 0; text-align: right; font-size: 14px; color: var(--pencil); }
+.wk-sign cite { font-style: italic; }
+.btn-link.small { font-size: 12px; }
+.wk-reflection h4 { margin: 0 0 10px; font: 700 15px/1.3 var(--serif); letter-spacing: .02em; }
+.wk-reflection h4 i { font-weight: 400; }
+.wk-reflection-text p { margin: 0 0 .8em; font-size: calc(var(--write-size) * 1.0); line-height: 1.62; white-space: pre-line; }
+.wk-reflection:not(.verse) .wk-reflection-text p + p { text-indent: 1.4em; margin-top: -.8em; }
+.wk-reflection.verse .wk-reflection-text p { font-style: italic; }
+.wk-prayer p + p { margin-top: .7em; }
+.wk-prayer p { white-space: pre-line; }
+.wk-blessing p { white-space: pre-line; }
+.wk-prayer p { margin: 0; font-style: italic; font-size: calc(var(--write-size) * 1.02); line-height: 1.6; }
+.wk-blessing h4 { margin: 0 0 4px; font: 700 16px/1.3 var(--serif); }
+.wk-blessing p { margin: 0; font-style: italic; line-height: 1.6; }
+.wk-blessing .wk-refs { font-style: normal; }
+.wk-ornament { text-align: center; font-size: 28px; color: var(--foil); margin: 18px 0 30px; }
+
+.q-kind { margin: 0 0 3px; font-size: 11.5px; letter-spacing: .04em; color: var(--ribbon); }
+.q-kind-row { display: grid; grid-template-columns: 9em 1fr auto; gap: 8px; align-items: center; margin: 6px 0; }
+.q-mine { display: flex; gap: 6px; align-items: center; font-size: 13px; white-space: nowrap; }
+.theme-chip.mine { border-color: var(--foil); }

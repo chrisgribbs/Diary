@@ -140,3 +140,32 @@ assert.throws(() => v.get('../../etc'), /Bad entry id/);
 
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`vault tests passed in ${Date.now() - t0} ms`);
+
+// ---- week pictures: encrypted, in backups, restored
+{
+  const fs2 = require('fs'), os2 = require('os'), path2 = require('path');
+  const { Vault: V } = require('../src/vault');
+  const dir = fs2.mkdtempSync(path2.join(os2.tmpdir(), 'wellwrite-pic-'));
+  const a = new V(path2.join(dir, 'a')); a.create('river-stone');
+  const pic = 'data:image/jpeg;base64,' + Buffer.from('not really a jpeg but fine').toString('base64');
+  a.setPicture('advent-0', pic);
+  assert.equal(a.getPicture('advent-0'), pic);
+  assert.equal(a.getPicture('lent-2'), null);
+  assert.deepEqual(a.pictureKeys(), ['advent-0']);
+  assert.ok(!fs2.readFileSync(path2.join(dir, 'a', 'pictures', 'advent-0.enc')).toString('latin1').includes('base64'), 'stored encrypted');
+  assert.throws(() => a.setPicture('../x', pic));
+  assert.throws(() => a.setPicture('lent-1', 'data:text/html;base64,AAAA'));
+  const bk = path2.join(dir, 'b.wellwrite');
+  a.exportBackup(bk);
+  const b = new V(path2.join(dir, 'b')); b.restoreFresh(bk, 'river-stone');
+  assert.equal(b.getPicture('advent-0'), pic, 'restored from backup');
+  const c = new V(path2.join(dir, 'c')); c.create('other-pass');
+  c.setPicture('lent-1', pic);
+  c.importBackup(bk, 'river-stone');
+  assert.equal(c.getPicture('advent-0'), pic, 'merged from backup');
+  assert.equal(c.getPicture('lent-1'), pic);
+  a.removePicture('advent-0'); assert.equal(a.getPicture('advent-0'), null);
+  a.lock(); assert.throws(() => a.getPicture('advent-0'));
+  fs2.rmSync(dir, { recursive: true, force: true });
+  console.log('picture tests passed');
+}

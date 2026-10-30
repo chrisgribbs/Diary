@@ -218,6 +218,11 @@ handle('bible:info', () => ({ plans: bible.planList(), translations: bible.TRANS
 handle('bible:setState', st => vault.setBible(st));
 handle('bible:reading', (plan, day, translation) => bible.reading(plan, day, translation));
 handle('bible:verseOfDay', (dayNumber, translation) => bible.verseOfDay(dayNumber, translation));
+handle('bible:verses', (refs, translation) => (Array.isArray(refs) ? refs.slice(0, 20) : []).map(r => bible.verseText(String(r), translation === 'kjv' ? 'kjv' : 'web')));
+handle('pictures:get', key => vault.getPicture(key));
+handle('pictures:keys', () => vault.pictureKeys());
+handle('pictures:set', (key, dataUrl) => vault.setPicture(key, dataUrl));
+handle('pictures:remove', key => vault.removePicture(key));
 handle('quotes:get', () => vault.getQuotes());
 handle('quotes:set', list => vault.setQuotes(list));
 handle('quotes:export', async text => {

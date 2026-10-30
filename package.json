@@ -1,7 +1,7 @@
 {
   "name": "wellwrite",
   "productName": "WellWrite",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "A private, encrypted desktop journal",
   "main": "main.js",
   "author": "Chris Gribble",
@@ -12,7 +12,7 @@
     "assets": "node -e \"const f=require('fs');f.copyFileSync('node_modules/dompurify/dist/purify.min.js','renderer/purify.min.js')\"",
     "dist": "electron-builder --win nsis --x64 --publish never",
     "dist:portable": "electron-builder --win portable --x64 --publish never",
-    "test:e2e": "electron --no-sandbox test/calendar.e2e.js && electron --no-sandbox test/connections.e2e.js && electron --no-sandbox test/daily.e2e.js && electron --no-sandbox test/trust.e2e.js",
+    "test:e2e": "electron --no-sandbox test/calendar.e2e.js && electron --no-sandbox test/connections.e2e.js && electron --no-sandbox test/daily.e2e.js && electron --no-sandbox test/trust.e2e.js && electron --no-sandbox test/weeks.e2e.js",
     "build:bible": "node scripts/build-bible.js node_modules/world-english-bible node_modules/kjv"
   },
   "devDependencies": {
