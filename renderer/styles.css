@@ -211,9 +211,10 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 
 /* ---------- Page ---------- */
 .page { background: var(--paper); display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
+.pagebar { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--rule); background: var(--paper); padding-right: 14px; min-height: 49px; }
 .toolbar {
-  display: flex; align-items: center; gap: 2px; padding: 8px 18px; border-bottom: 1px solid var(--rule);
-  background: var(--paper); flex-wrap: wrap; min-height: 49px;
+  display: flex; align-items: center; gap: 2px; padding: 8px 18px; flex: 1; min-width: 0;
+  background: var(--paper); flex-wrap: wrap;
 }
 .toolbar .icon-btn { color: var(--pencil); width: 34px; height: 32px; }
 .toolbar .icon-btn:hover { background: var(--paper-edge); color: var(--ink); }
@@ -472,3 +473,112 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .cat-row .sub-add { border-style: dashed !important; font-size: 13.5px !important; padding: 6px 9px !important; }
 
 .cloth input[type=search]::-webkit-search-cancel-button { filter: grayscale(1) brightness(1.8); opacity: .7; cursor: pointer; }
+
+/* ---------- views: Journal / Bible / Quote ---------- */
+.modes { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.modeswitch { display: inline-flex; padding: 3px; border-radius: 8px; background: var(--paper-edge); }
+.modeswitch button { font-size: 13px; font-weight: 600; color: var(--pencil); padding: 6px 13px; border-radius: 6px; }
+.modeswitch button:hover { color: var(--ink); }
+.modeswitch button.on { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.show-above { font-size: 12.5px; color: var(--pencil); padding: 6px 8px; border-radius: 6px; }
+.show-above::after { content: ' ▾'; font-size: 10px; }
+.show-above:hover { color: var(--ink); background: var(--paper-edge); }
+.readview { display: none; max-width: 46em; margin: 0 auto; padding: 44px 56px 100px; }
+.page[data-mode="bible"] #bibleView, .page[data-mode="quote"] #quoteView { display: block; }
+.page:not([data-mode="journal"]) #sheet, .page:not([data-mode="journal"]) #empty, .page:not([data-mode="journal"]) #pageFoot { display: none !important; }
+.page:not([data-mode="journal"]) .toolbar { visibility: hidden; }
+
+/* daily cards (quote / verse) */
+.daily-slot, .quote-slot { display: grid; gap: 14px; margin-bottom: 26px; }
+.quote-slot[hidden], .daily-slot[hidden] { display: none; }
+.empty .daily-slot { text-align: left; margin: 0 0 40px; }
+.quote-card { margin: 0; padding: 16px 20px 12px; border-left: 3px solid var(--foil); background: color-mix(in srgb, var(--foil) 7%, transparent); border-radius: 0 8px 8px 0; }
+.quote-card.verse { border-left-color: var(--ribbon); background: color-mix(in srgb, var(--ribbon) 5%, transparent); }
+.quote-card blockquote { margin: 0; font: italic 400 calc(var(--write-size) * .98)/1.55 var(--serif); color: var(--ink); white-space: pre-line; }
+.quote-card figcaption { margin-top: 8px; font-size: 13px; color: var(--pencil); }
+.quote-card cite { font-style: italic; }
+.q-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 10px; }
+.q-btn { font-size: 12.5px; color: var(--pencil); text-decoration: underline; text-underline-offset: 3px; }
+.q-btn:hover { color: var(--ink); }
+.q-btn.primary { color: var(--ribbon); font-weight: 600; }
+.q-btn.subtle { margin-left: auto; text-decoration: none; opacity: .75; }
+.q-star { font-size: 16px; line-height: 1; color: var(--pencil); padding: 0 2px; }
+.q-star.on { color: var(--foil); }
+
+/* reading view */
+.rv-kicker { font-size: 12.5px; color: var(--pencil); margin: 0 0 4px; }
+.rv-title { font: 600 34px/1.15 var(--serif); font-variation-settings: 'opsz' 48; margin: 0 0 6px; color: var(--ink); }
+.rv-title span { font-weight: 400; color: var(--pencil); font-size: .6em; }
+.rv-intro { color: var(--pencil); line-height: 1.55; margin: 0 0 20px; max-width: 34em; }
+.rv-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-top: 8px; }
+.rv-ref { font: italic 400 21px/1.3 var(--serif); color: var(--ribbon); margin: 0; }
+.rv-ref small { font: 13px var(--sans); color: var(--pencil); font-style: normal; }
+.rv-nav { display: flex; align-items: center; gap: 6px; }
+.rv-nav .icon-btn { font-size: 22px; color: var(--pencil); border: 1px solid var(--rule); }
+.rv-nav .icon-btn:hover:not(:disabled) { color: var(--ink); border-color: var(--pencil); }
+.rv-nav .icon-btn:disabled { opacity: .35; cursor: default; }
+.rv-progress { height: 5px; border-radius: 3px; background: var(--paper-edge); margin: 18px 0 6px; overflow: hidden; }
+.rv-progress div { height: 100%; background: var(--ribbon); border-radius: 3px; }
+.rv-status { font-size: 12.5px; color: var(--pencil); margin: 0 0 16px; }
+.rv-status .btn-link { color: var(--ribbon); font-size: inherit; }
+.rv-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 28px; }
+.rv-actions.center { justify-content: center; }
+.rv-actions.end { margin: 30px 0 10px; padding-top: 22px; border-top: 1px solid var(--rule); }
+.rv-actions .done { color: var(--ribbon); border-color: color-mix(in srgb, var(--ribbon) 40%, transparent); font-weight: 600; }
+.rv-note { font-size: 12.5px; color: var(--pencil); margin-top: 18px; }
+.passage { font: 400 var(--write-size)/1.75 var(--serif); font-variation-settings: 'opsz' 16; color: var(--ink); max-width: 36em; }
+.passage .chap { font: 600 1.25em/1.2 var(--serif); margin: 1.6em 0 .6em; }
+.passage .chap:first-child { margin-top: 0; }
+.passage sup { font: 600 .58em var(--sans); color: var(--ribbon); margin: 0 .25em 0 .1em; vertical-align: .55em; opacity: .85; }
+.b-para { margin: 0 0 .9em; }
+.b-head { font-style: italic; color: var(--pencil); margin: 0 0 .5em; font-size: .9em; }
+.b-poem { margin: 0 0 1em; padding-left: 1.4em; }
+.b-line { display: block; text-indent: -1.4em; padding-left: 1.4em; }
+.b-line + .b-line:not(:has(sup)) { padding-left: 2.6em; }
+.plan-opts { display: grid; gap: 8px; margin: 0 0 18px; max-width: 34em; }
+.plan-opt { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 8px; cursor: pointer; }
+.plan-opt:has(input:checked) { border-color: var(--ribbon); background: color-mix(in srgb, var(--ribbon) 5%, transparent); }
+.plan-opt input { margin-top: 3px; accent-color: var(--ribbon); }
+.plan-opt b { display: block; font-size: 15px; }
+.plan-opt small { color: var(--pencil); font-size: 12.5px; }
+.plan-row { display: flex; flex-wrap: wrap; gap: 18px; margin: 0 0 20px; font-size: 14px; color: var(--pencil); }
+.plan-row select, .plan-row input { margin-left: 6px; border: 1px solid var(--rule); border-radius: 6px; padding: 6px 8px; background: var(--paper); color: var(--ink); font: 14px var(--sans); }
+.readview .quote-card.rv { margin-bottom: 30px; }
+
+/* quote page */
+.big-quote { margin: 22px 0 26px; text-align: center; }
+.big-quote blockquote { margin: 0 auto; max-width: 30em; font: italic 400 30px/1.45 var(--serif); font-variation-settings: 'opsz' 36; color: var(--ink); white-space: pre-line; }
+.big-quote blockquote::before { content: '“'; display: block; font: 400 72px/0.6 var(--serif); color: var(--foil); margin-bottom: 18px; font-style: normal; }
+.big-quote figcaption { margin-top: 18px; color: var(--pencil); font-size: 15px; }
+#quoteView .rv-kicker { text-align: center; margin-top: 20px; }
+.earlier { margin: 54px auto 0; max-width: 34em; border-top: 1px solid var(--rule); padding-top: 18px; }
+.earlier h3 { font: italic 500 16px/1.2 var(--serif); color: var(--ribbon); margin: 0 0 8px; }
+.earlier-item { display: grid; grid-template-columns: 6.5em 1fr auto; gap: 12px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; font-size: 14px; color: var(--ink); align-items: baseline; }
+.earlier-item:hover { background: var(--paper-edge); }
+.earlier-item small { color: var(--pencil); }
+.earlier-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--serif); font-style: italic; }
+.earlier-item em { color: var(--pencil); font-style: normal; font-size: 12.5px; white-space: nowrap; }
+
+/* quotes dialog */
+.q-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.dlg textarea { width: 100%; border: 1px solid var(--rule); border-radius: 6px; padding: 9px 10px; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--serif); resize: vertical; }
+.dlg input[type=search] { width: 100%; border: 1px solid var(--rule); border-radius: 6px; padding: 8px 10px; background: var(--paper); color: var(--ink); font: 14px var(--sans); }
+.q-summary { font-size: 12.5px !important; margin: 8px 0 !important; }
+.q-list { display: grid; gap: 2px; max-height: 340px; overflow-y: auto; border: 1px solid var(--rule); border-radius: 8px; padding: 4px; }
+.q-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start; padding: 8px 8px; border-radius: 6px; }
+.q-row:hover { background: var(--paper-edge); }
+.q-row .q-star { margin-top: 2px; }
+.q-text { margin: 0 !important; color: var(--ink) !important; font: italic 15px/1.45 var(--serif); white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.q-main small { color: var(--pencil); font-size: 12.5px; }
+.q-row-btns { display: flex; gap: 10px; }
+.q-row-btns .btn-link { font-size: 12.5px; }
+.q-edit { grid-column: 1 / -1; display: grid; gap: 6px; }
+.imp-list { display: grid; gap: 2px; max-height: 340px; overflow-y: auto; border: 1px solid var(--rule); border-radius: 8px; padding: 4px; margin-bottom: 8px; }
+.imp-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+.imp-row:hover { background: var(--paper-edge); }
+.imp-row small { color: var(--pencil); }
+.imp-row input { accent-color: var(--ribbon); width: 16px; height: 16px; }
+@media (max-width: 1100px) { .readview { padding: 32px 30px 90px; } .modeswitch button { padding: 6px 10px; } }
+.quote-card.empty { border-left: 0; border-radius: 10px; text-align: center; padding: 20px 26px 14px; }
+.quote-card.empty .q-actions { justify-content: center; }
+.quote-card.empty .q-btn.subtle { margin-left: 0; }

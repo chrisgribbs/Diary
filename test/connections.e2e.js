@@ -6,6 +6,7 @@ process.env.WELLWRITE_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'wellwrit
 const OUT = path.resolve(process.argv.slice(2).find(a => !a.startsWith('-') && !a.endsWith('.js')) || path.join(os.tmpdir(), 'wellwrite-conn-shots'));
 fs.mkdirSync(OUT, { recursive: true });
 const { app } = require('electron');
+app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'wellwrite-profile-'))); // fresh browser storage each run
 const { getWindow } = require('../main.js');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const errors = [];

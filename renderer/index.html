@@ -92,7 +92,17 @@
   </aside>
 
   <main class="page" id="page">
-    <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting"></div>
+    <div class="pagebar">
+      <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting"></div>
+      <div class="modes" role="tablist" aria-label="View">
+        <button type="button" class="show-above" id="showAbove" title="Choose what appears above your journal">Above journal</button>
+        <span class="modeswitch">
+          <button type="button" role="tab" data-mode="journal" title="Journal (Ctrl+1)">Journal</button>
+          <button type="button" role="tab" data-mode="bible" title="Bible reading plan (Ctrl+2)">Bible</button>
+          <button type="button" role="tab" data-mode="quote" title="Quote of the day (Ctrl+3)">Quote</button>
+        </span>
+      </div>
+    </div>
 
     <div class="sheet-scroll" id="sheetScroll">
       <article class="sheet" id="sheet" hidden>
@@ -109,6 +119,7 @@
           <input type="time" id="timeInput" class="visually-hidden" tabindex="-1" aria-label="Entry time">
         </header>
 
+        <div class="quote-slot" id="quoteSlot" hidden></div>
         <input class="title" id="title" placeholder="Title" aria-label="Title" maxlength="300">
         <div class="tags" id="tags">
           <button type="button" class="cat-pill" id="catPill" title="Category"></button>
@@ -123,6 +134,8 @@
       </article>
 
       <div class="empty" id="empty" hidden></div>
+      <section class="readview" id="bibleView" aria-label="Bible reading plan"></section>
+      <section class="readview" id="quoteView" aria-label="Quote of the day"></section>
     </div>
 
     <footer class="page-foot" id="pageFoot" hidden>

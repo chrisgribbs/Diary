@@ -11,6 +11,7 @@ process.env.WELLWRITE_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'wellwrit
 if (DARK) fs.writeFileSync(path.join(process.env.WELLWRITE_DATA_DIR, 'settings.json'), JSON.stringify({ theme: 'dark' }));
 
 const { app } = require('electron');
+app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'wellwrite-profile-'))); // fresh browser storage each run
 const { getWindow } = require('../main.js');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const errors = [];

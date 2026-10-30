@@ -4,3 +4,4 @@ shots/
 *.log
 src/google-config.json
 shots-conn/
+shots-daily/

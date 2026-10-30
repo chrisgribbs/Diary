@@ -57,6 +57,12 @@ const state = {
   sideView: (() => { try { return localStorage.getItem('sideView') || 'calendar'; } catch { return 'calendar'; } })(),
   openCats: new Set(),  // collapsed state of the category tree (ids that are folded)
   trail: [],            // entries visited by following links, for "Back"
+  quotes: [],           // [{ id, text, author, source, fav }]
+  quoteSkip: {},        // date -> how many times "Another" was pressed today
+  mode: (() => { try { return localStorage.getItem('mode') || 'journal'; } catch { return 'journal'; } })(),
+  bible: null,          // { plans, translations, state: { plan, translation, start, done } }
+  bibleDay: null,       // day of the plan being viewed (0-based); null = today's
+  verseCache: {},
   settings: { autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true },
   lastActivity: Date.now(),
   unlocked: false,
@@ -240,14 +246,20 @@ async function enterApp() {
   state.lastActivity = Date.now();
   state.metas = await api.list();
   try { state.categories = await api.getCategories(); } catch { state.categories = []; }
+  try { state.quotes = await api.getQuotes(); } catch { state.quotes = []; }
+  try { state.bible = await api.bibleInfo(); } catch { state.bible = null; }
+  state.bibleDay = null;
   state.selectedDay = null; state.query = ''; state.tag = null; state.category = null; state.trail = []; $('#search').value = '';
   const d = new Date(); state.viewMonth = new Date(d.getFullYear(), d.getMonth(), 1);
   $('#lock').hidden = true;
   $('#app').hidden = false;
   const today = sorted(state.metas.filter(m => m.date === todayISO()))[0];
-  if (today) await openEntry(today.id); else showEmpty();
+  const mode = state.mode;
+  if (today) await openEntry(today.id, { keepMode: true }); else showEmpty();
+  state.mode = mode;
   renderSidebar();
   refreshBackupInfo();
+  setMode(state.mode);
 }
 
 async function lockNow() {
@@ -256,7 +268,8 @@ async function lockNow() {
   state.unlocked = false;
   try { await api.lock(); } catch {}
   // Wipe everything readable from the page.
-  state.metas = []; state.current = null; state.categories = []; state.trail = [];
+  state.metas = []; state.current = null; state.categories = []; state.trail = []; state.quotes = []; state.bible = null; state.verseCache = {};
+  $('#bibleView').replaceChildren(); $('#quoteView').replaceChildren();
   closePopover();
   $('#body').innerHTML = ''; $('#title').value = ''; $('#tagChips').replaceChildren();
   $('#list').replaceChildren(); $('#calGrid').replaceChildren(); $('#search').value = '';
@@ -517,12 +530,15 @@ function showEmpty() {
   $('#toolbar').setAttribute('aria-disabled', 'true');
   const box = $('#empty'); box.hidden = false;
   const first = state.metas.length === 0;
-  box.replaceChildren(
+  box.replaceChildren(...[
+    el('div', { class: 'daily-slot', id: 'emptyDaily' }),
     el('h2', {}, first ? 'Your first page is blank.' : fmt(todayISO(), { weekday: 'long', day: 'numeric', month: 'long' })),
     el('p', {}, first
       ? 'Write about today, or anything at all. Entries are encrypted with your password and stay on this computer.'
       : 'Nothing written yet today. A few lines is enough.'),
-    el('button', { class: 'btn-ink', onclick: () => newEntry(todayISO()) }, 'Write today’s entry'));
+    el('button', { class: 'btn-ink', onclick: () => newEntry(todayISO()) }, 'Write today’s entry'),
+  ].filter(Boolean));
+  fillDaily($('#emptyDaily'), todayISO(), 'empty');
 }
 
 function showSheet() {
@@ -546,7 +562,8 @@ function renderChips() {
     el('button', { type: 'button', 'aria-label': `Remove tag ${t}`, onclick: () => { c.tags = c.tags.filter(x => x !== t); renderChips(); markDirty(); } }, '×'))));
 }
 
-async function openEntry(id, { via } = {}) {
+async function openEntry(id, { via, keepMode } = {}) {
+  if (state.mode !== 'journal' && !keepMode) setMode('journal');
   if (state.current && state.current.id === id) { showSheet(); return; }
   const from = state.current && state.current.saved ? state.current.id : null;
   await saveNow();
@@ -558,7 +575,7 @@ async function openEntry(id, { via } = {}) {
   titleIn.value = e.title || dateTitle(e.date);
   body.innerHTML = clean(e.html);
   decorateLinks();
-  renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink();
+  renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink(); renderQuoteSlot();
   $('#saveState').textContent = 'Saved';
   $('#sheetScroll').scrollTop = 0;
   const d = dateOf(e.date);
@@ -569,11 +586,12 @@ async function openEntry(id, { via } = {}) {
 }
 
 async function newEntry(date = todayISO()) {
+  if (state.mode !== 'journal') setMode('journal');
   await saveNow();
   state.current = { id: crypto.randomUUID(), date, time: date === todayISO() ? nowTime() : '', title: '', tags: [], category: catById(state.category) ? state.category : '', saved: false };
   state.trail = [];
   titleIn.value = dateTitle(date); body.innerHTML = '';
-  renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink();
+  renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink(); renderQuoteSlot();
   $('#saveState').textContent = 'Not saved yet';
   document.querySelectorAll('#list .item.active').forEach(n => n.classList.remove('active'));
   body.focus();
@@ -1075,6 +1093,560 @@ function renderConnections() {
   box.replaceChildren(...groups);
 }
 
+
+/* ---------- daily quote ---------- */
+const strHash = str => { let h = 2166136261; for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+const dayNumber = iso => Math.round(dateOf(iso).getTime() / 864e5);
+const quoteAuthors = () => [...new Set(state.quotes.map(q => q.author).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+function quotePool() {
+  const from = state.settings.quoteFrom || '';
+  let pool = state.quotes;
+  if (from === 'fav') pool = pool.filter(q => q.fav);
+  else if (from.startsWith('author:')) pool = pool.filter(q => q.author === from.slice(7));
+  return pool.length ? pool : state.quotes;
+}
+
+/** The quote for a day: works through the whole collection in a shuffled order before repeating. */
+function quoteFor(iso) {
+  const pool = [...quotePool()].sort((a, b) => strHash(a.id) - strHash(b.id));
+  if (!pool.length) return null;
+  const n = dayNumber(iso) + (state.quoteSkip[iso] || 0);
+  return pool[((n % pool.length) + pool.length) % pool.length];
+}
+
+const hiddenQuoteDays = (() => { try { return new Set(JSON.parse(localStorage.getItem('quoteHidden') || '[]')); } catch { return new Set(); } })();
+function hideQuoteFor(iso) {
+  hiddenQuoteDays.add(iso);
+  try { localStorage.setItem('quoteHidden', JSON.stringify([...hiddenQuoteDays].slice(-60))); } catch {}
+}
+
+function quoteCard(iso, where) {
+  if (hiddenQuoteDays.has(iso)) return null;
+  const q = quoteFor(iso);
+  if (!q) return null;
+  const btn = (label, fn, cls = 'q-btn') => el('button', { type: 'button', class: cls, onclick: fn }, label);
+  const star = el('button', { type: 'button', class: 'q-star' + (q.fav ? ' on' : ''), title: q.fav ? 'Remove from favourites' : 'Add to favourites', 'aria-pressed': String(q.fav),
+    onclick: async () => { await saveQuotes(state.quotes.map(x => (x.id === q.id ? { ...x, fav: !x.fav } : x))); refreshQuote(); } }, q.fav ? '★' : '☆');
+  return el('figure', { class: 'quote-card ' + where },
+    el('blockquote', {}, q.text),
+    el('figcaption', {}, '— ' + (q.author || 'Unknown') + (q.source ? ', ' : ''), q.source ? el('cite', {}, q.source) : null),
+    el('div', { class: 'q-actions' },
+      btn('Write about this', () => writeAboutQuote(q, iso), 'q-btn primary'),
+      state.quotes.length > 1 ? btn('Another', () => { state.quoteSkip[iso] = (state.quoteSkip[iso] || 0) + 1; refreshQuote(); }) : null,
+      star,
+      btn('Your quotes', () => manageQuotes()),
+      btn('Hide today', () => { hideQuoteFor(iso); refreshQuote(); }, 'q-btn subtle')));
+}
+
+/* What shows above the journal: the quote, the verse of the day, both, or nothing. */
+const dailyChoice = () => (state.settings.showQuote === false && state.settings.dailyCard === 'quote' ? 'none' : state.settings.dailyCard || 'quote');
+
+async function getVerse(iso) {
+  const tr = (state.bible && state.bible.state.translation) || 'web';
+  const key = iso + tr;
+  if (!(key in state.verseCache)) {
+    try { state.verseCache[key] = await api.verseOfDay(dayNumber(iso), tr); } catch { state.verseCache[key] = null; }
+  }
+  return state.verseCache[key];
+}
+
+function verseCard(v, iso, where) {
+  if (!v || hiddenQuoteDays.has('v' + iso)) return null;
+  const btn = (label, fn, cls = 'q-btn') => el('button', { type: 'button', class: cls, onclick: fn }, label);
+  return el('figure', { class: 'quote-card verse ' + where },
+    el('blockquote', {}, v.text),
+    el('figcaption', {}, '— ' + v.ref + ' ', el('cite', {}, v.translation)),
+    el('div', { class: 'q-actions' },
+      btn('Write about this', () => writeAboutQuote({ text: v.text, author: v.ref, source: v.translation }, iso), 'q-btn primary'),
+      btn(state.bible && state.bible.state.plan ? 'Today’s reading' : 'Reading plans', () => setMode('bible')),
+      btn('Hide today', () => { hideQuoteFor('v' + iso); refreshQuote(); }, 'q-btn subtle')));
+}
+
+let dailyToken = 0;
+/** Fill a container with the cards chosen to appear above the journal. */
+async function fillDaily(box, iso, where) {
+  if (!box) return;
+  const token = ++dailyToken;
+  const choice = dailyChoice();
+  const cards = [];
+  if (choice === 'quote' || choice === 'both') cards.push(quoteCard(iso, where));
+  if (choice === 'verse' || choice === 'both') cards.push(verseCard(await getVerse(iso), iso, where));
+  if (token !== dailyToken) return; // a newer render started meanwhile
+  const shown = cards.filter(Boolean);
+  box.replaceChildren(...shown);
+  box.hidden = !shown.length;
+}
+
+function renderQuoteSlot() {
+  const slot = $('#quoteSlot');
+  const c = state.current;
+  if (!c || c.date !== todayISO()) { slot.hidden = true; slot.replaceChildren(); return; }
+  // Once you've written about today's quote or verse, don't keep showing it.
+  const used = [...body.querySelectorAll('blockquote')].map(b => b.textContent).join('\n');
+  const q = quoteFor(c.date);
+  if (q && used.includes(q.text.split('\n')[0].slice(0, 40))) hideQuoteFor(c.date);
+  const v = state.verseCache[c.date + ((state.bible && state.bible.state.translation) || 'web')];
+  if (v && used.includes(v.text.split('\n')[0].slice(0, 30))) hideQuoteFor('v' + c.date);
+  fillDaily(slot, c.date, 'in-sheet');
+}
+
+function refreshQuote() {
+  if (state.mode === 'quote') renderQuoteView();
+  else if (state.mode === 'bible') renderBibleView();
+  else if (state.current) renderQuoteSlot();
+  else if (!$('#empty').hidden) showEmpty();
+}
+
+async function writeAboutQuote(q, iso) {
+  if (state.mode !== 'journal') setMode('journal');
+  if (!state.current || state.current.date !== iso) {
+    const existing = sorted(state.metas.filter(m => m.date === iso))[0];
+    if (existing) await openEntry(existing.id); else await newEntry(iso);
+  }
+  const quote = el('blockquote', {}, ...q.text.split('\n').flatMap((line, i) => (i ? [el('br'), line] : [line])),
+    el('br'), '— ' + (q.author || 'Unknown') + (q.source ? `, ${q.source}` : ''));
+  const after = el('p', {}, el('br'));
+  body.prepend(quote, after);
+  body.focus();
+  const r = document.createRange(); r.setStart(after, 0); r.collapse(true);
+  const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  markDirty(); updateCounts(); renderQuoteSlot();
+}
+
+async function saveQuotes(list) {
+  try { state.quotes = await api.setQuotes(list); } catch (x) { toast(x.message); }
+}
+
+/* --- reading quotes from pasted text or a Kindle clippings file --- */
+/** Pasted quotes: separate them with a blank line; end one with "— Writer, Book" to say who wrote it. */
+function parsePastedQuotes(text, defAuthor = '', defSource = '') {
+  const out = [];
+  for (const block of text.replace(/\r\n?/g, '\n').split(/\n\s*\n/)) {
+    let lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) continue;
+    let author = defAuthor, source = defSource;
+    const last = lines[lines.length - 1];
+    const by = last.match(/^[—–~-]+\s*(.+)$/);
+    // A quote that names its own writer doesn't take the default book.
+    if (by && lines.length > 1) { [author, source = ''] = splitAttribution(by[1]); lines = lines.slice(0, -1); }
+    else if (lines.length === 1) {
+      const m = last.match(/^(.*\S)\s+[—–]\s+([^—–]+)$/) || last.match(/^(.*\S)\s+-\s+([^-]+)$/);
+      if (m) { lines = [m[1]]; [author, source = ''] = splitAttribution(m[2]); }
+    }
+    const t = lines.join('\n').replace(/^["“”']+|["“”']+$/g, '').trim();
+    if (t) out.push({ text: t, author: author || defAuthor, source });
+  }
+  return out;
+}
+function splitAttribution(s) {
+  const i = s.indexOf(',');
+  return i < 0 ? [s.trim(), ''] : [s.slice(0, i).trim(), s.slice(i + 1).trim().replace(/^["“”]|["“”]$/g, '')];
+}
+
+/** Kindle "My Clippings.txt": highlights only (not bookmarks or your own notes). */
+function parseKindle(text) {
+  const out = [], seen = new Set();
+  for (const chunk of text.split(/\r?\n==========\r?\n?/)) {
+    const lines = chunk.replace(/^﻿/, '').split(/\r?\n/);
+    while (lines.length && !lines[0].trim()) lines.shift();
+    if (lines.length < 3 || !/highlight/i.test(lines[1])) continue;
+    const head = lines[0].trim();
+    const m = head.match(/^(.*)\(([^()]*)\)\s*$/);
+    let book = (m ? m[1] : head).trim(), author = m ? m[2].trim() : '';
+    // Kindle often writes "O'Donohue, John": turn it round.
+    const parts = author.split(',').map(x => x.trim());
+    if (parts.length === 2 && parts[1] && !/\s/.test(parts[0]) && !/\s/.test(parts[1])) author = `${parts[1]} ${parts[0]}`;
+    author = author.replace(/;/g, ', ');
+    const body = lines.slice(2).join('\n').trim();
+    if (!body) continue;
+    const key = (body + author).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ text: body, author, source: book });
+  }
+  // Kindle keeps both a short and a longer version when you extend a highlight; keep the longer.
+  return out.filter(q => !out.some(o => o !== q && o.source === q.source && o.text.length > q.text.length && o.text.includes(q.text)));
+}
+
+function importPreview(found, fromLabel) {
+  return openDialog((f, done) => {
+    const groups = new Map();
+    for (const q of found) {
+      const k = `${q.source || 'No book'}|${q.author}`;
+      if (!groups.has(k)) groups.set(k, { book: q.source, author: q.author, items: [] });
+      groups.get(k).items.push(q);
+    }
+    const existing = new Set(state.quotes.map(q => (q.text + '|' + q.author).toLowerCase().replace(/\s+/g, ' ')));
+    const fresh = q => !existing.has((q.text + '|' + q.author).toLowerCase().replace(/\s+/g, ' '));
+    const boxes = [];
+    const list = el('div', { class: 'imp-list' }, ...[...groups.values()].sort((a, b) => (a.author || '').localeCompare(b.author || '') || (a.book || '').localeCompare(b.book || '')).map(g => {
+      const n = g.items.filter(fresh).length;
+      const cb = el('input', { type: 'checkbox' }); cb.checked = n > 0; cb.disabled = !n;
+      boxes.push([cb, g]);
+      return el('label', { class: 'imp-row' }, cb,
+        el('span', {}, el('b', {}, g.book || 'Untitled'), g.author ? ` — ${g.author}` : ''),
+        el('small', {}, n ? `${n} new` : 'already added'));
+    }));
+    const go = el('button', { type: 'submit', class: 'btn-ink' }, 'Import');
+    const count = () => { const n = boxes.filter(([c]) => c.checked).reduce((a, [, g]) => a + g.items.filter(fresh).length, 0); go.textContent = n ? `Import ${n} quote${n === 1 ? '' : 's'}` : 'Import'; go.disabled = !n; };
+    list.addEventListener('change', count);
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const add = boxes.filter(([c]) => c.checked).flatMap(([, g]) => g.items.filter(fresh));
+      await saveQuotes([...state.quotes, ...add]);
+      done(); toast(`Added ${add.length} quote${add.length === 1 ? '' : 's'}`); refreshQuote(); manageQuotes();
+    });
+    f.classList.add('wide');
+    f.append(el('h2', {}, `Import from ${fromLabel}`),
+      el('p', {}, `Found ${found.length} quote${found.length === 1 ? '' : 's'}. Untick any books you don’t want.`),
+      list,
+      el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Cancel'), go));
+    count();
+  });
+}
+
+function pasteQuotes() {
+  return openDialog((f, done) => {
+    const ta = el('textarea', { rows: '10', placeholder: 'Paste quotes here, with a blank line between each.\n\nTo say who wrote one, finish it with a line like:\n— John O’Donohue, Anam Cara', autofocus: true });
+    const who = el('input', { type: 'text', placeholder: 'e.g. Parker J. Palmer' });
+    const book = el('input', { type: 'text', placeholder: 'e.g. Let Your Life Speak' });
+    f.addEventListener('submit', e => {
+      e.preventDefault();
+      const found = parsePastedQuotes(ta.value, who.value.trim(), book.value.trim());
+      if (!found.length) { toast('Nothing to import yet. Paste some quotes first.'); return; }
+      done(); importPreview(found, 'pasted text');
+    });
+    f.classList.add('wide');
+    f.append(el('h2', {}, 'Paste several quotes'),
+      el('p', {}, 'Copy passages from your notes, an ebook or a document. Separate them with a blank line.'),
+      ta,
+      el('div', { class: 'q-two' },
+        el('label', { class: 'field' }, 'Writer, if not given', who),
+        el('label', { class: 'field' }, 'Book, if not given', book)),
+      el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Cancel'), el('button', { type: 'submit', class: 'btn-ink' }, 'Next')));
+  });
+}
+
+async function importQuotesFile() {
+  let file;
+  try { file = await api.pickQuotesFile(); } catch (x) { toast(x.message); return; }
+  if (!file) return manageQuotes();
+  const kindle = /==========/.test(file.text);
+  const found = kindle ? parseKindle(file.text) : parsePastedQuotes(file.text);
+  if (!found.length) { toast(kindle ? 'No highlights found in that file.' : 'No quotes found in that file.'); return manageQuotes(); }
+  importPreview(found, kindle ? 'Kindle highlights' : file.name);
+}
+
+function manageQuotes() {
+  return openDialog((f, done) => {
+    const s = state.settings;
+    const find = el('input', { type: 'search', placeholder: 'Search your quotes or writers', 'aria-label': 'Search quotes' });
+    const list = el('div', { class: 'q-list' });
+    const summary = el('p', { class: 'q-summary' });
+    const from = el('select', { 'aria-label': 'Choose the daily quote from',
+      onchange: async e => { await updateSetting({ quoteFrom: e.target.value }); refreshQuote(); } },
+      el('option', { value: '' }, 'All my quotes'), el('option', { value: 'fav' }, 'Favourites only'),
+      ...quoteAuthors().map(a => el('option', { value: 'author:' + a }, a)));
+    from.value = s.quoteFrom || '';
+    const show = el('input', { type: 'checkbox', onchange: async e => {
+      const c = dailyChoice();
+      const next = e.target.checked ? (c === 'verse' ? 'both' : c === 'none' ? 'quote' : c) : (c === 'both' ? 'verse' : c === 'quote' ? 'none' : c);
+      await updateSetting({ dailyCard: next, showQuote: true }); refreshQuote();
+    } });
+    show.checked = ['quote', 'both'].includes(dailyChoice());
+
+    const draw = () => {
+      const q = find.value.trim().toLowerCase();
+      const items = state.quotes.filter(x => !q || (x.text + ' ' + x.author + ' ' + x.source).toLowerCase().includes(q))
+        .sort((a, b) => Number(b.fav) - Number(a.fav) || (a.author || '').localeCompare(b.author || ''));
+      summary.textContent = `${state.quotes.length} quote${state.quotes.length === 1 ? '' : 's'} from ${quoteAuthors().length} writer${quoteAuthors().length === 1 ? '' : 's'}`;
+      list.replaceChildren(...items.slice(0, 300).map(x => {
+        const row = el('div', { class: 'q-row' });
+        const view = () => row.replaceChildren(
+          el('button', { type: 'button', class: 'q-star' + (x.fav ? ' on' : ''), title: x.fav ? 'Remove from favourites' : 'Add to favourites',
+            onclick: async () => { await saveQuotes(state.quotes.map(y => (y.id === x.id ? { ...y, fav: !y.fav } : y))); x = state.quotes.find(y => y.id === x.id); view(); refreshQuote(); } }, x.fav ? '★' : '☆'),
+          el('div', { class: 'q-main' }, el('p', { class: 'q-text' }, x.text), el('small', {}, (x.author || 'Unknown') + (x.source ? `, ${x.source}` : ''))),
+          el('div', { class: 'q-row-btns' },
+            el('button', { type: 'button', class: 'btn-link', onclick: edit }, 'Edit'),
+            el('button', { type: 'button', class: 'btn-link danger', onclick: async () => { await saveQuotes(state.quotes.filter(y => y.id !== x.id)); draw(); refreshQuote(); } }, 'Delete')));
+        const edit = () => {
+          const t = el('textarea', { rows: '4' }); t.value = x.text;
+          const a = el('input', { type: 'text', value: x.author, placeholder: 'Writer' });
+          const b = el('input', { type: 'text', value: x.source, placeholder: 'Book or source' });
+          row.replaceChildren(el('div', { class: 'q-edit' }, t, el('div', { class: 'q-two' }, a, b),
+            el('div', { class: 'btns' },
+              el('button', { type: 'button', class: 'btn-ink', onclick: async () => {
+                if (!t.value.trim()) return;
+                await saveQuotes(state.quotes.map(y => (y.id === x.id ? { ...y, text: t.value, author: a.value, source: b.value } : y)));
+                x = state.quotes.find(y => y.id === x.id) || x; view(); refreshQuote();
+              } }, 'Save'),
+              el('button', { type: 'button', class: 'btn-plain', onclick: view }, 'Cancel'))));
+          t.focus();
+        };
+        view();
+        return row;
+      }));
+      if (!items.length) list.append(el('p', { class: 'q-summary' }, q ? `No quotes match “${q}”.` : 'No quotes yet. Add one below.'));
+      if (items.length > 300) list.append(el('p', { class: 'q-summary' }, `Showing 300 of ${items.length}. Search to narrow them down.`));
+    };
+    find.addEventListener('input', draw);
+
+    const text = el('textarea', { rows: '3', placeholder: 'Type or paste a quote' });
+    const author = el('input', { type: 'text', placeholder: 'Writer, e.g. John O’Donohue', list: 'quoteAuthorList' });
+    const source = el('input', { type: 'text', placeholder: 'Book or source (optional)' });
+    const add = async () => {
+      if (!text.value.trim()) { text.focus(); return; }
+      await saveQuotes([...state.quotes, { text: text.value, author: author.value, source: source.value }]);
+      text.value = ''; source.value = ''; draw(); refreshQuote(); toast('Quote added');
+      text.focus();
+    };
+
+    f.classList.add('wide');
+    f.append(
+      el('h2', {}, 'Your quotes'),
+      el('p', {}, 'One of these appears at the top of each day. Add passages from writers you love; favourites (★) come first here.'),
+      el('div', { class: 'row' }, el('div', {}, 'Show the quote above my journal'), show),
+      el('div', { class: 'row' }, el('div', {}, 'Choose each day’s quote from'), from),
+      el('h3', {}, 'Add a quote'),
+      text,
+      el('div', { class: 'q-two' }, author, source),
+      el('datalist', { id: 'quoteAuthorList' }, ...quoteAuthors().map(a => el('option', { value: a }))),
+      el('div', { class: 'btns', style: 'margin-top:8px' },
+        el('button', { type: 'button', class: 'btn-ink', onclick: add }, 'Add quote'),
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); pasteQuotes(); } }, 'Paste several…'),
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); importQuotesFile(); } }, 'Import Kindle highlights…')),
+      el('h3', {}, 'Your collection'),
+      find, summary, list,
+      el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Done')));
+    draw();
+  });
+}
+
+
+/* ---------- views: Journal / Bible / Quote ---------- */
+function setMode(mode) {
+  if (!['journal', 'bible', 'quote'].includes(mode)) mode = 'journal';
+  if (state.mode === 'journal' && mode !== 'journal') saveNow();
+  state.mode = mode;
+  try { localStorage.setItem('mode', mode); } catch {}
+  $('#page').dataset.mode = mode;
+  for (const b of document.querySelectorAll('.modeswitch [data-mode]')) {
+    const on = b.dataset.mode === mode;
+    b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on));
+  }
+  $('#showAbove').hidden = mode !== 'journal';
+  closePopover();
+  if (mode === 'bible') renderBibleView();
+  else if (mode === 'quote') renderQuoteView();
+  else if (state.current) renderQuoteSlot(); else showEmpty();
+  $('#sheetScroll').scrollTop = 0;
+}
+for (const b of document.querySelectorAll('.modeswitch [data-mode]')) b.addEventListener('click', () => setMode(b.dataset.mode));
+
+$('#showAbove').addEventListener('click', () => {
+  showPopover($('#showAbove').getBoundingClientRect(), pop => {
+    pop.classList.add('menu');
+    pop.append(el('p', { class: 'pop-hint', style: 'margin:4px 10px 6px' }, 'Show above your journal'));
+    for (const [v, label] of [['quote', 'Quote of the day'], ['verse', 'Verse of the day'], ['both', 'Quote and verse'], ['none', 'Nothing, just the journal']]) {
+      pop.append(el('button', { type: 'button', class: 'menu-item' + (dailyChoice() === v ? ' on' : ''),
+        onclick: async () => { await updateSetting({ dailyCard: v, showQuote: true }); closePopover(); refreshQuote(); } }, label));
+    }
+  });
+});
+
+// --- Bible
+const planDays = () => { const b = state.bible; const p = b && b.plans.find(x => x.id === b.state.plan); return p ? p.days : 0; };
+const todayPlanDay = () => {
+  const st = state.bible.state;
+  return Math.floor((dateOf(todayISO()) - dateOf(st.start)) / 864e5 + 0.5);
+};
+
+async function saveBible(patch) {
+  try {
+    const st = await api.setBibleState({ ...state.bible.state, ...patch });
+    state.bible.state = st;
+  } catch (x) { toast(x.message); }
+  state.verseCache = {};
+}
+
+function renderPassage(ch) {
+  const out = [el('h3', { class: 'chap' }, `${ch.book} ${ch.chapter}`)];
+  for (const block of ch.blocks) {
+    if (block[0] === 'h') { out.push(el('p', { class: 'b-head' }, block[1])); continue; }
+    if (block[0] === 'p') {
+      const p = el('p', { class: 'b-para' });
+      for (const [v, text] of block[1]) p.append(el('sup', {}, String(v)), text + ' ');
+      out.push(p);
+    } else {
+      const q = el('div', { class: 'b-poem' });
+      let last = null;
+      for (const [v, text] of block[1]) {
+        q.append(el('span', { class: 'b-line' }, v !== last ? el('sup', {}, String(v)) : null, text));
+        last = v;
+      }
+      out.push(q);
+    }
+  }
+  return out;
+}
+
+let bibleToken = 0;
+async function renderBibleView() {
+  const box = $('#bibleView');
+  const b = state.bible;
+  const token = ++bibleToken;
+  if (!b) { box.replaceChildren(el('p', { class: 'rv-note' }, 'The Bible could not be loaded.')); return; }
+  const st = b.state;
+  const verse = await getVerse(todayISO());
+
+  if (!st.plan || !st.start) {
+    // Choose a plan
+    let plan = 'year', tr = st.translation || 'web';
+    const opts = el('div', { class: 'plan-opts' }, ...b.plans.map(p => {
+      const r = el('input', { type: 'radio', name: 'plan', value: p.id }); r.checked = p.id === plan;
+      r.addEventListener('change', () => { plan = p.id; });
+      return el('label', { class: 'plan-opt' }, r, el('span', {}, el('b', {}, p.name), el('small', {}, `${p.days} days, about ${Math.round(planChapters(p.id) / p.days * 10) / 10} chapters a day`)));
+    }));
+    const trSel = el('select', { onchange: e => { tr = e.target.value; } }, ...Object.entries(b.translations).map(([id, name]) => el('option', { value: id }, name)));
+    trSel.value = tr;
+    const start = el('input', { type: 'date', value: todayISO() });
+    if (token !== bibleToken) return;
+    box.replaceChildren(...[
+      verseCard(verse, todayISO(), 'rv'),
+      el('h2', { class: 'rv-title' }, 'Read through the Bible'),
+      el('p', { class: 'rv-intro' }, 'Pick a plan and each day’s reading appears here. Tick it off when you’ve read it, and write about it in your journal.'),
+      opts,
+      el('div', { class: 'plan-row' }, el('label', {}, 'Translation ', trSel), el('label', {}, 'Start on ', start)),
+      el('button', { type: 'button', class: 'btn-ink', onclick: async () => { await saveBible({ plan, translation: tr, start: start.value || todayISO(), done: [] }); state.bibleDay = null; renderBibleView(); } }, 'Start reading plan'),
+      el('p', { class: 'rv-note' }, 'World English Bible: a modern translation in the public domain. King James Version: the 1769 text. Both are built in and work offline.'),
+    ].filter(Boolean));
+    return;
+  }
+
+  const days = planDays();
+  const today = todayPlanDay();
+  const day = Math.max(0, Math.min(days - 1, state.bibleDay == null ? today : state.bibleDay));
+  let r;
+  try { r = await api.bibleReading(st.plan, day, st.translation); } catch (x) { box.replaceChildren(el('p', {}, x.message)); return; }
+  if (token !== bibleToken) return;
+  const done = new Set(st.done);
+  const isDone = done.has(day);
+  const behind = [...Array(Math.max(0, Math.min(today, days)))].map((_, i) => i).filter(i => !done.has(i));
+  const dayDate = (() => { const d = dateOf(st.start); d.setDate(d.getDate() + day); return isoOf(d); })();
+  const planName = b.plans.find(p => p.id === st.plan).name;
+  const go = d => { state.bibleDay = d; renderBibleView(); $('#sheetScroll').scrollTop = 0; };
+
+  const markBtn = el('button', { type: 'button', class: isDone ? 'btn-plain done' : 'btn-ink', onclick: async () => {
+    const set = new Set(state.bible.state.done);
+    isDone ? set.delete(day) : set.add(day);
+    await saveBible({ done: [...set] });
+    if (!isDone) toast(set.size === days ? 'Plan complete. Well done.' : `Day ${day + 1} read`);
+    renderBibleView();
+  } }, isDone ? '✓ Read' : 'Mark as read');
+
+  box.replaceChildren(...[
+    day === today ? verseCard(verse, todayISO(), 'rv') : null,
+    el('div', { class: 'rv-head' },
+      el('div', {},
+        el('p', { class: 'rv-kicker' }, `${planName}, ${st.translation.toUpperCase()}`),
+        el('h2', { class: 'rv-title' }, `Day ${day + 1} `, el('span', {}, `of ${days}`)),
+        el('p', { class: 'rv-ref' }, r.label, el('small', {}, ` ${fmt(dayDate, { weekday: 'long', day: 'numeric', month: 'long' })}`))),
+      el('div', { class: 'rv-nav' },
+        el('button', { type: 'button', class: 'icon-btn', title: 'Previous day', 'aria-label': 'Previous day', disabled: day <= 0, onclick: () => go(day - 1) }, '‹'),
+        day !== today && today >= 0 && today < days ? el('button', { type: 'button', class: 'btn-link', onclick: () => go(null) }, 'Today') : null,
+        el('button', { type: 'button', class: 'icon-btn', title: 'Next day', 'aria-label': 'Next day', disabled: day >= days - 1, onclick: () => go(day + 1) }, '›'))),
+    el('div', { class: 'rv-progress', title: `${done.size} of ${days} days read` },
+      el('div', { style: `width:${(done.size / days) * 100}%` })),
+    el('p', { class: 'rv-status' }, `${done.size} of ${days} days read`,
+      behind.length > 1 && day === today ? el('button', { type: 'button', class: 'btn-link', onclick: () => go(behind[0]) }, ` Catch up from day ${behind[0] + 1}`) : null,
+      today >= days ? ' You’ve reached the end of the plan.' : null),
+    el('div', { class: 'rv-actions' }, markBtn,
+      el('button', { type: 'button', class: 'btn-plain', onclick: () => writeAboutReading(r) }, 'Write about this reading'),
+      el('button', { type: 'button', class: 'btn-link', onclick: biblePlanSettings }, 'Plan settings')),
+    el('article', { class: 'passage' }, ...r.chapters.flatMap(renderPassage)),
+    el('div', { class: 'rv-actions end' }, markBtn.cloneNode(true),
+      day < days - 1 ? el('button', { type: 'button', class: 'btn-plain', onclick: () => go(day + 1) }, 'Next day ›') : null),
+    el('p', { class: 'rv-note' }, `${b.translations[st.translation]}, public domain.`),
+  ].filter(Boolean));
+  // the cloned button needs the handler too
+  box.querySelector('.rv-actions.end button').addEventListener('click', () => markBtn.click());
+}
+
+function planChapters(id) {
+  return { year: 1189, 'ot-nt': 1189, nt90: 260, gospels30: 89, psalms60: 181 }[id] || 0;
+}
+
+async function writeAboutReading(r) {
+  const iso = todayISO();
+  setMode('journal');
+  const existing = sorted(state.metas.filter(m => m.date === iso))[0];
+  if (!state.current || state.current.date !== iso) { if (existing) await openEntry(existing.id); else await newEntry(iso); }
+  const p = el('blockquote', {}, `Today’s reading: ${r.label} (${r.translation})`);
+  const after = el('p', {}, el('br'));
+  body.prepend(p, after);
+  body.focus();
+  const range = document.createRange(); range.setStart(after, 0); range.collapse(true);
+  const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  markDirty(); updateCounts();
+}
+
+function biblePlanSettings() {
+  const b = state.bible, st = b.state;
+  return openDialog((f, done) => {
+    const plan = el('select', {}, ...b.plans.map(p => el('option', { value: p.id }, `${p.name} (${p.days} days)`)));
+    plan.value = st.plan;
+    const tr = el('select', {}, ...Object.entries(b.translations).map(([id, name]) => el('option', { value: id }, name)));
+    tr.value = st.translation;
+    const start = el('input', { type: 'date', value: st.start });
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const changedPlan = plan.value !== st.plan || start.value !== st.start;
+      await saveBible({ plan: plan.value, translation: tr.value, start: start.value || st.start, done: changedPlan ? [] : st.done });
+      state.bibleDay = null; done(); renderBibleView(); refreshQuote();
+    });
+    f.append(el('h2', {}, 'Reading plan'),
+      el('p', {}, 'Changing the plan or start date starts your progress again. Changing the translation keeps it.'),
+      el('label', { class: 'field' }, 'Plan', plan),
+      el('label', { class: 'field' }, 'Translation', tr),
+      el('label', { class: 'field' }, 'Day 1 was', start),
+      el('div', { class: 'actions' },
+        el('button', { type: 'button', class: 'btn-link danger', style: 'margin-right:auto', onclick: async () => { await saveBible({ plan: '', start: '', done: [] }); done(); renderBibleView(); } }, 'Stop this plan'),
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => done() }, 'Cancel'),
+        el('button', { type: 'submit', class: 'btn-ink' }, 'Save')));
+  });
+}
+
+// --- Quote of the day, full page
+function renderQuoteView() {
+  const box = $('#quoteView');
+  const iso = todayISO();
+  const q = quoteFor(iso);
+  if (!q) {
+    box.replaceChildren(el('h2', { class: 'rv-title' }, 'Quote of the day'),
+      el('p', { class: 'rv-intro' }, 'Add quotes from writers you love and one will appear here each day.'),
+      el('button', { type: 'button', class: 'btn-ink', onclick: () => manageQuotes() }, 'Add quotes'));
+    return;
+  }
+  const btn = (label, fn, cls = 'btn-plain') => el('button', { type: 'button', class: cls, onclick: fn }, label);
+  const earlier = [1, 2, 3, 4, 5, 6].map(n => { const d = dateOf(iso); d.setDate(d.getDate() - n); return isoOf(d); })
+    .map(d => ({ d, q: quoteFor(d) })).filter(x => x.q && x.q.id !== q.id);
+  box.replaceChildren(
+    el('p', { class: 'rv-kicker' }, fmt(iso, { weekday: 'long', day: 'numeric', month: 'long' })),
+    el('figure', { class: 'big-quote' },
+      el('blockquote', {}, q.text),
+      el('figcaption', {}, '— ' + (q.author || 'Unknown') + (q.source ? ', ' : ''), q.source ? el('cite', {}, q.source) : null)),
+    el('div', { class: 'rv-actions center' },
+      btn('Write about this', () => writeAboutQuote(q, iso), 'btn-ink'),
+      state.quotes.length > 1 ? btn('Another', () => { state.quoteSkip[iso] = (state.quoteSkip[iso] || 0) + 1; renderQuoteView(); }) : null,
+      btn(q.fav ? '★ Favourite' : '☆ Favourite', async () => { await saveQuotes(state.quotes.map(x => (x.id === q.id ? { ...x, fav: !x.fav } : x))); renderQuoteView(); }),
+      btn('Your quotes', () => manageQuotes(), 'btn-link')),
+    earlier.length ? el('div', { class: 'earlier' }, el('h3', {}, 'Earlier this week'),
+      ...earlier.map(({ d, q: e }) => el('button', { type: 'button', class: 'earlier-item', onclick: () => writeAboutQuote(e, iso), title: 'Write about this today' },
+        el('small', {}, fmt(d, { weekday: 'long' })), el('span', {}, e.text.split('\n')[0]), el('em', {}, e.author)))) : null,
+  );
+}
+
 /* ---------- formatting toolbar ---------- */
 const exec = (cmd, val = null) => { body.focus(); document.execCommand(cmd, false, val); markDirty(); refreshToolbar(); };
 const blockIs = tag => (document.queryCommandValue('formatBlock') || '').toLowerCase() === tag;
@@ -1254,6 +1826,7 @@ function openSettings(section) {
       el('h3', {}, 'Writing'),
       row('Theme', null, select(s.theme, [['system', 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
       row('Text size', null, size),
+      row('Daily quote', 'Choose what appears above your journal with “Above journal” at the top right.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Your quotes')),
       row('Categories', 'Group entries into sections, like a notebook.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageCategories(); } }, 'Edit categories')),
       row('Check spelling', 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
 
@@ -1602,6 +2175,7 @@ document.addEventListener('keydown', e => {
     else if (k === 's') { e.preventDefault(); state.dirty = true; saveNow().then(() => toast('Saved')); }
     else if (k === 'k' && body.contains(document.activeElement)) { e.preventDefault(); insertLink(); }
     else if (k === ',') { e.preventDefault(); openSettings(); }
+    else if (k === '1' || k === '2' || k === '3') { e.preventDefault(); setMode(['journal', 'bible', 'quote'][+k - 1]); }
   }
   if (e.key === 'Escape' && !$('#lightbox').hidden) $('#lightbox').click();
 }, true);

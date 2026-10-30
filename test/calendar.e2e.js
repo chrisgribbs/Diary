@@ -4,6 +4,7 @@
 const fs = require('fs'), os = require('os'), path = require('path'), assert = require('assert');
 process.env.WELLWRITE_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'wellwrite-cal-'));
 const { app } = require('electron');
+app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'wellwrite-profile-'))); // fresh browser storage each run
 const { getWindow } = require('../main.js');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 app.whenReady().then(async () => {

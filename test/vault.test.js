@@ -118,5 +118,22 @@ assert.throws(() => v.get('../../etc'), /Bad entry id/);
   assert.deepEqual(j.list().find(m => m.title === 'B').links, [a.id], 'old index upgraded');
 }
 
+// ---------- quotes ----------
+{
+  const q = new Vault(path.join(tmp, 'quotes')); q.create('pass-word');
+  const starter = q.getQuotes();
+  assert(starter.length >= 15, 'starter quotes added');
+  assert(starter.every(x => x.text && x.author && x.id), 'starter quotes complete');
+  q.setQuotes([...starter.slice(0, 2), { text: 'Mine, typed in.', author: 'Me', source: 'Notebook', fav: true }, { text: 'mine,  TYPED in.', author: 'me' }, { text: '   ' }]);
+  assert.equal(q.getQuotes().length, 3, 'deduped, blanks dropped, starter not re-added');
+  assert(!fs.readFileSync(path.join(tmp, 'quotes', 'meta.enc')).includes('Mine, typed'), 'quotes encrypted');
+  q.setCategories([{ id: 'c-a', name: 'A' }]);
+  assert.equal(q.getQuotes().length, 3, 'saving categories keeps quotes');
+  const bk = path.join(tmp, 'quotes.wellwrite'); q.exportBackup(bk);
+  const other = new Vault(path.join(tmp, 'quotes-other')); other.create('other-pass');
+  other.importBackup(bk, 'pass-word');
+  assert(other.getQuotes().some(x => x.text === 'Mine, typed in.' && x.fav), 'quotes come across in backups');
+}
+
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log(`vault tests passed in ${Date.now() - t0} ms`);

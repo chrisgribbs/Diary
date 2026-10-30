@@ -206,10 +206,63 @@ class Vault {
   }
 
   setCategories(list) {
+    return this._writeMeta({ categories: Vault.cleanCategories(list) });
+  }
+
+  _writeMeta(patch) {
     this._requireKey();
-    const meta = { ...this.getMeta(), categories: Vault.cleanCategories(list) };
+    const meta = { categories: [], ...this.getMeta(), ...patch };
     writeAtomic(this.metaFile, seal(this.key, Buffer.from(JSON.stringify(meta))));
     return meta;
+  }
+
+  // ---------- quotes (for the daily quote) ----------
+  static cleanQuotes(list) {
+    const seen = new Set();
+    const out = [];
+    for (const q of Array.isArray(list) ? list : []) {
+      if (!q) continue;
+      const text = String(q.text || '').replace(/\r\n?/g, '\n').trim().slice(0, 3000);
+      if (!text) continue;
+      const author = String(q.author || '').trim().slice(0, 120);
+      const key = (text + '|' + author).toLowerCase().replace(/\s+/g, ' ');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        id: /^[a-z0-9-]{1,40}$/.test(q.id || '') ? q.id : 'q-' + crypto.randomBytes(5).toString('hex'),
+        text, author, source: String(q.source || '').trim().slice(0, 200), fav: !!q.fav,
+      });
+      if (out.length >= 5000) break;
+    }
+    return out;
+  }
+
+  /** Quotes, adding the starter set the first time. */
+  getQuotes() {
+    const meta = this.getMeta();
+    if (!meta.quotesSeeded) {
+      const { STARTER_QUOTES } = require('./quotes');
+      return this._writeMeta({ quotes: Vault.cleanQuotes([...(meta.quotes || []), ...STARTER_QUOTES]), quotesSeeded: true }).quotes;
+    }
+    return meta.quotes || [];
+  }
+
+  // ---------- Bible reading plan ----------
+  static cleanBible(b) {
+    b = b || {};
+    const plans = ['year', 'ot-nt', 'nt90', 'gospels30', 'psalms60'];
+    return {
+      plan: plans.includes(b.plan) ? b.plan : '',
+      translation: ['web', 'kjv'].includes(b.translation) ? b.translation : 'web',
+      start: /^\d{4}-\d{2}-\d{2}$/.test(b.start || '') ? b.start : '',
+      done: [...new Set((Array.isArray(b.done) ? b.done : []).filter(n => Number.isInteger(n) && n >= 0 && n < 400))].sort((x, y) => x - y),
+    };
+  }
+  getBible() { return Vault.cleanBible(this.getMeta().bible); }
+  setBible(b) { return this._writeMeta({ bible: Vault.cleanBible(b) }).bible; }
+
+  setQuotes(list) {
+    return this._writeMeta({ quotes: Vault.cleanQuotes(list), quotesSeeded: true }).quotes;
   }
 
   /** Move every entry in one category to another ('' = none). Keeps their "last edited" time. */
@@ -315,6 +368,9 @@ class Vault {
         const mine = this.getMeta().categories;
         const extra = theirs.filter(c => !mine.some(x => x.id === c.id));
         if (extra.length) this.setCategories([...mine, ...extra]);
+        // And quotes (duplicates are dropped).
+        const theirQuotes = JSON.parse(open(key, Buffer.from(data.meta, 'base64')).toString('utf8')).quotes || [];
+        if (theirQuotes.length) this.setQuotes([...this.getQuotes(), ...theirQuotes]);
       }
       for (const [id, b64] of Object.entries(data.entries)) {
         if (!ID_RE.test(id)) continue;

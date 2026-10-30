@@ -17,6 +17,9 @@ Prefer no installer? **WellWrite-Portable.exe** runs on its own (your journal is
 - **Tags tab** — every tag with its count, and a box to search them; click a tag to see its entries. The main search also matches #tags.
 - **Links between entries** — type `[[` (or use the toolbar button) to link to another entry, or create a new one on the spot. Links show the other entry's current title; click one to open it, then "Back" to return. Under every entry you'll see the entries that link to it, the ones it links to, and ones that share its tags.
 - **Tags** — click a tag on an entry to see every entry with that tag.
+- **Journal, Bible and Quote views** — switch at the top right (Ctrl+1, 2, 3). "Above journal" chooses what sits at the top of today's page: the quote of the day, the verse of the day, both, or nothing.
+- **Quote of the day** — from your own collection, encrypted with your journal. Starts with out-of-copyright writers (Julian of Norwich, Traherne, Thoreau, Emerson, Dickinson and others); add your own by typing, pasting several at once ("— Writer, Book" after each), or importing your Kindle highlights (My Clippings.txt). Favourite quotes, or have each day's quote come from one writer. "Write about this" puts it in today's entry.
+- **Bible reading plans** — the whole Bible in a year, Old and New Testament each day, the New Testament in 90 days, the Gospels in 30 days, or Psalms and Proverbs in 60 days. World English Bible or King James Version, both built in and public domain. Mark each day as read, catch up on missed days, and write about the reading. A verse of the day goes with it.
 - **Rich text** — bold, italic, underline, strikethrough, headings, quotes, lists, highlight, links, section breaks.
 - **Photos** — add with the toolbar button, paste, or drag in. Large photos are resized to keep the journal light. Double-click a photo to view it full size.
 - **Titles** — every new entry starts with its date as the title (e.g. "Friday 30 October 2026"). Add to it, or replace it with your own.
@@ -63,6 +66,10 @@ Building the Windows installer on Linux/macOS needs Wine (64- and 32-bit).
 ## Google Drive setup (for builds)
 
 Google Drive backups need an OAuth client from Google Cloud (type: Desktop app, scope `drive.file`, publishing status: In production). Add its values as repository secrets `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; the release workflow writes them into `src/google-config.json` (not committed). For local runs, set `WELLWRITE_GOOGLE_CLIENT_ID` and `WELLWRITE_GOOGLE_CLIENT_SECRET`. Without them, WellWrite still works and offers folder backups only.
+
+## Bible text
+
+`bible/web.json` and `bible/kjv.json` are generated from the public-domain `world-english-bible` and `kjv` npm packages by `scripts/build-bible.js` (`npm i --no-save world-english-bible kjv && npm run build:bible`).
 
 ## Releasing an update
 

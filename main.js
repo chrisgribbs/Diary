@@ -5,6 +5,7 @@ const fs = require('fs');
 const { Vault } = require('./src/vault');
 const { autoUpdater } = require('electron-updater');
 const { migrateJournal } = require('./src/migrate');
+const bible = require('./src/bible');
 const { GoogleDrive } = require('./src/gdrive');
 const { BackupManager, suggestFolders } = require('./src/backup');
 
@@ -23,13 +24,14 @@ let win = null;
 let quitting = false;
 
 const DEFAULT_SETTINGS = {
-  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true,
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'quote', quoteFrom: '',
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
 };
 const CHOICES = {
   theme: ['system', 'light', 'dark'],
   backupEvery: ['daily', 'weekly', 'close'],
   backupKeep: [5, 10, 30, 0],
+  dailyCard: ['quote', 'verse', 'both', 'none'],
 };
 
 function readSettings() {
@@ -188,6 +190,23 @@ handle('entries:remove', id => { vault.remove(id); return true; });
 handle('categories:get', () => vault.getMeta().categories);
 handle('categories:set', list => vault.setCategories(list).categories);
 handle('categories:move', (fromId, toId) => vault.recategorize(fromId, toId || ''));
+handle('bible:info', () => ({ plans: bible.planList(), translations: bible.TRANSLATIONS, state: vault.getBible() }));
+handle('bible:setState', st => vault.setBible(st));
+handle('bible:reading', (plan, day, translation) => bible.reading(plan, day, translation));
+handle('bible:verseOfDay', (dayNumber, translation) => bible.verseOfDay(dayNumber, translation));
+handle('quotes:get', () => vault.getQuotes());
+handle('quotes:set', list => vault.setQuotes(list));
+// Read a text file the person picks (e.g. Kindle's "My Clippings.txt") so quotes can be imported from it.
+handle('quotes:pickFile', async () => {
+  const r = await dialog.showOpenDialog(win, {
+    title: 'Choose your Kindle “My Clippings.txt”, or any text file of quotes', properties: ['openFile'],
+    filters: [{ name: 'Text', extensions: ['txt', 'md', 'csv'] }, { name: 'All files', extensions: ['*'] }],
+  });
+  if (r.canceled || !r.filePaths[0]) return null;
+  const st = fs.statSync(r.filePaths[0]);
+  if (st.size > 25 * 1024 * 1024) throw new Error('That file is too large to import');
+  return { name: path.basename(r.filePaths[0]), text: fs.readFileSync(r.filePaths[0], 'utf8').replace(/^\uFEFF/, '') };
+});
 handle('settings:get', () => readSettings());
 handle('settings:set', s => writeSettings(s || {}));
 handle('app:showDataFolder', () => { shell.openPath(DATA_DIR); return true; });
