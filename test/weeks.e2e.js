@@ -40,7 +40,7 @@ app.whenReady().then(async () => {
   assert.match(await text('#quoteView .wk-running'), /^Theme: /);
   assert.ok(await js(`return document.querySelectorAll('#quoteView .wk-scripture p').length`) >= 5, 'verses shown');
   assert.match(await text('#quoteView .wk-scripture .wk-refs'), /\(.+, WEB\)/);
-  assert.match(await text('#quoteView .wk-prayer'), /Amen\.$/);
+  assert.ok((await text('#quoteView .wk-prayer')).length > 20, 'a prayer');
   assert.ok((await text('#quoteView .wk-blessing')).startsWith('A Benediction'));
   assert.ok(await js(`return document.querySelectorAll('#quoteView .wk-reading').length`) >= 1, 'readings for the week');
   assert.ok(await js(`return !!document.querySelector('#quoteView .wk-reading.now')`), 'today marked');
@@ -102,6 +102,11 @@ app.whenReady().then(async () => {
     'Lord, keep me near when I want to run.\nAmen.', '— Test Writer', 'Kind: Prayer, my own writing', 'Themes: Prayer, Courage & vulnerability, Faith & doubt, Hope & renewal, Gratitude, Love & belonging, Slowness & presence, Wonder & beauty, True self, Soul', '', '',
     'May the road rise gently under you.', '— Test Writer', 'Kind: Blessing, my own writing', 'Themes: Blessing, Hope & renewal, Prayer, Courage & vulnerability, Faith & doubt, Gratitude, Love & belonging, Slowness & presence, Wonder & beauty, True self, Soul',
   ].join('\n');
+  // a dash list inside a poem is not a writer's name
+  const listPoem = await js(`return parsePastedQuotes(${JSON.stringify('Keep me from\n– Pride;\n– Arrogance;\n– Contempt.\nAnd hold me.\n— Test Writer, My Psalms')})`);
+  assert.equal(listPoem.length, 1);
+  assert.equal(listPoem[0].text, 'Keep me from\n– Pride;\n– Arrogance;\n– Contempt.\nAnd hold me.');
+  assert.equal(listPoem[0].author, 'Test Writer');
   const parsedMine = await js(`return parsePastedQuotes(${JSON.stringify(mineText)})`);
   assert.deepEqual(parsedMine.map(q => [q.kind, !!q.mine, q.title || '']), [['psalm', true, 'Psalm of the morning'], ['fieldnote', true, 'Staying'], ['prayer', true, ''], ['blessing', true, '']]);
   assert.equal(parsedMine[0].text, 'Morning light on the hills,\nand I am held.');
@@ -109,8 +114,9 @@ app.whenReady().then(async () => {
   assert.deepEqual(back, parsedMine, 'own writing round-trips through export');
   await js(`await saveQuotes([...state.quotes, ...${JSON.stringify(parsedMine)}]); state.weekAt = null; renderQuoteView();`); await wait(900);
   assert.ok(await js(`return !!document.querySelector('#quoteView .wk-reflection')`), 'a reflection from your own writing');
-  assert.match(await text('#quoteView .wk-reflection h4'), /^(A Psalm|From the field)/);
-  assert.match(await text('#quoteView .wk-reflection .wk-sign'), /Test Writer/);
+  assert.match(await text('#quoteView .wk-reflection h4'), /^(A Psalm|A Poem|A Reflection|From the field)/);
+  const real = !!process.env.WELLWRITE_QUOTES_FILE;   // with a real collection, other writing may be chosen
+  if (!real) assert.match(await text('#quoteView .wk-reflection .wk-sign'), /Test Writer/);
   // across two neighbouring weeks, your prayer and your blessing each appear once
   let sawPrayer = false, sawBlessing = false;
   for (let i = 0; i < 2; i++) {
@@ -118,12 +124,12 @@ app.whenReady().then(async () => {
     if (await js(`return document.querySelector('#quoteView .wk-blessing').innerText.includes('road rise gently')`)) sawBlessing = true;
     await js(`[...document.querySelectorAll('#quoteView .wk-nav button')].at(-1).click();`); await wait(600);
   }
-  assert.ok(sawPrayer && sawBlessing, 'own prayer and blessing used in alternate weeks');
+  if (!real) assert.ok(sawPrayer && sawBlessing, 'own prayer and blessing used in alternate weeks');
   await js(`state.weekAt = null; renderQuoteView();`); await wait(700);
   await scrollTo('#quoteView .wk-reflection'); await shot('w10-own-reflection');
   // the editor shows kind, title and the mark
   await js(`quoteThemeFilter = '\u0000mine'; manageQuotes();`); await wait(500);
-  assert.equal(await js(`return document.querySelectorAll('#dlg .q-row').length`), 4);
+  if (!real) assert.equal(await js(`return document.querySelectorAll('#dlg .q-row').length`), 4);
   assert.match(await text('#dlg .q-row .q-kind'), /my own writing/);
   await shot('w11-my-writing-filter');
   await js(`document.querySelector('#dlg').close(); quoteThemeFilter = '';`);

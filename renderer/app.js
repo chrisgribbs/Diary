@@ -1200,7 +1200,7 @@ function quotePool() {
 
 /* --- the year of themes --- */
 /** Prayers and blessings of your own have their own places on the weekly page, so they aren't daily readings. */
-const isReading = q => q.kind !== 'prayer' && q.kind !== 'blessing';
+const isReading = q => q.kind !== 'prayer' && q.kind !== 'blessing' && !(q.mine && q.text.length > 600);  // your longer pieces are the week's Reflection
 const quotePlan = () => state.settings.quotePlan || 'christian';
 /** The season for a date under the chosen plan (null when the plan is off). */
 function seasonOn(iso) {
@@ -1426,7 +1426,10 @@ function parsePastedQuotes(text, defAuthor = '', defSource = '') {
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i].trim();
     const m = l.match(ATTR_LINE);
-    if (m && buf.some(x => x.trim() && !isJunk(x.trim()))) {
+    // Two or more dash lines in a row are a list inside a poem ("– Pride; / – Arrogance;"), not a writer.
+    const near = d => { for (let k = i + d; k >= 0 && k < lines.length; k += d) { const t = lines[k].trim(); if (t) return t; if (d > 0) return ''; } return ''; };
+    const inList = m && (ATTR_LINE.test(near(1)) || ATTR_LINE.test(near(-1)));
+    if (m && !inList && buf.some(x => x.trim() && !isJunk(x.trim()))) {
       let [author, source = ''] = splitAttribution(m[1] || m[2]);
       let j = i + 1;
       const meta = {};
@@ -2009,7 +2012,8 @@ async function renderWeekView(today, season) {
   const year = +days[0].slice(0, 4);
   const own = kinds => { const pool = seasonPool(s).filter(x => x.mine && kinds.includes(x.kind || '')); return pool.length ? pool : null; };
   const pickOwn = (pool, avoid) => { if (!pool) return null; const p = pool.filter(x => !avoid.has(x.id)); const from = p.length ? p : pool; return from[(week.index + year * 5) % from.length]; };
-  const reflection = pickOwn(own(['', 'reflection', 'fieldnote', 'psalm', 'poem']), readingIds);
+  const ownLong = own(['', 'reflection', 'fieldnote', 'psalm', 'poem']);
+  const reflection = pickOwn(ownLong && (ownLong.filter(x => !isReading(x)).length ? ownLong.filter(x => !isReading(x)) : ownLong), readingIds);
   const myPrayer = week.number % 2 === 0 ? pickOwn(own(['prayer']), readingIds) : null;
   const myBlessing = week.number % 2 === 1 ? pickOwn(own(['blessing']), readingIds) : null;
   const kindHead = { psalm: 'A Psalm', poem: 'A Poem', reflection: 'A Reflection', fieldnote: 'From the field', '': 'A Reflection' };
