@@ -290,7 +290,7 @@ class Vault {
     const plans = ['year', 'ot-nt', 'nt90', 'gospels30', 'psalms60'];
     return {
       plan: plans.includes(b.plan) ? b.plan : '',
-      translation: ['web', 'kjv'].includes(b.translation) ? b.translation : 'web',
+      translation: ['web', 'kjv'].includes(b.translation) || /^api:[A-Za-z0-9-]{4,64}$/.test(b.translation || '') ? b.translation : 'web',
       start: /^\d{4}-\d{2}-\d{2}$/.test(b.start || '') ? b.start : '',
       done: [...new Set((Array.isArray(b.done) ? b.done : []).filter(n => Number.isInteger(n) && n >= 0 && n < 400))].sort((x, y) => x - y),
     };

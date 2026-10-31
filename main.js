@@ -3,6 +3,8 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu, powerMonitor, nativeTh
 const path = require('path');
 const fs = require('fs');
 const { Vault } = require('./src/vault');
+const { ApiBible } = require('./src/apibible');
+const { BOOKS } = require('./src/bible-books');
 const { autoUpdater } = require('electron-updater');
 const { migrateJournal } = require('./src/migrate');
 const bible = require('./src/bible');
@@ -219,11 +221,62 @@ handle('entries:remove', id => { vault.remove(id); return true; });
 handle('categories:get', () => vault.getMeta().categories);
 handle('categories:set', list => vault.setCategories(list).categories);
 handle('categories:move', (fromId, toId) => vault.recategorize(fromId, toId || ''));
-handle('bible:info', () => ({ plans: bible.planList(), translations: bible.TRANSLATIONS, state: vault.getBible() }));
+// ---------- Bible versions: WEB and KJV built in; more from API.Bible with your own key ----------
+const apiBible = new ApiBible({
+  file: path.join(DATA_DIR, 'apibible.json'),
+  available: () => process.env.WELLWRITE_TEST_TRUST === '1' || safeStorage.isEncryptionAvailable(),
+  protect: s => process.env.WELLWRITE_TEST_TRUST === '1' ? 't:' + Buffer.from(s).toString('base64') : safeStorage.encryptString(s).toString('base64'),
+  unprotect: s => s.startsWith('t:') ? Buffer.from(s.slice(2), 'base64').toString() : safeStorage.decryptString(Buffer.from(s, 'base64')),
+  fetch: (url, opts) => net.fetch(url, opts),
+  ...(process.env.WELLWRITE_APIBIBLE_URL ? { base: process.env.WELLWRITE_APIBIBLE_URL, fums: process.env.WELLWRITE_APIBIBLE_URL + '/fums' } : {}),
+});
+const apiId = tr => (typeof tr === 'string' && tr.startsWith('api:') ? tr.slice(4) : null);
+const builtinTr = tr => (tr === 'kjv' ? 'kjv' : 'web');
+function translations() {
+  const out = { ...bible.TRANSLATIONS };
+  for (const v of apiBible.versions()) out['api:' + v.id] = v.name + (v.abbr ? ` (${v.abbr})` : '');
+  return out;
+}
+/** A verse in any version; if API.Bible can't be reached, the built-in WEB text with a note. */
+async function verseIn(ref, tr) {
+  const id = apiId(tr);
+  if (!id) return bible.verseText(ref, builtinTr(tr));
+  try { const v = await apiBible.passage(id, ref); if (v) return v; } catch (e) { const w = bible.verseText(ref, 'web'); return w && { ...w, fallback: e.message }; }
+  return bible.verseText(ref, 'web');
+}
+handle('bible:info', () => ({ plans: bible.planList(), translations: translations(), state: vault.getBible() }));
 handle('bible:setState', st => vault.setBible(st));
-handle('bible:reading', (plan, day, translation) => bible.reading(plan, day, translation));
-handle('bible:verseOfDay', (dayNumber, translation) => bible.verseOfDay(dayNumber, translation));
-handle('bible:verses', (refs, translation) => (Array.isArray(refs) ? refs.slice(0, 20) : []).map(r => bible.verseText(String(r), translation === 'kjv' ? 'kjv' : 'web')));
+handle('bible:reading', async (plan, day, translation) => {
+  const id = apiId(translation);
+  if (!id) return bible.reading(plan, day, builtinTr(translation));
+  const base = bible.reading(plan, day, 'web');
+  try {
+    let copyright = '';
+    const chapters = [];
+    for (const [b, c] of bible.planDay(plan, day)) {
+      const ch = await apiBible.chapter(id, b, c);
+      copyright = copyright || ch.copyright;
+      chapters.push({ book: BOOKS[b].name, chapter: c, blocks: ch.blocks });
+    }
+    const v = apiBible.versions().find(x => x.id === id) || {};
+    return { ...base, translation: v.abbr || v.name || id, copyright, chapters };
+  } catch (e) { return { ...base, fallback: e.message }; }
+});
+handle('bible:verseOfDay', async (dayNumber, translation) => {
+  const i = ((dayNumber % bible.VERSES.length) + bible.VERSES.length) % bible.VERSES.length;
+  return verseIn(bible.VERSES[i], translation);
+});
+handle('bible:verses', (refs, translation) => Promise.all((Array.isArray(refs) ? refs.slice(0, 20) : []).map(r => verseIn(String(r), translation))));
+handle('apibible:status', () => apiBible.status());
+handle('apibible:setKey', key => apiBible.setKey(key));
+handle('apibible:forget', () => { const st = vault.isUnlocked() ? vault.getBible() : null; if (st && apiId(st.translation)) vault.setBible({ ...st, translation: 'web' }); return apiBible.forget(); });
+handle('apibible:list', language => apiBible.list(typeof language === 'string' ? language.slice(0, 8) : 'eng'));
+handle('apibible:setVersions', list => {
+  const r = apiBible.setVersions(list);
+  const st = vault.isUnlocked() ? vault.getBible() : null;   // a version you removed can't stay chosen
+  if (st && apiId(st.translation) && !r.versions.some(v => v.id === apiId(st.translation))) vault.setBible({ ...st, translation: 'web' });
+  return r;
+});
 // A picture for each week: WellWrite's own choice (public-domain art and photos, fetched once from Wikimedia
 // Commons and then kept, encrypted, in the journal), or one you choose.
 const DEFAULT_PICTURES = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'pictures.json'), 'utf8'));

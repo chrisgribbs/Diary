@@ -697,3 +697,10 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 /* Settings and Your quotes fill the window: no little box to scroll around in */
 .dlg.page { width: calc(100vw - 40px); max-width: none; height: calc(100vh - 40px); max-height: none; border-radius: 10px; }
 .dlg.page form { max-height: none; height: 100%; box-sizing: border-box; padding: 34px max(40px, calc((100% - 820px) / 2)) 30px; }
+
+.q-copy, .wk-copy { font-size: 11px !important; color: var(--pencil); margin: 6px 0 0 !important; line-height: 1.4; }
+.rv-note.warn { color: var(--ribbon); }
+.bv-list { max-height: 55vh; overflow-y: auto; border: 1px solid color-mix(in srgb, var(--pencil) 25%, transparent); border-radius: 8px; padding: 6px 10px; margin: 10px 0 16px; }
+.bv-row { display: flex; gap: 10px; align-items: baseline; padding: 6px 2px; font-size: 14px; border-bottom: 1px solid color-mix(in srgb, var(--pencil) 12%, transparent); cursor: pointer; }
+.bv-row:last-child { border-bottom: 0; }
+#apiBibleKey { width: 16em; }

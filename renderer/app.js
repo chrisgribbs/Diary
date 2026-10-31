@@ -1160,6 +1160,78 @@ function suggestThemes(text, exclude = []) {
 }
 
 /** A comma-separated themes box with clickable suggestions underneath. */
+/** Bible versions: the one used everywhere, and more versions from API.Bible with your own key. */
+function bibleVersionControls(redraw) {
+  const box = el('div', { class: 'readings-box', id: 'bibleVersions' });
+  (async () => {
+    let st; try { st = await api.apiBibleStatus(); } catch { st = { connected: false, versions: [] }; }
+    try { state.bible = await api.bibleInfo(); } catch {}
+    const b = state.bible;
+    const tr = el('select', { id: 'bibleTr', 'aria-label': 'Bible version', onchange: async e => { await saveBible({ translation: e.target.value }); refreshQuote(); toast('Bible version changed'); } },
+      ...Object.entries((b && b.translations) || {}).map(([id, name]) => el('option', { value: id }, name)));
+    tr.value = (b && b.state.translation) || 'web';
+    const rows = [el('div', { class: 'row' }, el('div', {}, 'Bible version', el('small', {}, 'Used for the verse of the day, the weekly pages and reading plans.')), tr)];
+    if (!st.connected) {
+      const key = el('input', { type: 'password', id: 'apiBibleKey', placeholder: 'Your API.Bible key', autocomplete: 'off', spellcheck: 'false' });
+      const go = el('button', { type: 'button', class: 'btn-plain', id: 'apiBibleConnect', onclick: async () => {
+        go.disabled = true; go.textContent = 'Checking…';
+        try { await api.apiBibleSetKey(key.value); toast('Connected to API.Bible'); redraw(); chooseBibleVersions(redraw); }
+        catch (e) { toast(e.message); go.disabled = false; go.textContent = 'Connect'; }
+      } }, 'Connect');
+      rows.push(el('div', { class: 'row' }, el('div', {}, 'More versions from API.Bible',
+        el('small', {}, 'Paste your free API.Bible key to add other translations (open translations, plus up to three copyrighted ones on the free plan). The key is kept encrypted on this computer.')),
+        el('div', { class: 'readings-btns' }, key, go)));
+    } else {
+      rows.push(el('div', { class: 'row' }, el('div', {}, 'API.Bible',
+        el('small', {}, st.versions.length ? 'Added: ' + st.versions.map(v => v.abbr || v.name).join(', ') + '. Text is fetched as you read, so these need the internet.' : 'Connected. Choose the versions you want.')),
+        el('div', { class: 'readings-btns' },
+          el('button', { type: 'button', class: 'btn-plain', id: 'apiBibleChoose', onclick: () => chooseBibleVersions(redraw) }, 'Choose versions…'),
+          el('button', { type: 'button', class: 'btn-link danger', onclick: async () => { await api.apiBibleForget(); try { state.bible = await api.bibleInfo(); } catch {} state.verseCache = {}; refreshQuote(); redraw(); } }, 'Disconnect'))));
+    }
+    box.replaceChildren(...rows);
+  })();
+  return box;
+}
+/** Pick versions from the ones your API.Bible key can use. */
+async function chooseBibleVersions(back) {
+  let list = [];
+  const chosen = new Map(((await api.apiBibleStatus()).versions || []).map(v => [v.id, v]));
+  return openDialog((f, done) => {
+    f.classList.add('page');
+    const lang = el('select', { 'aria-label': 'Language' }, ...[['eng', 'English'], ['', 'All languages']].map(([v, n]) => el('option', { value: v }, n)));
+    const find = el('input', { type: 'text', placeholder: 'Search versions', id: 'bvFind' });
+    const listBox = el('div', { class: 'bv-list' }, el('p', {}, 'Loading…'));
+    const draw = () => {
+      const q = find.value.trim().toLowerCase();
+      const items = list.filter(b => !q || (b.name + ' ' + b.abbr + ' ' + b.language).toLowerCase().includes(q));
+      listBox.replaceChildren(...items.slice(0, 400).map(b => {
+        const cb = el('input', { type: 'checkbox', value: b.id }); cb.checked = chosen.has(b.id);
+        cb.addEventListener('change', () => { if (cb.checked) chosen.set(b.id, b); else chosen.delete(b.id); });
+        return el('label', { class: 'bv-row' }, cb, el('span', {}, el('b', {}, b.abbr || b.name), ' ', b.name, b.language && lang.value === '' ? el('small', {}, ' · ' + b.language) : null));
+      }));
+      if (!items.length) listBox.append(el('p', {}, list.length ? 'No versions match.' : 'No versions found.'));
+    };
+    const load = async () => {
+      listBox.replaceChildren(el('p', {}, 'Loading…'));
+      try { list = await api.apiBibleList(lang.value); draw(); } catch (e) { listBox.replaceChildren(el('p', {}, e.message)); }
+    };
+    lang.addEventListener('change', load); find.addEventListener('input', draw);
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      await api.apiBibleSetVersions([...chosen.values()]);
+      try { state.bible = await api.bibleInfo(); } catch {}
+      state.verseCache = {}; done(); refreshQuote(); toast(`${chosen.size} version${chosen.size === 1 ? '' : 's'} added`); if (back) back();
+    });
+    f.append(
+      el('h2', {}, 'Bible versions from API.Bible'),
+      el('p', {}, 'Tick the versions you want. They’ll appear alongside the World English Bible and King James Version. Copyrighted versions show their copyright notice wherever they’re used.'),
+      el('div', { class: 'q-two' }, lang, find),
+      listBox,
+      el('div', { class: 'btns' }, el('button', { type: 'submit', class: 'btn-ink' }, 'Save'), el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); if (back) back(); } }, 'Cancel')));
+    load();
+  });
+}
+
 /** The two reading packs: built-in writing (on/off) and your readings file (choose / stop). */
 function readingsControls(redraw = () => manageQuotes()) {
   const box = el('div', { class: 'readings-box' });
@@ -1412,6 +1484,7 @@ function verseCard(v, iso, where) {
   return el('figure', { class: 'quote-card verse ' + where },
     el('blockquote', {}, v.text),
     el('figcaption', {}, '— ' + v.ref + ' ', el('cite', {}, v.translation)),
+    v.copyright ? el('p', { class: 'q-copy' }, v.copyright) : null,
     el('div', { class: 'q-actions' },
       btn('Write about this', () => writeAboutQuote({ text: v.text, author: v.ref, source: v.translation }, iso), 'q-btn primary'),
       btn(state.bible && state.bible.state.plan ? 'Today’s reading' : 'Reading plans', () => setMode('bible')),
@@ -1992,7 +2065,7 @@ async function renderBibleView() {
       opts,
       el('div', { class: 'plan-row' }, el('label', {}, 'Translation ', trSel), el('label', {}, 'Start on ', start)),
       el('button', { type: 'button', class: 'btn-ink', onclick: async () => { await saveBible({ plan, translation: tr, start: start.value || todayISO(), done: [] }); state.bibleDay = null; renderBibleView(); } }, 'Start reading plan'),
-      el('p', { class: 'rv-note' }, 'World English Bible: a modern translation in the public domain. King James Version: the 1769 text. Both are built in and work offline.'),
+      el('p', { class: 'rv-note' }, 'World English Bible: a modern translation in the public domain. King James Version: the 1769 text. Both are built in and work offline. Add more versions from API.Bible in Settings.'),
     ].filter(Boolean));
     return;
   }
@@ -2040,7 +2113,8 @@ async function renderBibleView() {
     el('article', { class: 'passage' }, ...r.chapters.flatMap(renderPassage)),
     el('div', { class: 'rv-actions end' }, markBtn.cloneNode(true),
       day < days - 1 ? el('button', { type: 'button', class: 'btn-plain', onclick: () => go(day + 1) }, 'Next day ›') : null),
-    el('p', { class: 'rv-note' }, `${b.translations[st.translation]}, public domain.`),
+    r.fallback ? el('p', { class: 'rv-note warn' }, `Couldn’t reach API.Bible (${r.fallback}), so this is the World English Bible.`) : null,
+    el('p', { class: 'rv-note' }, r.copyright ? r.copyright : `${b.translations[st.translation] || r.translation}, public domain.`),
   ].filter(Boolean));
   // the cloned button needs the handler too
   box.querySelector('.rv-actions.end button').addEventListener('click', () => markBtn.click());
@@ -2207,7 +2281,8 @@ async function renderWeekView(today, season) {
     el('hr', { class: 'wk-rule swash' }),
     shown.length ? el('section', { class: 'wk-scripture' },
       ...shown.map(verseParagraph),
-      el('p', { class: 'wk-refs' }, '(' + shown.map(v => v.ref).join('; ') + ', ' + shown[0].translation + ')')) : null,
+      el('p', { class: 'wk-refs' }, '(' + shown.map(v => v.ref).join('; ') + ', ' + shown[0].translation + ')'),
+      shown[0].copyright ? el('p', { class: 'wk-refs wk-copy' }, shown[0].copyright) : null) : null,
     el('hr', { class: 'wk-rule' }),
     reflection ? el('section', { class: 'wk-reflection' + (['psalm', 'poem'].includes(reflection.kind) ? ' verse' : '') },
       el('h4', {}, kindHead[reflection.kind || ''], reflection.title ? el('i', {}, ': ' + reflection.title) : null),
@@ -2490,6 +2565,9 @@ function openSettings(section) {
 
       el('h3', { id: 'set-readings' }, 'Readings'),
       readingsControls(() => openSettings('readings')),
+
+      el('h3', { id: 'set-bible' }, 'Bible versions'),
+      bibleVersionControls(() => openSettings('bible')),
 
       el('h3', {}, 'Privacy'),
       row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),
