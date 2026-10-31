@@ -144,6 +144,20 @@ app.whenReady().then(async () => {
   assert.equal(await js(`return state.quotes.filter(q => q.mine).length`), 0);
   await js(`document.querySelector('#dlg').close(); quoteThemeFilter = '';`);
 
+  // --- occasions: a Good Friday piece only on Good Friday (in either calendar); a Lent piece only in Lent
+  const occParsed = await js(`return parsePastedQuotes(${JSON.stringify('Standing at the cross today.\n— Test Writer\nOccasion: Good Friday\nThemes: Joy\n\n\nAshes, and return.\n— Other Writer\nOccasion: Lent\nThemes: Joy')})`);
+  assert.deepEqual(occParsed.map(q => q.occasion), ['goodfriday', 'lent']);
+  assert.deepEqual(await js(`return parsePastedQuotes(quotesAsText(${JSON.stringify(occParsed)})).map(q => q.occasion)`), ['goodfriday', 'lent'], 'occasion round-trips');
+  await js(`await saveQuotes([...state.quotes, ...${JSON.stringify(occParsed)}]);`);
+  for (const plan of ['christian', 'spiritual']) {
+    const r = await js(`await updateSetting({ quotePlan: '${plan}' }); yearPlans.clear(); const p = yearPlan(2027);
+      const days = t => [...p.quotes.entries()].filter(([, q]) => q.text === t).map(([d]) => d);
+      return { gf: days('Standing at the cross today.'), lent: days('Ashes, and return.') };`);
+    assert.deepEqual(r.gf, ['2027-03-26'], plan + ': Good Friday piece on Good Friday 2027 only');
+    assert.ok(r.lent.length >= 1 && r.lent.every(d => d >= '2027-02-10' && d <= '2027-03-20'), plan + ': Lent piece only in Lent ' + r.lent);
+  }
+  await js(`await updateSetting({ quotePlan: 'christian' }); state.weekAt = null;`);
+
   // --- monthly themes use the same layout
   await js(`await updateSetting({ quotePlan: 'spiritual' }); renderQuoteView();`); await wait(700);
   assert.match(await text('#quoteView .wk-running'), /Theme: /);

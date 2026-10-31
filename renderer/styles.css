@@ -704,3 +704,6 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .bv-row { display: flex; gap: 10px; align-items: baseline; padding: 6px 2px; font-size: 14px; border-bottom: 1px solid color-mix(in srgb, var(--pencil) 12%, transparent); cursor: pointer; }
 .bv-row:last-child { border-bottom: 0; }
 #apiBibleKey { width: 16em; }
+
+.q-occ-row { margin: 0 0 6px; }
+.q-occ-row select { width: 100%; }

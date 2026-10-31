@@ -17,6 +17,10 @@ const crypto = require('crypto');
 const MAGIC = Buffer.from('DBK1');
 // What a piece in the quote collection is: a quote ('') or a piece of the person's own writing.
 const QUOTE_KINDS = ['', 'poem', 'psalm', 'prayer', 'blessing', 'reflection', 'fieldnote'];
+// Days and seasons a piece can belong to (see renderer/seasons.js OCCASIONS).
+const OCCASION_IDS = ['ashwednesday', 'palmsunday', 'maundythursday', 'goodfriday', 'holysaturday', 'easterday', 'ascension', 'pentecostday',
+  'christmaseve', 'christmasday', 'newyear', 'epiphanyday', 'allsaints', 'anzacday', 'mothersday', 'fathersday',
+  'advent', 'christmas', 'epiphany', 'lent', 'holyweek', 'easter', 'pentecost', 'endofyear', 'newbeginnings', 'birthday'];
 const PICTURE_KEY_RE = /^[a-z]{2,20}-\d{1,2}$/;
 const KDF = { N: 1 << 17, r: 8, p: 1, keyLen: 32 };
 const MAXMEM = 512 * 1024 * 1024;
@@ -248,6 +252,7 @@ class Vault {
         title: String(q.title || '').replace(/\s+/g, ' ').trim().slice(0, 120),
         mine: !!q.mine,
         pack: /^[a-z0-9]{1,20}$/.test(q.pack || '') ? q.pack : '',
+        occasion: OCCASION_IDS.includes(q.occasion) ? q.occasion : '',
       });
       if (out.length >= 5000) break;
     }
@@ -305,7 +310,8 @@ class Vault {
     return crypto.createHash('sha1').update(n(text) + '|' + n(author)).digest('hex').slice(0, 16);
   }
   static readingHash(q) {
-    return crypto.createHash('sha1').update(JSON.stringify([q.text, q.author, q.source, q.title, q.kind, q.themes])).digest('hex').slice(0, 12);
+    // (occasion only counts when set, so pieces synced before occasions existed still match)
+    return crypto.createHash('sha1').update(JSON.stringify([q.text, q.author, q.source, q.title, q.kind, q.themes, ...(q.occasion ? [q.occasion] : [])])).digest('hex').slice(0, 12);
   }
   /**
    * Bring a pack's quotes into the collection:
@@ -344,7 +350,7 @@ class Vault {
       const id = `${packId}-${k}`;
       const cur = byId.get(id);
       const fresh = { text: it.text, author: it.author || '', source: it.source || '', title: it.title || '', kind: it.kind || '',
-        themes: it.themes || [], mine: !!it.mine, pack: packId, id, fav: (cur && cur.fav) || fav.has(k) };
+        themes: it.themes || [], mine: !!it.mine, pack: packId, id, fav: (cur && cur.fav) || fav.has(k), occasion: it.occasion || '' };
       if (!cur) {
         if (was[k] && !fav.has(k)) continue;           // you deleted it earlier
         quotes.push(fresh); added++; touched.add(id);

@@ -1,7 +1,7 @@
 {
 "id": "wellwrite",
 "name": "Psalms, poems and reflections by Chris Gribble",
-"version": 1,
+"version": 2,
 "items": [
 {
 "id": "1198a1858e5974ec",
@@ -236,8 +236,8 @@
 ]
 },
 {
-"id": "2ac8bf6e58ddfdfa",
-"text": "Then in the silence the truth is fully found,\nWhen the chatter stops and a pause opens space,\nI find the strength in knowing each other,\nA sure hand that comes from the faithful trust,\nWhen I have nothing left to fill my life,\nIt’s when I pause I fully find God,\nThe earth’s discovery of this truth,\nWill be its final call to love,\nKnow God, Stop, Wait, Truth is my strength.",
+"id": "ffb0bcfd356306dd",
+"text": "Together seated side by side,\nAt the table laid out specially for me,\nOur endless stream of excited chatter,\nSharing the familiar stories of loved friends.\n\nThen in the silence the truth is fully found,\nWhen the chatter stops and a pause opens space,\nI find the strength in knowing each other,\nA sure hand that comes from the faithful trust,\nWhen I have nothing left to fill my life,\nIt’s when I pause I fully find God,\nThe earth’s discovery of this truth,\nWill be its final call to love,\nKnow God, Stop, Wait, Truth is my strength.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm Forty-Six: A pause opens space",
@@ -262,8 +262,8 @@
 ]
 },
 {
-"id": "7009b6193fde4e94",
-"text": "Then came the gift of a blank slate,\nSelf hatred transformed by forgiveness,\nIts beautiful balm of healing mercy,\nWholeness no longer hidden from me,\nIt became the centre of my reality.\n\nNothing became my best effort,\nA gift from creation’s source to his beloved,\nObedience born from love’s desire,\nIs the source of my every thought and action,\nKnowing that acceptance is given to brokenness,\nEternity’s tender heart discovering beauty.",
+"id": "eea1c15b5197183a",
+"text": "Life was the blackest of pits,\nMy list of wrongs mounting up,\nA huge pile that never decreased,\nMy best efforts were futility in action.\n\nThen came the gift of a blank slate,\nSelf hatred transformed by forgiveness,\nIts beautiful balm of healing mercy,\nWholeness no longer hidden from me,\nIt became the centre of my reality.\n\nNothing became my best effort,\nA gift from creation’s source to his beloved,\nObedience born from love’s desire,\nIs the source of my every thought and action,\nKnowing that acceptance is given to brokenness,\nEternity’s tender heart discovering beauty.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm Fifty-One: The gift of a blank slate",
@@ -402,19 +402,6 @@
 "Love & belonging",
 "Prayer",
 "Hope & renewal"
-]
-},
-{
-"id": "b9a970ad8ef5b2cb",
-"text": "This storm will bring refreshing rain,\nReviving the tired and weary soul,\nLoneliness became my closest friend,\nStopping to take time to listen,\nTo my sad story of painful loss,\nRestlessly seeking my true home.",
-"author": "Chris Gribble",
-"source": "",
-"title": "Psalm Sixty-Eight: Refreshing rain",
-"kind": "psalm",
-"themes": [
-"Darkness & suffering",
-"Earth & creation",
-"Soul"
 ]
 },
 {
@@ -624,8 +611,8 @@
 ]
 },
 {
-"id": "6d1cca3691ff65c7",
-"text": "So, I cried out, seeking Mercy’s beautiful response,\nI wanted to find life again, not just live in a shadow,\nMy life’s foundation had to be rebuilt,\nThe destruction that surrounded my life,\nSpoke the harsh message….\nThere is nothing permanent in this life,\nExcept for what belongs to Eternity,\nSlowly Eternity rebuilt what was loyal and good,\nBeginning by finding a kernel of trustworthiness,\nShared with a multitude of trusting souls gathered in His rest.",
+"id": "942c457f6f4a5e6b",
+"text": "Words are replaced by tears as my sadness grows,\nThe shadow of death looms over my life,\nResistance is lost in the hopeless circle of regret,\nThe hateful baying hounding me day after day.\n\nSo, I cried out, seeking Mercy’s beautiful response,\nI wanted to find life again, not just live in a shadow,\nMy life’s foundation had to be rebuilt,\nThe destruction that surrounded my life,\nSpoke the harsh message….\nThere is nothing permanent in this life,\nExcept for what belongs to Eternity,\nSlowly Eternity rebuilt what was loyal and good,\nBeginning by finding a kernel of trustworthiness,\nShared with a multitude of trusting souls gathered in His rest.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm One Hundred and Two: A kernel of trustworthiness",
@@ -968,8 +955,8 @@
 ]
 },
 {
-"id": "776c27e79ae818a4",
-"text": "Instead I will commit to what lies closest to Eternity’s heart -\nI will seek to see more of Eternity in everyone,\nI will open my ears more to cry of the poor,\nI will weep with those who know sadness,\nI will love deeply my neighbour,\nI will stand up when truth is distorted,\nI will find beauty in everyone.",
+"id": "e415668ee7ca7483",
+"text": "The best of advice is to follow God wholeheartedly,\nThen nothing else can distract from my heartfelt joy,\nI can leave behind the easily made plans of distraction,\nInstead I will commit to what lies closest to Eternity’s heart -\nI will seek to see more of Eternity in everyone,\nI will open my ears more to cry of the poor,\nI will weep with those who know sadness,\nI will love deeply my neighbour,\nI will stand up when truth is distorted,\nI will find beauty in everyone.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm One Hundred and Forty-Six: Closest to Eternity's heart",
@@ -1280,8 +1267,8 @@
 ]
 },
 {
-"id": "d28cda818cc92fb3",
-"text": "During this period, I arrived early at my annual retreat group to visit my fellow retreat facilitator before we started. He had recently constructed a labyrinth in his yard. In it, he had several sculptures to give the labyrinth's visitors inspiration and a prompt for reflection. I was drawn to the bits of a large pot stuck in the ground. All the bits were there, but the original pot was no longer recognisable. I sat with this pot, which brought me to my brokenness. I could no longer find myself in the usual ways I was used to. All I could see of myself were broken bits that no longer could serve the purpose it was designed for.",
+"id": "8a47cb34df727955",
+"text": "From the beginning of 2014, I realised that I was living a life of increasing desperation because my desire for wholeness and to live a life congruent with my core passion felt divided. … During this period, I arrived early at my annual retreat group to visit my fellow retreat facilitator before we started. He had recently constructed a labyrinth in his yard. In it, he had several sculptures to give the labyrinth's visitors inspiration and a prompt for reflection. I was drawn to the bits of a large pot stuck in the ground. All the bits were there, but the original pot was no longer recognisable. I sat with this pot, which brought me to my brokenness. I could no longer find myself in the usual ways I was used to. All I could see of myself were broken bits that no longer could serve the purpose it was designed for.",
 "author": "Chris Gribble",
 "source": "Finding Hope, 2022",
 "title": "The broken pot",
@@ -1306,16 +1293,16 @@
 ]
 },
 {
-"id": "68f859f73bb9338b",
-"text": "As I have emerged from this shadow, I rediscovered the Psalms. In them I have felt with David the raw emotion that comes with dealing with adversity, coping with harsh words and wondering where God is in the midst of this. Healing takes time. But, the words that have come to me as I have read and entered into David’s pain have been an important part of moving past the shadows. Most of all, they have brought me to God.\n\nOne definition of found poetry is, “it’s the literary version of a collage”. In finding these Psalms, I have gathered together my emotions, feelings and pain and sought to “find” my understanding of what David was saying. It’s the worst possible translation methodology, but it’s been a great personal re-discovery of God.",
+"id": "21dc9599615b299c",
+"text": "[After one of the darkest periods of his life] As I have emerged from this shadow, I rediscovered the Psalms. In them I have felt with David the raw emotion that comes with dealing with adversity, coping with harsh words and wondering where God is in the midst of this. Healing takes time. But, the words that have come to me as I have read and entered into David’s pain have been an important part of moving past the shadows. Most of all, they have brought me to God.\n\nOne definition of found poetry is, “it’s the literary version of a collage”. In finding these Psalms, I have gathered together my emotions, feelings and pain and sought to “find” my understanding of what David was saying. It’s the worst possible translation methodology, but it’s been a great personal re-discovery of God.",
 "author": "Chris Gribble",
 "source": "Finding Hope, 2022",
 "title": "Finding the Psalms",
 "kind": "reflection",
 "themes": [
 "Hope & renewal",
-"Creativity & art",
-"Prayer"
+"Prayer",
+"Creativity & art"
 ]
 },
 {
@@ -1356,8 +1343,8 @@
 ]
 },
 {
-"id": "37511c619900995f",
-"text": "We try to take a long walk. The minimum time we like is an hour. The gift of this amount of time is that we tend to run out of words. This isn’t the silence because of conflict but the sound of two people being content just to be with each other.\n\nWhat I find is the walk gives me perspective on the day ahead. Work is about people, relationships, hopes and ideas. It’s also about the things that have to be done. Sometimes work can be the climb, the tiredness and the pain. Or, sometimes there is the opportunity to take a rest and appreciate the view.",
+"id": "12083978e4a1d7ef",
+"text": "Most mornings my wife and I go for a walk. We are fortunate enough to live near the edge of the Toowoomba range so we are given a beautiful context in which to do this. … We try to take a long walk. The minimum time we like is an hour. The gift of this amount of time is that we tend to run out of words. This isn’t the silence because of conflict but the sound of two people being content just to be with each other.\n\nWhat I find is the walk gives me perspective on the day ahead. Work is about people, relationships, hopes and ideas. It’s also about the things that have to be done. Sometimes work can be the climb, the tiredness and the pain. Or, sometimes there is the opportunity to take a rest and appreciate the view.",
 "author": "Chris Gribble",
 "source": "Psalms for love of work, 2016",
 "title": "Walking and perspective",
@@ -1408,8 +1395,8 @@
 ]
 },
 {
-"id": "1c343da75e75a485",
-"text": "Deep sorrow, properly lamented points to hope. It helps us find our true north again. This new certainty began emerging for me as I spent more time in stillness and listening to God. To be fully realised it started with a lament about my deep disappointment. But, as I waited and listened I discovered a fresh sense of hope emerging. I found that over and over I was able to find more and more to celebrate in my life. Even just over two years since he died there are still times when I think about my Dad and feel a tinge of sadness that he’s not with us any more. Yet from that sadness I am able to return to a more hopeful place much more quickly because of a future that I look forward to.",
+"id": "e23a58e650b0f695",
+"text": "Deep sorrow, properly lamented points to hope. … This new certainty began emerging for me as I spent more time in stillness and listening to God. To be fully realised it started with a lament about my deep disappointment. But, as I waited and listened I discovered a fresh sense of hope emerging. I found that over and over I was able to find more and more to celebrate in my life. Even just over two years since he died there are still times when I think about my Dad and feel a tinge of sadness that he’s not with us any more. Yet from that sadness I am able to return to a more hopeful place much more quickly because of a future that I look forward to.",
 "author": "Chris Gribble",
 "source": "Lament in the Psalms, 2016",
 "title": "Deep sorrow points to hope",
@@ -1434,8 +1421,8 @@
 ]
 },
 {
-"id": "6a7d945f5d882792",
-"text": "Home for me means the unique sounds that belong to Australia with our bird calls that awaken us in the early morning. Home is the familiar accent of the Australian twang. Home is about our unique plants and trees that bring with them unique smells that are very familiar. These are all things that I feel like I belong to. Home in the Psalms is all about becoming familiar with God. It’s a place that feels like grace. When it is lived in community it brings with it the sweetest voice to each of its members. It’s a different language to the often brutal words that we can be surrounded by.",
+"id": "1a1e5941accc79a1",
+"text": "A couple of times in my life I have lived overseas for an extended period of time. Once in the Middle East and then more recently in China. There were many exciting experiences that were had when travelling but the sensation of returning home is one that I have always welcomed.\n\nHome for me means the unique sounds that belong to Australia with our bird calls that awaken us in the early morning. Home is the familiar accent of the Australian twang. Home is about our unique plants and trees that bring with them unique smells that are very familiar. These are all things that I feel like I belong to.\n\nHome in the Psalms is all about becoming familiar with God. It’s a place that feels like grace.",
 "author": "Chris Gribble",
 "source": "Psalms - Home and rest, 2016",
 "title": "Home",
@@ -1460,8 +1447,8 @@
 ]
 },
 {
-"id": "bd150cc6cdb6f6d3",
-"text": "The first word that came to me as I wrote it in my words was, “Joy”. Joy comes from an attitude of thankfulness. I have discovered this is very true for my life. I can count up all the wrongs committed against me or, I can be thankful for what I have. It’s a choice. The first option leads to despair but the second brings me to joy.",
+"id": "1dbab6313b02abd8",
+"text": "[On writing his own version of Psalm 9] The first word that came to me as I wrote it in my words was, “Joy”. Joy comes from an attitude of thankfulness. I have discovered this is very true for my life. I can count up all the wrongs committed against me or, I can be thankful for what I have. It’s a choice. The first option leads to despair but the second brings me to joy.\n\nJoy is my first word this morning,\nHostilities surround me,\nYet, my world is calm,\nI feel the breath of hate,\nFrom the words of Contempt,\nBut, my heart is touched by Love.",
 "author": "Chris Gribble",
 "source": "Sermon - Psalm Nine, 2017",
 "title": "Joy is a choice",
@@ -1703,7 +1690,8 @@
 "Hope & renewal",
 "Love & belonging",
 "Faith & doubt"
-]
+],
+"occasion": "easter"
 },
 {
 "id": "e45886fc5f8becea",
@@ -1911,7 +1899,8 @@
 "Blessing",
 "Courage & vulnerability",
 "Hope & renewal"
-]
+],
+"occasion": "endofyear"
 },
 {
 "id": "4212056ab69250b9",
@@ -2068,8 +2057,8 @@
 ]
 },
 {
-"id": "61fa500c7c3d2382",
-"text": "I think about my small town country beginnings, growing up in a rural community where my relationship to the bigger cities feels like Kathmandu and its relationship to Delhi. There are things you don’t know what you don’t know when first venturing into a bigger world. My experience in Delhi mostly reflects my ignorance and the realisation of my need to be a learner.",
+"id": "d0178584315f8ff4",
+"text": "Before commencing my current role as Project leader in Nepal, I had never wanted to visit India. … I thought India would be a bit like Nepal but busier. But I was wrong. India is different and more intense, with more people and more of everything. Delhi’s metropolitan area population is larger than my entire country’s population. When navigating anything, it's hard not to feel overwhelmed and inundated by the sheer mass of people. … I think about my small town country beginnings, growing up in a rural community where my relationship to the bigger cities feels like Kathmandu and its relationship to Delhi. There are things you don’t know what you don’t know when first venturing into a bigger world. My experience in Delhi mostly reflects my ignorance and the realisation of my need to be a learner.",
 "author": "Chris Gribble",
 "source": "GB Road (autoethnography), 2024",
 "title": "The need to be a learner",
@@ -2077,19 +2066,6 @@
 "themes": [
 "Humility",
 "The path"
-]
-},
-{
-"id": "6039fb7e9382a879",
-"text": "I reflect after that this may be one of the dumbest things I have ever done to combat human trafficking. I continue to feel conflicted about the whole experience. … There is no judgment, only prayer. The ethical dilemma is about the action that should occur to demonstrate love for our neighbour in this situation practically. I did what I was asked, which may be enough for this time.",
-"author": "Chris Gribble",
-"source": "GB Road (autoethnography), 2024",
-"title": "Only prayer",
-"kind": "fieldnote",
-"themes": [
-"Prayer",
-"Humility",
-"Paradox"
 ]
 },
 {
@@ -2106,8 +2082,8 @@
 ]
 },
 {
-"id": "fe1524345586cf6c",
-"text": "A seven day road trip on the roughest roads is a great place to start new relationships. We ate, talked, peed in the Nepali toilet and spent many hours in silence together. … And so, the foundations of relationships were formed in the space of a few days travelling over the dirt tracks and scattered potholed bitumen they call roads in Nepal. I, a foreigner, was quickly accepted into their world. This belonging felt like a community I wanted to be part of.",
+"id": "854876f93b866757",
+"text": "A seven day road trip on the roughest roads is a great place to start new relationships. We ate, talked, peed in the Nepali toilet and spent many hours in silence together. Many men form relationships through road trips, treks, or other journeys. And so, the foundations of relationships were formed in the space of a few days travelling over the dirt tracks and scattered potholed bitumen they call roads in Nepal. I, a foreigner, was quickly accepted into their world. This belonging felt like a community I wanted to be part of.",
 "author": "Chris Gribble",
 "source": "My First Twelve Days in Nepal (autoethnography), 2023",
 "title": "The roughest roads",
@@ -2118,8 +2094,8 @@
 ]
 },
 {
-"id": "f061234ad766a1d0",
-"text": "I realise this is because this is something that I have given my heart to, and I allowed myself to be vulnerable to the group when giving my presentation. My heart has a very tender, soft place for this role and its place in my life. I am prepared to admit that what this role asks me to do is closely tied to my identity.",
+"id": "7df19e9b6b39d03a",
+"text": "When I returned to Australia after 12 days away, I was invited to give a presentation about my trip to our fundraising managers. There were questions about the project's integrity and how the funders understood working with partners. I was surprised at the emotion of my response. The people questioning me aren't significant in my life. I have limited interaction with them, and if they left the organisation, I would never hear from them again. Yet I found what they said very offensive. … I realise this is because this is something that I have given my heart to, and I allowed myself to be vulnerable to the group when giving my presentation.\n\nMy heart has a very tender, soft place for this role and its place in my life. I am prepared to admit that what this role asks me to do is closely tied to my identity.",
 "author": "Chris Gribble",
 "source": "My First Twelve Days in Nepal (autoethnography), 2023",
 "title": "A tender, soft place",
@@ -2144,8 +2120,8 @@
 ]
 },
 {
-"id": "70d161bd0190e609",
-"text": "Despite my questions and uncertainties about my former theological props, I trust my calling to act justly and to bring healing to the world and its broken relationships. To seek out the virtuous path that leads me to discover more kindness and less judgement, more grace and less sin, more faith and less doubt.",
+"id": "fcfe6a1aae4c57ed",
+"text": "Despite my questions and uncertainties about my former theological props, I trust my calling to act justly and to bring healing to the world and its broken relationships. To seek out the virtuous path that leads me to discover more kindness and less judgement, more grace and less sin, more faith and less doubt. My discovery is the work of compassion and empathy in actualising the work of justice. And the growing recognition of my privilege and my need for greater humility if I am to understand this privilege fully.",
 "author": "Chris Gribble",
 "source": "My First Twelve Days in Nepal (autoethnography), 2023",
 "title": "More kindness, less judgement",
@@ -2153,7 +2129,7 @@
 "themes": [
 "The path",
 "Faith & doubt",
-"Vocation & calling"
+"Humility"
 ]
 },
 {
@@ -2170,8 +2146,8 @@
 ]
 },
 {
-"id": "3826559b13465d90",
-"text": "He concluded by saying, “it’s no good saying that my pile of ashes is bigger than yours”. I made a call at that point to follow into ministry no matter what the cost. I wanted my life to be defined by my obedience. Not by the things that I have done. But, by how faithfully I have loved and forgiven and demonstrated compassion even in the midst of injustice.",
+"id": "969284c8f29aba11",
+"text": "[Remembering a talk given to the small Christian community he belonged to as a young man] He was speaking about our futures and what counted in life.\n\nHe used the following verse:\n\n1 Corinthians 13:3 But on the judgment day, fire will reveal what kind of work each builder has done. The fire will show if a person’s work has any value.\n\nHe concluded by saying, “it’s no good saying that my pile of ashes is bigger than yours”.\n\nI made a call at that point to follow into ministry no matter what the cost. I wanted my life to be defined by my obedience. Not by the things that I have done. But, by how faithfully I have loved and forgiven and demonstrated compassion even in the midst of injustice.",
 "author": "Chris Gribble",
 "source": "Devotion Two, 2022",
 "title": "A bigger pile of ashes",
@@ -2183,8 +2159,8 @@
 ]
 },
 {
-"id": "39a02093641fb01a",
-"text": "Then, there is the ego that sits in this work. I have to admit I feel good about what I do. I get fulfilment from seeing the results and from helping people. I also know that too much ego can make this all about me, and I am aware of the dangers of pride and how it can quickly lead to my downfall. I have found that life brings about enough success to keep me going and enough failure to temper my natural optimism with a healthy dose of reality. Without this balance, I could quickly get caught up in my success rather than keep my focus on the source of success.",
+"id": "ddea410dbbfbd44a",
+"text": "[On his work against the exploitation of children] Then, there is the ego that sits in this work. I have to admit I feel good about what I do. I get fulfilment from seeing the results and from helping people. I also know that too much ego can make this all about me, and I am aware of the dangers of pride and how it can quickly lead to my downfall. I have found that life brings about enough success to keep me going and enough failure to temper my natural optimism with a healthy dose of reality. Without this balance, I could quickly get caught up in my success rather than keep my focus on the source of success.",
 "author": "Chris Gribble",
 "source": "The Cabin Bar (autoethnography), 2024",
 "title": "Enough success, enough failure",
@@ -2195,21 +2171,21 @@
 ]
 },
 {
-"id": "c3dee60c18d660e4",
-"text": "This is a different phase of “calling.” It’s not the calling into a new land anymore with the tinge of excitement that comes from launching into something new. … But recently, I have considered that doing anything worthwhile will take a five-year commitment. When I listen to my inner voice telling me this, I know that this will be the reality of living a called life for me at this time.",
+"id": "aab16568a5309f5c",
+"text": "Some of my visits haven’t been easy. Initially, it meant significant time away from my wife, leaving her to navigate many of the functions I normally do in our home and for the family. It’s meant being alone for significant periods, with no familiar conversations I can have at home. There have also been significant challenges in the relationships with the people we work with.\n\nThis is a different phase of “calling.” It’s not the calling into a new land anymore with the tinge of excitement that comes from launching into something new. I know that spending time in Nepal will mean a lack of deep connections and being viewed as someone with money and a certain amount of power. I have choices that are not available to most Nepalis. My Nepali language, even after a year of study, is still at a very basic level.\n\nBut recently, I have considered that doing anything worthwhile will take a five-year commitment. When I listen to my inner voice telling me this, I know that this will be the reality of living a called life for me at this time.",
 "author": "Chris Gribble",
 "source": "The Cabin Bar (autoethnography), 2024",
 "title": "A different phase of calling",
 "kind": "reflection",
 "themes": [
 "Vocation & calling",
-"Slowness & presence",
-"The path"
+"The path",
+"Courage & vulnerability"
 ]
 },
 {
-"id": "e906529e5499440f",
-"text": "My vocation is best described as how I choose to love my neighbour. … I often comment on how much I love my work, realising that my work satisfaction is partly formed because of the misfortune of others. This seems grossly unfair to those who are exploited.",
+"id": "6b0ea3231bd0d660",
+"text": "My vocation is best described as how I choose to love my neighbour. My work is to rescue children who are being exploited. My first task to be loving is to seek out those being exploited; my second is to help them be free of this exploitation. I often comment on how much I love my work, realising that my work satisfaction is partly formed because of the misfortune of others. This seems grossly unfair to those who are exploited.",
 "author": "Chris Gribble",
 "source": "The Cabin Bar (autoethnography), 2024",
 "title": "How I choose to love",
@@ -2221,21 +2197,8 @@
 ]
 },
 {
-"id": "fc4d6f09a163e283",
-"text": "Rescue is an integral part of the Christian story. I believe that I have been rescued myself. It was a real experience of coming out of darkness and into light, restoring my relationship with God. This was not done without great cost.",
-"author": "Chris Gribble",
-"source": "The Cabin Bar (autoethnography), 2024",
-"title": "Out of darkness",
-"kind": "reflection",
-"themes": [
-"Hope & renewal",
-"Darkness & suffering",
-"Faith & doubt"
-]
-},
-{
-"id": "55628be999dafe1c",
-"text": "My theology is understood in the ways I open myself up to the concept of God - My belief that this world isn’t a closed frame and that there is involvement by God. … Theology is formed in the space between what I believe and what I do. In my Christian life, I am reborn into practical theology. The core idea of being made in God’s image ensures that theology becomes a lived practice.",
+"id": "f5e790a976eda6b7",
+"text": "My theology is understood in the ways I open myself up to the concept of God - My belief that this world isn’t a closed frame and that there is involvement by God. This is the main filter I used to discern my understanding of reality and actions. The text by which I determine my understanding of God is primarily formed from the Bible. But my understanding of God is multifaceted, informed by my early Christian experiences in communal life, the influence of mentors and transformed by my personal experiences of brokenness. … Theology is formed in the space between what I believe and what I do. In my Christian life, I am reborn into practical theology. The core idea of being made in God’s image ensures that theology becomes a lived practice.",
 "author": "Chris Gribble",
 "source": "Experience of a Rescue (autoethnography), 2024",
 "title": "Between belief and action",
@@ -2246,8 +2209,8 @@
 ]
 },
 {
-"id": "d203fb934d51a5c5",
-"text": "This dichotomy conflicts with my inner sense of right and wrong. But, even more so, it brings to the forefront one of the ongoing questions around the stated truths of the Christian God. He is all loving and all powerful, yet there remain questions about the existence of evil. The more I try to understand these two ideas and how they co-exist, the less certain I am about some of what I once considered foundational in my belief in God.",
+"id": "83e47e718317fab7",
+"text": "[On how an all-loving, all-powerful God can allow children to be abused] This dichotomy conflicts with my inner sense of right and wrong. But, even more so, it brings to the forefront one of the ongoing questions around the stated truths of the Christian God. He is all loving and all powerful, yet there remain questions about the existence of evil. The more I try to understand these two ideas and how they co-exist, the less certain I am about some of what I once considered foundational in my belief in God.",
 "author": "Chris Gribble",
 "source": "Experience of a Rescue (autoethnography), 2024",
 "title": "Less certain",
@@ -2271,8 +2234,8 @@
 ]
 },
 {
-"id": "d93d758aacc088a1",
-"text": "Inherent in this lies the contradictions we find between orthodoxy and orthopraxy. (Right belief and right action). This sort of experience pushed my faith to the edges, beyond the safe confines of a Sunday Church service that was, for many years, the central activity of my Christian faith. It pushes me into a deeper understanding of some of Christ’s words. The challenge of loving God with all your heart actually means caring for your neighbour.",
+"id": "b0fa3fd35e929886",
+"text": "[On seeing anti-trafficking work at first hand] This sort of experience pushed my faith to the edges, beyond the safe confines of a Sunday Church service that was, for many years, the central activity of my Christian faith.\n\nIt pushes me into a deeper understanding of some of Christ’s words. The challenge of loving God with all your heart actually means caring for your neighbour. And, because of our work, the definition of our neighbour has been expanded.",
 "author": "Chris Gribble",
 "source": "Experience of a Rescue (autoethnography), 2024",
 "title": "Faith pushed to the edges",
@@ -2284,8 +2247,8 @@
 ]
 },
 {
-"id": "019070effcaa154d",
-"text": "It seems strange that after such a restless life of always thinking about what’s next, these days, I wake up to a sense of contentedness. I don’t claim everything is perfect, but I am blessed with a sense of connection to my family, friends, faith, and work. Each of them brings a gift that I can celebrate every day.",
+"id": "32b347b3ac41e573",
+"text": "This year, I turned 60, and this felt like it was significant for me. One of my realisations was that there is less life in front of me than behind me. … When I think about all the other decades in my life that have passed, it feels good to be 60 and more content than I have ever been. … It seems strange that after such a restless life of always thinking about what’s next, these days, I wake up to a sense of contentedness. I don’t claim everything is perfect, but I am blessed with a sense of connection to my family, friends, faith, and work. Each of them brings a gift that I can celebrate every day.",
 "author": "Chris Gribble",
 "source": "Not Quite Retired, 2024",
 "title": "Waking to contentedness",
@@ -2294,11 +2257,12 @@
 "Gratitude",
 "Blessing",
 "Joy"
-]
+],
+"occasion": "birthday"
 },
 {
-"id": "4df1989323ca8e70",
-"text": "The 50s started painfully. With the loss of my Dad, my life broke down with a mixture of burnout and depression and painfully reconstructing a healthier version of myself. Hopefully, it is a person much kinder and more compassionate than the one that preceded it.",
+"id": "2d873ef9515784b0",
+"text": "[Looking back over each decade of his life, the year he turned 60] The 50s started painfully. With the loss of my Dad, my life broke down with a mixture of burnout and depression and painfully reconstructing a healthier version of myself. Hopefully, it is a person much kinder and more compassionate than the one that preceded it. … Throughout all these decades, I have always been learning, changing, and trying new things.",
 "author": "Chris Gribble",
 "source": "Not Quite Retired, 2024",
 "title": "A kinder version of myself",
@@ -2307,24 +2271,12 @@
 "Hope & renewal",
 "Darkness & suffering",
 "True self"
-]
+],
+"occasion": "birthday"
 },
 {
-"id": "e7beb08348712d84",
-"text": "I know that so often I am less than loving. I know that the person I love the most in this life, my wife April is also the one that bears the brunt of my unlovingness. God invites us into all his love, it’s a fierce, loyal, forgiving love. And, as I come into his presence, often I know there are things that will make him weep.",
-"author": "Chris Gribble",
-"source": "Reflection Starting Point, 2020",
-"title": "A fierce, loyal, forgiving love",
-"kind": "reflection",
-"themes": [
-"Love & belonging",
-"Humility",
-"Prayer"
-]
-},
-{
-"id": "245191cdbf99f045",
-"text": "Yet as we cry together, about the shared loves that we have, I know that it's by being open to knowing the pain of disappointment that love can live more deeply in me. I am given that choice, to shy away and become less known to myself and to God. Or, to become more fully what God has intended me to become, the purpose that he created me for. To become love, to enter into God’s love and to stay in that presence.",
+"id": "2cb736d09ab45adf",
+"text": "[Reflecting on an old Hebridean prayer: “Then hide me from Thy tears”] God invites us into all his love, it’s a fierce, loyal, forgiving love. And, as I come into his presence, often I know there are things that will make him weep.\n\nYet as we cry together, about the shared loves that we have, I know that it's by being open to knowing the pain of disappointment that love can live more deeply in me. I am given that choice, to shy away and become less known to myself and to God. Or, to become more fully what God has intended me to become, the purpose that he created me for. To become love, to enter into God’s love and to stay in that presence.",
 "author": "Chris Gribble",
 "source": "Reflection Starting Point, 2020",
 "title": "To become love",
@@ -2336,8 +2288,8 @@
 ]
 },
 {
-"id": "2b72450b073a2b42",
-"text": "For me it meant being reduced sometimes to an almost childlike state of total dependence on others to be able to complete some of the simplest tasks such as buying a mobile phone, ensure that we have drinking water delivered or working out why we had no gas or why the power had gone off. … This was a humbling experience that reminded me of the need to not get too proud. I must never forget my dependence on God. That whatever I have today may not be here tomorrow. To tread lightly in this world because it’s a fleeting existence.",
+"id": "d3b7c864d09e3071",
+"text": "[On six months living in China as a foreigner] For me it meant being reduced sometimes to an almost childlike state of total dependence on others to be able to complete some of the simplest tasks such as buying a mobile phone, ensure that we have drinking water delivered or working out why we had no gas or why the power had gone off.\n\nThis was a humbling experience that reminded me of the need to not get too proud. I must never forget my dependence on God. That whatever I have today may not be here tomorrow. To tread lightly in this world because it’s a fleeting existence.\n\nMy six month stay in China reinforced my understanding of my need to continue to be humble. The feeling of thinking that I know something is quickly challenged by realising that there is always more to know.",
 "author": "Chris Gribble",
 "source": "My Fortress Story, 2013",
 "title": "Tread lightly",
@@ -2349,20 +2301,21 @@
 ]
 },
 {
-"id": "cd71185b1cf5f041",
-"text": "This was my first experience of working in a place with no spirit. In the end it was quite a soulless existence. My weight hovered at around 8 stone. I was constantly tired due to lack of sleep. I saw no hope and no future. My spirit was stripped away during these four years of abuse.",
+"id": "8ce6e2b69cbc72a6",
+"text": "My first job after leaving school was in a factory that made farm implements. I commenced an apprenticeship with that company and began some of the most difficult years of my life.\n\nFor the next four years I faced a situation of ongoing bullying (we didn't have that name for it back then). … What was most tiring was the hatred that was expressed constantly by my immediate boss. For some reason he found the thought of looking at me each day intolerable and he set out to make my life miserable.\n\nThis was my first experience of working in a place with no spirit. In the end it was quite a soulless existence. My weight hovered at around 8 stone. I was constantly tired due to lack of sleep. I saw no hope and no future.\n\nMy spirit was stripped away during these four years of abuse. As soon as I finished my apprenticeship I resigned and got away as far as possible from that workplace.\n\nSince that time I have worked in many workplaces and talked to many people who struggle in their workplace. My understanding of these experiences has led me to seek to find ways to encourage a positive workplace spirit.",
 "author": "Chris Gribble",
 "source": "My Fortress Story, 2013",
 "title": "A place with no spirit",
 "kind": "reflection",
 "themes": [
 "Darkness & suffering",
-"Soul"
+"Soul",
+"Hope & renewal"
 ]
 },
 {
-"id": "3617907c7a15b9a9",
-"text": "The hardest journey that I have ever faced is the inward journey. It's the one that takes me to those places that I would rather not go to. God takes us there. If we truly desire greatness in the Kingdom then we must go to the place that we fear the most. If we are willing God will allow us to stare it in the face.",
+"id": "6e2a5e428c0ac4f1",
+"text": "I thought that I was brave. I thought that I was scared of nothing. I have been discovering that this is not true. My self perception was not the reality that God wanted me to know. … The hardest journey that I have ever faced is the inward journey. It's the one that takes me to those places that I would rather not go to.\n\nGod takes us there. If we truly desire greatness in the Kingdom then we must go to the place that we fear the most. If we are willing God will allow us to stare it in the face.\n\nThen we make a choice. Is this experience going to limit what I do in the future? Or, am I going to use this experience to do more for the Kingdom.",
 "author": "Chris Gribble",
 "source": "My Fortress Story, 2014",
 "title": "The inward journey",
@@ -2374,8 +2327,8 @@
 ]
 },
 {
-"id": "9287ca69ef396cdb",
-"text": "Instead we took the kids to a park. We had a packed lunch prepared for the day at the Convention centre so it became a picnic day. After lunch we played in the playground and went for a walk. We wasted time together but it was lots of fun. … We are not poor, but we don’t have lots of spare cash. Like most families we need to watch how we spend our money. We try to live simply so we can spend time with our kids.",
+"id": "7604ca43f6364109",
+"text": "[When a planned family day at a children's Expo fell through for lack of cash] Instead we took the kids to a park. We had a packed lunch prepared for the day at the Convention centre so it became a picnic day. After lunch we played in the playground and went for a walk. We wasted time together but it was lots of fun.\n\nEven though we felt disappointed about missing the Expo I don’t think the kids felt the slightest bit neglected. In fact they had a great time.\n\nOn our way home my wife April and I talked and reflected on our day. We are not poor, but we don’t have lots of spare cash. Like most families we need to watch how we spend our money. We try to live simply so we can spend time with our kids.",
 "author": "Chris Gribble",
 "source": "My Fortress Story, 2013",
 "title": "Wasted time together",
@@ -2387,8 +2340,8 @@
 ]
 },
 {
-"id": "7291aff4c7d55e8e",
-"text": "This I think is the most important lesson I have learned. That going to the footy every week is one of my most valuable inputs I have into my son’s life. When he asks me, “did I run forward this week, Dad”? My affirmation is vital for Toby. He needs to know that he has done exactly what I asked and I love watching his face light up when he is told he did well.",
+"id": "ebe5dd82ce66e7a9",
+"text": "[On watching his young son play junior football each week] This I think is the most important lesson I have learned. That going to the footy every week is one of my most valuable inputs I have into my son’s life. When he asks me, “did I run forward this week, Dad”? … He needs to know that he has done exactly what I asked and I love watching his face light up when he is told he did well.",
 "author": "Chris Gribble",
 "source": "My Fortress Story, 2013",
 "title": "Did I run forward?",
@@ -2399,8 +2352,8 @@
 ]
 },
 {
-"id": "748b504ae703dc06",
-"text": "I would describe my relationship with God as mixed. I continue to have no doubts about my faith. But, I continue to have lots of doubts about the church. I have little desire to engage in corporate worship, yet my heart lifts when I experience true community.",
+"id": "29ab8104513d45a4",
+"text": "I would describe my relationship with God as mixed. I continue to have no doubts about my faith. But, I continue to have lots of doubts about the church. I have little desire to engage in corporate worship, yet my heart lifts when I experience true community.\n\nI struggle with the conservative versions of Christianity. I think this largely lies in my experiences of its unreasonableness, especially when one considers the irrational perspectives that emerge from its literalisation of Scripture.",
 "author": "Chris Gribble",
 "source": "Personal Motivations (Nepal journal), 2022",
 "title": "My heart lifts",
@@ -2411,8 +2364,8 @@
 ]
 },
 {
-"id": "91317fd6ecaccb5f",
-"text": "Driving past people living with no safety nets always invites me to consider how I spend the enormous privilege I’ve been given. My prayer continues to ask God this question. And at 58 years old, I want to ensure that my time is used wisely. I want my life to be seen as one of continued obedience to God’s call. … I know that as I sit on the brink of something new that God is inviting me into, I have never felt more ALIVE.",
+"id": "20b37b08283e01c5",
+"text": "Seven days travelling through some of the poorest areas you could imagine. … Driving past people living with no safety nets always invites me to consider how I spend the enormous privilege I’ve been given. My prayer continues to ask God this question. And at 58 years old, I want to ensure that my time is used wisely. I want my life to be seen as one of continued obedience to God’s call. … I know that as I sit on the brink of something new that God is inviting me into, I have never felt more ALIVE.",
 "author": "Chris Gribble",
 "source": "Personal Motivations (Nepal journal), 2022",
 "title": "On the brink of something new",
@@ -2436,8 +2389,8 @@
 ]
 },
 {
-"id": "106b426ae68926d7",
-"text": "I remember after my Dad passed away early in the morning and as I sat in a park by myself, the bright sunlight, bird calls, and the noises of young families enjoying their discovery of the park were experienced through a fog. Something significant had ended in my world, but for everyone else, their world was rushing on. And, then, the tears came. I remember waking up for the first time, weeping uncontrollably. Each tear was an expression of the love I experienced with my Dad.",
+"id": "9952672688355196",
+"text": "When someone you are close to passes away, a surreal existence is entered into for a period after the reality of that loss begins to sink in.\n\nI remember after my Dad passed away early in the morning and as I sat in a park by myself, the bright sunlight, bird calls, and the noises of young families enjoying their discovery of the park were experienced through a fog. Something significant had ended in my world, but for everyone else, their world was rushing on.\n\nAnd, then, the tears came. I remember waking up for the first time, weeping uncontrollably. Each tear was an expression of the love I experienced with my Dad.",
 "author": "Chris Gribble",
 "source": "Nepal Stay Journal, 2023",
 "title": "Each tear",
@@ -2448,8 +2401,8 @@
 ]
 },
 {
-"id": "1269dfd04ac8f3cd",
-"text": "But, the reality of my faith continues in the midst of this as I pause to remember the sorrow experienced by those witnesses of Christ’s death. And, as I join them, I remember this is the price paid for me to experience the full impact of love. Without this moment, when God laid down his life for his beloved world, I would not be able to cry like I cried when Dad passed away, celebrate a love of 30+ years with my wife, or join others in a sacred community who are choosing to be witnesses to Good Friday today.",
+"id": "4ee9276887918992",
+"text": "My morning reflections on Good Friday are reliving the reality of the death of Christ. Again I am reminded of God's deep connection with us - with me.\n\nAnd, yet, there is a surreal quality to it. I am experiencing it through the lens of a country that rushes on because the death of Jesus has little meaning for the everyday Hindu. … But, the reality of my faith continues in the midst of this as I pause to remember the sorrow experienced by those witnesses of Christ’s death. And, as I join them, I remember this is the price paid for me to experience the full impact of love.\n\nWithout this moment, when God laid down his life for his beloved world, I would not be able to cry like I cried when Dad passed away, celebrate a love of 30+ years with my wife, or join others in a sacred community who are choosing to be witnesses to Good Friday today.",
 "author": "Chris Gribble",
 "source": "Nepal Stay Journal, 2023",
 "title": "Good Friday in Nepal",
@@ -2458,11 +2411,12 @@
 "Faith & doubt",
 "Love & belonging",
 "Gratitude"
-]
+],
+"occasion": "goodfriday"
 },
 {
-"id": "8d2ef30c09a7bcaa",
-"text": "I realise that this doesn’t mean I won’t have experiences of belonging now. Instead, it strengthens my desire to change how I belong to others. I want my connection with people to feel kind, attentive and fully there with them in their moment. And the miracle is that my loneliness dissipates when I have a conversation marked with these qualities. When I see someone touched by my kindness, I realise I have connected and allowed that person to belong fully.",
+"id": "e2fa377d720c81dc",
+"text": "Living alone in a foreign country and not knowing anyone has brought a new understanding of loneliness. And, because of my not belonging, how important belonging is. … Loneliness reminds me that even when in familiar places, in my home country, this ache will still remain. Even in my amazing life adventure, this unfulfilled hope of fully belonging remains. I am reminded that having my own home and being surrounded by my things doesn’t remove the reality of Peter’s words that I am an “exile” in this world.\n\nI realise that this doesn’t mean I won’t have experiences of belonging now. Instead, it strengthens my desire to change how I belong to others. I want my connection with people to feel kind, attentive and fully there with them in their moment.\n\nAnd the miracle is that my loneliness dissipates when I have a conversation marked with these qualities. When I see someone touched by my kindness, I realise I have connected and allowed that person to belong fully. By giving in such a way, I notice that my loneliness is also pushed back as our conversation seeks the words God would have us speak.",
 "author": "Chris Gribble",
 "source": "Nepal Stay Journal, 2023",
 "title": "Fully there in their moment",
@@ -2473,8 +2427,8 @@
 ]
 },
 {
-"id": "3dc996e35df60a73",
-"text": "This family had so little but gave me an open heart. As important as my work is, life is always about everyday interactions. But these can contain the heart of God when they contain kindness and love. I was the recipient of love regularly. Even in beautiful Pokhara, I witnessed poverty and injustice. I am thankful for how close I came to it and the reminder of one of the marks of healing: to seek to be loving wherever I am. I write these words with gratitude for the privilege to serve, love, and seek justice.",
+"id": "c52ae4699a1d9b3a",
+"text": "Our time in Nepal is rapidly coming to an end. I have loved my time here, but my goodbye is also touched with a bit of sadness. … There was a family around the corner who welcomed me and wanted to feed me constantly. … This family had so little but gave me an open heart.\n\nAs important as my work is, life is always about everyday interactions. But these can contain the heart of God when they contain kindness and love. I was the recipient of love regularly.\n\nEven in beautiful Pokhara, I witnessed poverty and injustice. I am thankful for how close I came to it and the reminder of one of the marks of healing: to seek to be loving wherever I am.\n\nI write these words with gratitude for the privilege to serve, love, and seek justice.",
 "author": "Chris Gribble",
 "source": "Nepal Stay Journal, 2023",
 "title": "The heart of God in everyday things",
@@ -2486,8 +2440,8 @@
 ]
 },
 {
-"id": "cf49c7c010c6f7b0",
-"text": "Dealing with people brings a range of ethical questions. I could choose to deal with them through a simplistic moral/theological lens of a God who has strict guidelines about right and wrong. But, I can’t find this God. After 30 years of living as a Christian I am less certain today of where God’s boundaries sit in regards to behaviours. What I am finding is that as I get older my values are becoming more settled. When I am tempted to judge I want to look for the goodness in the other person. I want to see evil more clearly and respond to it more decisively. Even if that decision is to be more loving.",
+"id": "c94565596e6bab72",
+"text": "What I am discovering is that no action is devoid of ethical responsibility.\n\nDealing with people brings a range of ethical question. I could choose to deal with them through a simplistic moral/theological lens of a God who has strict guidelines about right and wrong. But, I can’t find this God.\n\nAfter 30 years of living as a Christian I am less certain today of where God’s boundaries sit in regards to behaviours. What I am finding is that as I get older my values are becoming more settled. When I am tempted to judge I want to look for the goodness in the other person.\n\nI want to see evil more clearly and respond to it more decisively.",
 "author": "Chris Gribble",
 "source": "Nepal Stay Journal, 2023",
 "title": "I can’t find this God",
@@ -2499,8 +2453,8 @@
 ]
 },
 {
-"id": "40d1871a6aa47631",
-"text": "But, I also realise that if I hadn’t had those disappointments I wouldn’t be where I am today. This helps me hear more clearly the words of Paul, in giving thanks for all things. In the midst of disappointment it’s hard to understand what God is doing. But, taking time to reflect allows me to better understand what happened in the past and provide perspective for my future. … I am thankful to be able to feel disappointment, because without that I never would know the full extent of my love.",
+"id": "87d10c8524ea9fcf",
+"text": "For the first time in a long time I have let my work win my heart over. It’s taken a while for me to trust again after experiencing disappointment in how my last two roles ended. … Both of these felt like they were taken from me before they should have been. I definitely was not willing to let them go when my circumstances quickly changed and in both situations no longer had a job.\n\nBut, I also realise that if I hadn’t had those disappointments I wouldn’t be where I am today. This helps me hear more clearly the words of Paul, in giving thanks for all things. In the midst of disappointment it’s hard to understand what God is doing. But, taking time to reflect allows me to better understand what happened in the past and provide perspective for my future. … I am thankful to be able to feel disappointment, because without that I never would know the full extent of my love.",
 "author": "Chris Gribble",
 "source": "Nepal Stay Journal, 2023",
 "title": "Thankful for disappointment",
@@ -2512,8 +2466,8 @@
 ]
 },
 {
-"id": "9c93606f9a7d2bb3",
-"text": "Arriving home felt strange. Our familiar house bears the scars of four kids growing up, numerous friends visiting, countless shared meals, robust loud conversations discussing every aspect of human existence, the odd fiery argument (usually with me) and lots of laughter. But, now our kids have left or are transitioning to a more independent life, and when returning home, the house feels much quieter.",
+"id": "f14a88fc78f30885",
+"text": "Arriving home felt strange. Our familiar house bears the scars of four kids growing up, numerous friends visiting, countless shared meals, robust loud conversations discussing every aspect of human existence, the odd fiery argument (usually with me) and lots of laughter.\n\nBut, now our kids have left or are transitioning to a more independent life, and when returning home, the house feels much quieter. My time away accentuates this new quietness around our home.",
 "author": "Chris Gribble",
 "source": "Nepal Stay Journal, 2023",
 "title": "The quieter house",
@@ -2525,8 +2479,8 @@
 ]
 },
 {
-"id": "727d0974e995a0e3",
-"text": "I realise that home is a place where I can be completely myself. I don’t have to put on any pretexts and am free to arrange things my way. … But home is that place where I can take off my shoes and, even if my feet smell, know this is ok. It’s that place where I can organise my routine my way. Home is a place of rest where all pretences are irrelevant. This also describes my hope for eternity. I am acutely aware of my flaws and how they restrict me, so I long for a place where I can be completely free. Where who I am is matched with what I desire to be.",
+"id": "034450927e5dbd36",
+"text": "I realise that home is a place where I can be completely myself. I don’t have to put on any pretexts and am free to arrange things my way. … But home is that place where I can take off my shoes and, even if my feet smell, know this is ok. It’s that place where I can organise my routine my way. Home is a place of rest where all pretences are irrelevant.\n\nThis also describes my hope for eternity. I am acutely aware of my flaws and how they restrict me, so I long for a place where I can be completely free. Where who I am is matched with what I desire to be.\n\nWhen those inner discrepancies are resolved, I discover the completeness of who I am and what it means for me to bear God’s image.",
 "author": "Chris Gribble",
 "source": "Nepal Stay Journal, 2023",
 "title": "Where all pretences are irrelevant",
@@ -2538,8 +2492,8 @@
 ]
 },
 {
-"id": "570a54809b2fa22a",
-"text": "For most people it isn’t a single act of abuse that destroys their soul. More often it’s the daily accumulation of barbs and jabs that slowly suck the life out of any productive activity. They are the thousand pinpricks that slowly accumulate and take away any passion that may be felt for the daily tasks needed to be done. Redemption is found when the gifts that are brought are celebrated by another.",
+"id": "daf13cec823956ab",
+"text": "[From conversations with people about their working lives] For most people it isn’t a single act of abuse that destroys their soul. More often it’s the daily accumulation of barbs and jabs that slowly suck the life out of any productive activity. They are the thousand pinpricks that slowly accumulate and take away any passion that may be felt for the daily tasks needed to be done. Redemption is found when the gifts that are brought are celebrated by another. But, recovery is a healing process that is required because of the wounding inflicted.",
 "author": "Chris Gribble",
 "source": "Lessons from 1000 Conversations, 2016",
 "title": "A thousand pinpricks",
@@ -2551,8 +2505,8 @@
 ]
 },
 {
-"id": "39075dd65313a0e7",
-"text": "In this poem I was also exploring the beauty of creation and the discovery of my place in the Creator’s heart. The thought that the creator of this world would stop to listen to me, that he would hear my voice and know me by name inspires me to explore more of this Creator. Imagination is the place where a deeper experience of God begins.",
+"id": "a347be9b4fa95b3c",
+"text": "When Love created an eternal soul,\nA smile announced his arrival,\nImagination’s beautiful idea fulfilled,\nIn the surprising gasp for breath,\nIntroducing life’s first cry.\n\nIn the landscape of a million conversations,\nOne voice creates a new piece of ground,\nCreation’s busy activity paused.\n\nStopping to listen.\n\nA moment dedicated to this life,\nFinding a word that belonged to this person,\nThe word that sought out his special name,\nThat joined imagination with possibility,\nConcluding with life’s final breath,\nThe smile completed by Love’s embrace.\n\nIn this poem I was also exploring the beauty of creation and the discovery of my place in the Creator’s heart. The thought that the creator of this world would stop to listen to me, that he would hear my voice and know me by name inspires me to explore more of this Creator. Imagination is the place where a deeper experience of God begins.",
 "author": "Chris Gribble",
 "source": "Lessons from 1000 Conversations, 2016",
 "title": "Known by name",
@@ -2564,8 +2518,8 @@
 ]
 },
 {
-"id": "e87aeab6bb2237ec",
-"text": "It was one of those periods that I best describe as dark, or as if a fog had come over my life that limited any hope of finding a way forward. I couldn’t see any way to get myself out of it and its clammy tentacles infiltrated every part of my life. Although in many ways it was unpleasant I also recognise this was the beginning of a new conversation that allowed me to slowly emerge from this debilitating fog into a more hopeful life.",
+"id": "33598fc0988f41f1",
+"text": "At the beginning of every decade of my adult life it seems that a significant shift has taken place that has led me into a period of deep uncertainty. … I had lost my way and couldn’t see any way forward. Uncertainty was about the only thing that I knew to be true. This uncertainty permeated every area of my life for example, I had difficulty making a decision about the most trivial of things. I would procrastinate and delay doing anything out of fear of making the wrong decision.\n\nIt was one of those periods that I best describe as dark, or as if a fog had come over my life that limited any hope of finding a way forward. I couldn’t see any way to get myself out of it and its clammy tentacles infiltrated every part of my life. Although in many ways it was unpleasant I also recognise this was the beginning of a new conversation that allowed me to slowly emerge from this debilitating fog into a more hopeful life.",
 "author": "Chris Gribble",
 "source": "Lessons from 1000 Conversations, 2016",
 "title": "Out of the fog",
@@ -2589,8 +2543,8 @@
 ]
 },
 {
-"id": "7a0f131582a6740a",
-"text": "When I was depressed the one thing that I desired above all else was to sleep through the night. I dreaded going to sleep because I realised that I would wake too soon. I knew that I would wake with the problems of the day ahead tossing around my head. I felt like there was never any rest. … To be able to say tonight because God is watching over me that it doesn’t matter what else is going on I will sleep is a statement about the blessing that comes with being right with God. I am no longer alone but held safe where I belong.",
+"id": "dafd8946945558d9",
+"text": "[On Psalm 4: “In peace I will lie down and sleep”] I have always found that when I am anxious my sleep gets disrupted. When I was depressed the one thing that I desired above all else was to sleep through the night. I dreaded going to sleep because I realised that I would wake too soon. I knew that I would wake with the problems of the day ahead tossing around my head. I felt like there was never any rest.\n\nWhen David says that in peace he will sleep I understand how important this is. To be able to say tonight because God is watching over me that it doesn’t matter what else is going on I will sleep is a statement about the blessing that comes with being right with God. I am no longer alone but held safe where I belong.",
 "author": "Chris Gribble",
 "source": "Lessons from 1000 Conversations, 2016",
 "title": "In peace I will sleep",
@@ -2615,8 +2569,8 @@
 ]
 },
 {
-"id": "bd0e6112df41ea20",
-"text": "This may be where hope is found, not in the promise that death will be painless or that its loneliness can be removed, but in the conviction that no manner of dying can take us where God has not already been. The person who dies must cross that final threshold alone, but they are not abandoned by God.",
+"id": "3ed190cf6e8b2e23",
+"text": "In The Crucified God, Jürgen Moltmann argues that God is not an idle spectator to suffering. In the crucified Christ, God enters abandonment, mortality and apparent defeat. The cry “It is finished” does not deny the reality of suffering; it declares that divine love has entered it completely and travelled through it to the end.\n\nThis may be where hope is found, not in the promise that death will be painless or that its loneliness can be removed, but in the conviction that no manner of dying can take us where God has not already been. The person who dies must cross that final threshold alone, but they are not abandoned by God.",
 "author": "Chris Gribble",
 "source": "Passing Through Life, 2026",
 "title": "Where God has already been",
@@ -2625,17 +2579,21 @@
 "Hope & renewal",
 "Faith & doubt",
 "Darkness & suffering"
-]
+],
+"occasion": "goodfriday"
 }
 ],
 "retired": [
+"019070effcaa154d",
 "051cc883c56faf46",
 "0a526ba30f66a063",
 "0ce55510e7644c3f",
 "0d80df6da8ef1ebf",
+"106b426ae68926d7",
 "10de511ae96749a1",
 "10f59b7c1633dd1a",
 "110fcda8113d616a",
+"1269dfd04ac8f3cd",
 "142972a0d5e00d34",
 "14cacc2b32d5b47d",
 "154e0a945cfb3008",
@@ -2644,18 +2602,22 @@
 "1a079a8a61d9f87d",
 "1b900a98fd944f8f",
 "1bab9e2dce560a68",
+"1c343da75e75a485",
 "1cd8a890fbdccea6",
 "2228ff2c79b7864c",
 "226c26e2f2bb649a",
 "22a0a51ebacb305c",
 "23b5bed145b30402",
+"245191cdbf99f045",
 "24e47e09c1c29ba4",
 "259a8e6a4b0d412e",
 "2855e0f3fa3142d2",
 "292cfa199bb096f8",
 "29a6fcecafe4266a",
 "2aab2f0bd59ffd86",
+"2ac8bf6e58ddfdfa",
 "2b0180f6b69b98a1",
+"2b72450b073a2b42",
 "2ca92700bca9b7ed",
 "2ce120b13bdf1110",
 "2ded0ab22fc14491",
@@ -2667,12 +2629,19 @@
 "34955eb14af65972",
 "35019d2590bd7cd8",
 "3555dd6ef5c0073a",
+"3617907c7a15b9a9",
+"37511c619900995f",
 "37aaf8ee49f8e0de",
+"3826559b13465d90",
 "387271b2f17e5445",
+"39075dd65313a0e7",
 "3995cd3d59f8dda1",
+"39a02093641fb01a",
 "3ce28b0a48a40489",
+"3dc996e35df60a73",
 "3dcec9267e3505e2",
 "3dd0143c48117ab0",
+"40d1871a6aa47631",
 "43a02c6bfff0e8bc",
 "4488ab526cce2a7c",
 "45842aeb0632e9c1",
@@ -2685,6 +2654,7 @@
 "4d6c67b1ff712e14",
 "4d8f5bb7dbfe5acc",
 "4daa1c142073797c",
+"4df1989323ca8e70",
 "4f0fe2dcdc0bc2fb",
 "4f5415b81da3e9de",
 "4fa968115b3f7fb4",
@@ -2693,7 +2663,9 @@
 "53d6b8d83d6382dc",
 "53f91fed81032eba",
 "54ab659b484e27b0",
+"55628be999dafe1c",
 "567cfbda7ae9eff8",
+"570a54809b2fa22a",
 "58ecfd238f339df9",
 "58efa5ebaf1cef7b",
 "59d10fca1bd68dd8",
@@ -2707,28 +2679,40 @@
 "5eb144177fbf8aef",
 "5fe464a54f44cf7e",
 "600ca205af9e9068",
+"6039fb7e9382a879",
 "60a76e358d64d90a",
 "6199890c1addea81",
+"61fa500c7c3d2382",
 "64383e6a277972f6",
 "64505c98b77fd8bb",
 "650ada820c4a878f",
 "662bccd72661b2fb",
 "66508fcae318b10d",
 "68d599753b62c751",
+"68f859f73bb9338b",
 "6a50d83ce1f3415a",
+"6a7d945f5d882792",
 "6bbc8044e379eb7c",
 "6c1b58b179ba9460",
 "6cb0878bd333a991",
+"6d1cca3691ff65c7",
 "6d62426102f4e434",
 "6d920d75914d31be",
+"7009b6193fde4e94",
+"70d161bd0190e609",
 "70edaba0ceb0c338",
+"727d0974e995a0e3",
+"7291aff4c7d55e8e",
 "73956e46cb18454f",
+"748b504ae703dc06",
 "750ad8008728a1c5",
 "7572500527a61e9b",
 "758ac331dae3cc89",
 "7648f95b81a7a6ad",
 "764b31ead6823171",
+"776c27e79ae818a4",
 "79fb0dc679628dfd",
+"7a0f131582a6740a",
 "7a54dcbb60b9d56c",
 "7a9aba69b72c8a3a",
 "7df9f6ffacd8b941",
@@ -2746,6 +2730,7 @@
 "8a28f204d87c7b3b",
 "8c7066ced3004dda",
 "8cc44d8e18abf5e7",
+"8d2ef30c09a7bcaa",
 "8daafc9f4b34bd4d",
 "8debf955e27cbd77",
 "8e66596be7f73a29",
@@ -2753,9 +2738,11 @@
 "8f91c38d031253bc",
 "902f0c893dc9b6f5",
 "90b865b7642cf7d1",
+"91317fd6ecaccb5f",
 "91be6eed5c0572b2",
 "92157d7387d4705d",
 "9239d64ced381e70",
+"9287ca69ef396cdb",
 "92fcdb393d97b4e5",
 "969c688ca42b94b5",
 "97a77b989691a475",
@@ -2763,6 +2750,7 @@
 "9853ec30fc18b4f9",
 "9bee2db18fcc0aa5",
 "9c5fbb30b7559ffa",
+"9c93606f9a7d2bb3",
 "9ce1762c53eebe2b",
 "a24219cc857eadb3",
 "a5326107a48328d5",
@@ -2785,12 +2773,16 @@
 "b7e0b96913ba148d",
 "b8b595d2d220da6b",
 "b93670a682757aa8",
+"b9a970ad8ef5b2cb",
 "bab69ae78b044f64",
+"bd0e6112df41ea20",
+"bd150cc6cdb6f6d3",
 "c0ab3897510b40b2",
 "c2ceb6a4b4b6af30",
 "c3043bd66d2f04d9",
 "c34b00b532e1457e",
 "c3cc42d8729bd9dd",
+"c3dee60c18d660e4",
 "c6462febb37cf31e",
 "c6524f465b483a78",
 "c6e14197b6d41d09",
@@ -2798,14 +2790,18 @@
 "c7f94d9504c7ad99",
 "caff861cb1f7d4e6",
 "cd50cf453eebb83b",
+"cd71185b1cf5f041",
 "ce1670382f02e913",
 "ce18077093ebb85b",
 "ce301c546fd94e9b",
 "cf44db0c522b628c",
+"cf49c7c010c6f7b0",
 "d0ed16b73600da6a",
+"d203fb934d51a5c5",
 "d20c2deb6fa39820",
 "d23aef1d8622817a",
 "d25476ae86a79846",
+"d28cda818cc92fb3",
 "d2a2ad3322646d8a",
 "d2b38e95f102f208",
 "d6b25f8334864712",
@@ -2813,6 +2809,7 @@
 "d7abe6a234eb4f54",
 "d8140aee893a58de",
 "d819c060a4c55d2c",
+"d93d758aacc088a1",
 "d9fb2c2916c0941a",
 "da5e5e28e867d69a",
 "da78763195ee4716",
@@ -2827,14 +2824,18 @@
 "e4e1ff137d88397e",
 "e5a18ec45c982119",
 "e70b4d5f77537942",
+"e7beb08348712d84",
 "e80876b59f485c37",
 "e80d41858a2d5694",
+"e87aeab6bb2237ec",
+"e906529e5499440f",
 "eabe7259d058c25d",
 "eb3b6d8642962f33",
 "ebf663dd6a20166c",
 "ecd477150a3c2c85",
 "ef6de017573ea272",
 "efd6f9290b9b5f01",
+"f061234ad766a1d0",
 "f161c005b7e6665b",
 "f360ca6a364187b0",
 "f37859338c7e8469",
@@ -2848,6 +2849,8 @@
 "fa4bbfc0e04819ef",
 "fa81359b0e24f1e1",
 "fb0700ad7b72373d",
-"fd3a80b1a7e201b4"
+"fc4d6f09a163e283",
+"fd3a80b1a7e201b4",
+"fe1524345586cf6c"
 ]
 }

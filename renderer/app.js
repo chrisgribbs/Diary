@@ -1271,10 +1271,14 @@ function kindFields(x = {}) {
     ...Object.entries(KIND_NAMES).map(([k, n]) => el('option', { value: k }, n)));
   kind.value = x.kind || '';
   const mine = el('input', { type: 'checkbox' }); mine.checked = !!x.mine;
+  const O = (window.WellWriteSeasons && window.WellWriteSeasons.OCCASIONS) || {};
+  const occ = el('select', { 'aria-label': 'Occasion', title: 'Only show this on a particular day or in a season' },
+    el('option', { value: '' }, 'Any time of year'), ...Object.entries(O).map(([k, n]) => el('option', { value: k }, 'Only: ' + n)));
+  occ.value = x.occasion || '';
   return {
-    el: el('div', { class: 'q-kind-row' }, kind, title, el('label', { class: 'q-mine' }, mine, ' My own writing')),
-    get: () => ({ kind: kind.value, title: title.value.trim(), mine: mine.checked }),
-    reset: () => { kind.value = ''; title.value = ''; mine.checked = false; },
+    el: el('div', {}, el('div', { class: 'q-kind-row' }, kind, title, el('label', { class: 'q-mine' }, mine, ' My own writing')), el('div', { class: 'q-occ-row' }, occ)),
+    get: () => ({ kind: kind.value, title: title.value.trim(), mine: mine.checked, occasion: occ.value }),
+    reset: () => { kind.value = ''; title.value = ''; mine.checked = false; occ.value = ''; },
   };
 }
 
@@ -1381,17 +1385,30 @@ function themeScore(q, season) {
   return score;
 }
 /** Picks from a pool, round by round: best fit first among those not yet used this round. */
+/**
+ * A piece tied to an occasion (Good Friday, Lent, Christmas Day…) can only come then, and comes first then:
+ * a day's own pieces before anything else, a season's pieces before general ones.
+ */
+const occasionsOn = iso => (window.WellWriteSeasons && window.WellWriteSeasons.occasionsOn ? window.WellWriteSeasons.occasionsOn(iso) : new Set());
+const fitsOccasion = (q, occ) => !q.occasion || q.occasion === 'birthday' || occ.has(q.occasion);
+const occasionBoost = (q, occ) => !q.occasion || !occ.has(q.occasion) ? 0 : window.WellWriteSeasons.DAY_OCCASIONS.has(q.occasion) ? 100000 : 5000;
+/** Picks from a pool, round by round: best fit first among those not yet used this round. */
 function roundRobin(pool, salt) {
   const used = new Set();
-  return (season, avoid = () => 0) => {
-    if (!pool.length) return null;
-    if (used.size >= pool.length) used.clear();
+  const pick = (season, occ, avoid) => {
     let best = null, bestScore = -Infinity;
     for (const q of pool) {
-      if (used.has(q.id)) continue;
-      const sc = themeScore(q, season) * 10 - avoid(q) + (strHash(q.id + salt) % 1000) / 1000;
+      if (used.has(q.id) || !fitsOccasion(q, occ)) continue;
+      const sc = occasionBoost(q, occ) + themeScore(q, season) * 10 - avoid(q) + (strHash(q.id + salt) % 1000) / 1000;
       if (sc > bestScore) { best = q; bestScore = sc; }
     }
+    return best;
+  };
+  return (season, avoid = () => 0, occ = new Set()) => {
+    if (!pool.length) return null;
+    let best = pick(season, occ, avoid);
+    // When everything that fits today has had its turn, a new round begins.
+    if (!best) { used.clear(); best = pick(season, occ, avoid); }
     if (best) used.add(best.id);
     return best;
   };
@@ -1411,12 +1428,16 @@ function yearPlan(year) {
   for (let d = `${year}-01-01`; d.startsWith(String(year)); d = addDays(d, 1)) {
     const s = seasonOn(d);
     if (!s) break;
-    const q = nextQuote(s, x => (x.author === recent[recent.length - 1] ? 200 : recent.includes(x.author) ? 30 : 0));
+    const occ = occasionsOn(d);
+    const q = nextQuote(s, x => (x.author === recent[recent.length - 1] ? 200 : recent.includes(x.author) ? 30 : 0), occ);
     if (q) { quotes.set(d, q); recent.push(q.author); if (recent.length > 3) recent.shift(); }
     const wk = window.WellWriteWeeks && window.WellWriteWeeks.weekOf(s);
     const wkKey = wk && `${s.id}|${wk.index}`;
     if (wk && !weeks.has(wkKey)) {
-      weeks.set(wkKey, { reflection: nextReflection(s), prayer: wk.number % 2 === 0 ? nextPrayer(s) : null, blessing: wk.number % 2 === 1 ? nextBlessing(s) : null });
+      // a week's own occasions: everything that falls on any of its days
+      const wocc = new Set();
+      for (let i = wk.firstDay - s.dayIndex; i <= wk.lastDay - s.dayIndex; i++) for (const o of occasionsOn(addDays(d, i))) wocc.add(o);
+      weeks.set(wkKey, { reflection: nextReflection(s, undefined, wocc), prayer: wk.number % 2 === 0 ? nextPrayer(s, undefined, wocc) : null, blessing: wk.number % 2 === 1 ? nextBlessing(s, undefined, wocc) : null });
     }
   }
   const out = { quotes, weeks };
@@ -1431,7 +1452,8 @@ function quoteFor(iso) {
     const planned = yearPlan(+iso.slice(0, 4)).quotes.get(iso);
     if (!skip && planned) return planned;
     // "Another": the season's best-fitting quotes in turn, never the day's own quote
-    const pool = seasonPool(season).filter(q => isReading(q) && q !== planned);
+    const occ = occasionsOn(iso);
+    const pool = seasonPool(season).filter(q => isReading(q) && q !== planned && fitsOccasion(q, occ));
     if (pool.length >= 2) return pool[(season.dayIndex + skip - 1) % pool.length];
   }
   const pool = [...quotePool()].sort((a, b) => strHash(a.id) - strHash(b.id));
@@ -1563,6 +1585,13 @@ const KIND_NAMES = { poem: 'Poem', psalm: 'Psalm', prayer: 'Prayer', blessing: '
 const metaLine = l => {
   let m = l.match(/^title:\s*(.+)$/i);
   if (m) return { title: m[1].trim() };
+  m = l.match(/^occasion:\s*(.+)$/i);
+  if (m) {
+    const want = m[1].trim().toLowerCase().replace(/[’']/g, '');
+    const O = (window.WellWriteSeasons && window.WellWriteSeasons.OCCASIONS) || {};
+    const id = Object.keys(O).find(k => k === want || O[k].toLowerCase().replace(/[’']/g, '') === want);
+    return id ? { occasion: id } : {};
+  }
   m = l.match(/^kind:\s*(.+)$/i);
   if (!m) return null;
   const parts = m[1].toLowerCase().split(',').map(x => x.trim());
@@ -1607,7 +1636,7 @@ function parsePastedQuotes(text, defAuthor = '', defSource = '') {
     if (source && source.length > 40 && /^[^,“”]{3,}:\s/.test(source)) source = source.slice(0, source.indexOf(':')).trim();
     if (source) source = source.replace(/\s*[-–(]\s*(revised|new|expanded|updated|anniversary)[^)]*\)?$/i, '').trim();
     if (t) out.push({ text: trimCutShort(t), author: author || defAuthor, source, themes: meta.themes || [],
-      ...(meta.kind ? { kind: meta.kind } : {}), ...(meta.title ? { title: meta.title } : {}), ...(meta.mine ? { mine: true } : {}) });
+      ...(meta.kind ? { kind: meta.kind } : {}), ...(meta.title ? { title: meta.title } : {}), ...(meta.mine ? { mine: true } : {}), ...(meta.occasion ? { occasion: meta.occasion } : {}) });
   };
   // Blocks with no writer line: one quote per block (an inline "text — Writer" works too).
   const pushBlocks = blockLines => {
@@ -1880,7 +1909,8 @@ function manageQuotes() {
           el('button', { type: 'button', class: 'q-star' + (x.fav ? ' on' : ''), title: x.fav ? 'Remove from favourites' : 'Add to favourites',
             onclick: async () => { await saveQuotes(state.quotes.map(y => (y.id === x.id ? { ...y, fav: !y.fav } : y))); x = state.quotes.find(y => y.id === x.id); view(); refreshQuote(); } }, x.fav ? '★' : '☆'),
           el('div', { class: 'q-main' },
-            x.title || x.kind || x.mine ? el('p', { class: 'q-kind' }, [x.kind ? KIND_NAMES[x.kind] : '', x.title, x.mine ? 'my own writing' : ''].filter(Boolean).join(' · ')) : null,
+            x.title || x.kind || x.mine || x.occasion ? el('p', { class: 'q-kind' }, [x.kind ? KIND_NAMES[x.kind] : '', x.title, x.mine ? 'my own writing' : '',
+              x.occasion && window.WellWriteSeasons ? 'only ' + window.WellWriteSeasons.OCCASIONS[x.occasion] : ''].filter(Boolean).join(' · ')) : null,
             el('p', { class: 'q-text' }, x.text),
             el('small', {}, (x.author || 'Unknown') + (x.source ? `, ${x.source}` : '')),
             (x.themes || []).length ? el('div', { class: 'q-themes' }, ...x.themes.map(t => el('button', { type: 'button', class: 'theme-chip mini', onclick: () => { quoteThemeFilter = t; draw(); } }, t))) : null),
@@ -1959,6 +1989,7 @@ function quotesAsText(list) {
   return list.map(q => [q.text, '— ' + (q.author || 'Unknown') + (q.source ? `, ${q.source}` : ''),
     q.title ? 'Title: ' + q.title : null,
     q.kind || q.mine ? 'Kind: ' + [q.kind ? KIND_NAMES[q.kind] : null, q.mine ? 'my own writing' : null].filter(Boolean).join(', ') : null,
+    q.occasion && window.WellWriteSeasons ? 'Occasion: ' + window.WellWriteSeasons.OCCASIONS[q.occasion] : null,
     (q.themes || []).length ? 'Themes: ' + q.themes.join(', ') : null]
     .filter(Boolean).join('\n')).join('\n\n\n') + '\n';
 }

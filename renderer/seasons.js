@@ -303,5 +303,42 @@
     return { ...s, start, end, dayIndex, length };
   }
 
-  window.WellWriteSeasons = { easter: y => iso(easter(y)), adventSunday: y => iso(adventSunday(y)), seasonsFor, seasonOn, SEASONS: S };
+  /* Occasions: days and seasons a piece can belong to. Worked out from the Christian year (and Australian dates)
+     whichever calendar of themes is chosen, so a Good Friday piece comes on Good Friday either way. */
+  const OCCASIONS = {
+    ashwednesday: 'Ash Wednesday', palmsunday: 'Palm Sunday', maundythursday: 'Maundy Thursday', goodfriday: 'Good Friday',
+    holysaturday: 'Holy Saturday', easterday: 'Easter Day', ascension: 'Ascension Day', pentecostday: 'Pentecost Sunday',
+    christmaseve: 'Christmas Eve', christmasday: 'Christmas Day', newyear: 'New Year’s Day', epiphanyday: 'Epiphany',
+    allsaints: 'All Saints’ Day', anzacday: 'Anzac Day', mothersday: 'Mother’s Day', fathersday: 'Father’s Day',
+    advent: 'Advent', christmas: 'Christmas', epiphany: 'Epiphany season', lent: 'Lent', holyweek: 'Holy Week',
+    easter: 'Easter season', pentecost: 'Pentecost season', endofyear: 'End of the year', newbeginnings: 'January',
+    birthday: 'Birthday',
+  };
+  const DAY_OCCASIONS = new Set(['ashwednesday', 'palmsunday', 'maundythursday', 'goodfriday', 'holysaturday', 'easterday', 'ascension', 'pentecostday',
+    'christmaseve', 'christmasday', 'newyear', 'epiphanyday', 'allsaints', 'anzacday', 'mothersday', 'fathersday']);
+  const nthSunday = (y, m, n) => { const d = new Date(y, m, 1, 12); d.setDate(1 + ((7 - d.getDay()) % 7) + 7 * (n - 1)); return iso(d); };
+  /** The occasions on a date, e.g. Set{'holyweek', 'goodfriday'}. ("birthday" pieces aren't tied to a date.) */
+  function occasionsOn(dateIso) {
+    const out = new Set();
+    const s = seasonOn(dateIso, 'christian');
+    if (!s) return out;
+    if (['advent', 'christmas', 'epiphany', 'lent', 'holyweek', 'easter', 'pentecost'].includes(s.id)) out.add(s.id);
+    const day = { lent: ['ashwednesday'], holyweek: ['palmsunday', , , , 'maundythursday', 'goodfriday', 'holysaturday'], easter: ['easterday'], pentecost: ['pentecostday'] }[s.id];
+    if (day && day[s.dayIndex]) out.add(day[s.dayIndex]);
+    if (s.id === 'easter' && s.dayIndex === 39) out.add('ascension');
+    const y = +dateIso.slice(0, 4), md = dateIso.slice(5);
+    if (md === '12-24') out.add('christmaseve');
+    if (md === '12-25') out.add('christmasday');
+    if (md === '01-01') out.add('newyear');
+    if (md === '01-06') out.add('epiphanyday');
+    if (md === '11-01') out.add('allsaints');
+    if (md === '04-25') out.add('anzacday');
+    if (md >= '12-26') out.add('endofyear');
+    if (md.startsWith('01-')) out.add('newbeginnings');
+    if (dateIso === nthSunday(y, 4, 2)) out.add('mothersday');    // Australia: second Sunday in May
+    if (dateIso === nthSunday(y, 8, 1)) out.add('fathersday');    // Australia: first Sunday in September
+    return out;
+  }
+
+  window.WellWriteSeasons = { easter: y => iso(easter(y)), adventSunday: y => iso(adventSunday(y)), seasonsFor, seasonOn, SEASONS: S, OCCASIONS, DAY_OCCASIONS, occasionsOn };
 })();

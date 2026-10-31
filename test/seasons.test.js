@@ -125,3 +125,22 @@ console.log('weekly pages tests passed');
   });
   console.log('week pictures listed:', Object.keys(pics).length);
 }
+
+// ---- occasions
+{
+  const o = d => [...W.occasionsOn(d)].sort().join(',');
+  assert.equal(o('2027-03-26'), 'goodfriday,holyweek');
+  assert.equal(o('2026-04-05'), 'easter,easterday');
+  assert.equal(o('2026-02-18'), 'ashwednesday,lent');
+  assert.equal(o('2026-12-25'), 'christmas,christmasday');
+  assert.equal(o('2026-04-25'), 'anzacday,easter');
+  assert.equal(o('2026-05-10'), 'easter,mothersday');
+  assert.equal(o('2026-09-06'), 'fathersday');
+  assert.equal(o('2026-05-14'), 'ascension,easter');
+  assert.equal(o('2026-12-31'), 'christmas,endofyear');
+  assert.equal(o('2026-07-15'), '');
+  for (const id of W.DAY_OCCASIONS) assert.ok(W.OCCASIONS[id], id);
+  // every day-occasion happens once a year
+  for (const id of W.DAY_OCCASIONS) { let n = 0; for (let d = '2028-01-01'; d <= '2028-12-31'; d = next(d)) if (W.occasionsOn(d).has(id)) n++; assert.equal(n, 1, id); }
+  console.log('occasions tests passed');
+}
