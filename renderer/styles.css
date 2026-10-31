@@ -680,3 +680,6 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .q-kind-row { display: grid; grid-template-columns: 9em 1fr auto; gap: 8px; align-items: center; margin: 6px 0; }
 .q-mine { display: flex; gap: 6px; align-items: center; font-size: 13px; white-space: nowrap; }
 .theme-chip.mine { border-color: var(--foil); }
+
+.readings-box { border-top: 1px solid color-mix(in srgb, var(--pencil) 20%, transparent); margin-top: 4px; }
+.readings-btns { display: flex; gap: 8px; align-items: center; white-space: nowrap; }

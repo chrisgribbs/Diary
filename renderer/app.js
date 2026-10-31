@@ -273,6 +273,7 @@ async function enterApp() {
   state.metas = await api.list();
   try { state.categories = await api.getCategories(); } catch { state.categories = []; }
   try { state.quotes = await api.getQuotes(); } catch { state.quotes = []; }
+  await syncReadings();
   try { state.bible = await api.bibleInfo(); } catch { state.bible = null; }
   state.bibleDay = null;
   state.selectedDay = null; state.query = ''; state.tag = null; state.category = null; state.trail = []; $('#search').value = '';
@@ -1158,6 +1159,34 @@ function suggestThemes(text, exclude = []) {
 }
 
 /** A comma-separated themes box with clickable suggestions underneath. */
+/** The two reading packs: built-in writing (on/off) and your readings file (choose / stop). */
+function readingsControls() {
+  const box = el('div', { class: 'readings-box' });
+  const draw = () => {
+    const b = el('input', { type: 'checkbox', id: 'builtinReadings' }); b.checked = state.settings.builtinReadings !== false;
+    b.addEventListener('change', async () => { await updateSetting({ builtinReadings: b.checked }); await syncReadings(); manageQuotes(); refreshQuote(); });
+    const f = readings.file;
+    box.replaceChildren(
+      el('div', { class: 'row' }, el('div', {}, readings.builtin ? readings.builtin.name : 'Built-in readings',
+        el('small', {}, `${readings.builtin ? readings.builtin.count : ''} pieces that come with WellWrite. They become each week’s Reflection, and updates arrive with the app.`)), b),
+      el('div', { class: 'row' },
+        el('div', {}, 'Your readings file',
+          el('small', {}, !f ? 'Choose a text file of quotes once; WellWrite keeps your collection in step with it whenever it changes. Replacing the file replaces its readings — nothing doubles up.'
+            : f.missing ? `Can’t find ${f.name} — it may have been moved. Choose it again.` : `${f.name}: ${f.count} readings, kept up to date.`)),
+        el('div', { class: 'readings-btns' },
+          el('button', { type: 'button', class: 'btn-plain', id: 'pickReadings', onclick: async () => {
+            const p = await api.pickReadingsFile(); if (!p) return;
+            const n = await syncReadings(); toast(`Readings loaded${n ? ` (${n} changes)` : ''}`); manageQuotes(); refreshQuote();
+          } }, f ? 'Change…' : 'Choose…'),
+          f ? el('button', { type: 'button', class: 'btn-link danger', onclick: async () => {
+            await api.forgetReadingsFile(); await api.syncReadings('file', []); state.quotes = await api.getQuotes(); readings.file = null;
+            toast('Stopped using the readings file'); manageQuotes(); refreshQuote();
+          } }, 'Stop using') : null)));
+  };
+  draw();
+  return box;
+}
+
 /** Title, kind and "my own writing" for a piece in the collection. */
 function kindFields(x = {}) {
   const title = el('input', { type: 'text', value: x.title || '', placeholder: 'Title (optional)' });
@@ -1198,9 +1227,42 @@ function quotePool() {
   return pool.length ? pool : state.quotes;
 }
 
+/* --- reading packs: built-in writing, and your readings file, kept up to date --- */
+const readings = { file: null, builtin: null };
+/** Built-in psalms and reflections count as "your" writing for the weekly Reflection, prayers and blessings. */
+const ownish = q => q.mine || q.pack === 'wellwrite';
+async function syncReadings({ quiet = true } = {}) {
+  let changed = 0;
+  try {
+    const b = await api.builtinReadings();
+    readings.builtin = { name: b.name, count: b.items.length };
+    const r = await api.syncReadings('wellwrite', state.settings.builtinReadings === false ? [] : b.items, b.retired);
+    state.quotes = r.quotes; changed += r.added + r.updated + r.removed;
+  } catch (e) { console.warn('Built-in readings:', e.message); }
+  try {
+    const f = await api.readReadingsFile();
+    readings.file = f ? { name: f.name, path: f.path, missing: !!f.missing, modified: f.modified } : null;
+    if (f && f.text != null) {
+      const items = parsePastedQuotes(f.text);
+      readings.file.count = items.length;
+      const r = await api.syncReadings('file', items);
+      state.quotes = r.quotes;
+      changed += r.added + r.updated + r.removed;
+      if (!quiet && changed) toast(`Readings updated: ${r.added} new, ${r.updated} changed, ${r.removed} removed`);
+    }
+  } catch (e) { toast('Couldn’t read your readings file: ' + e.message); }
+  return changed;
+}
+api.onReadingsChanged(async () => {
+  if (!state.unlocked) return;
+  await syncReadings({ quiet: false });
+  refreshQuote();
+  if ($('#dlg').open && $('#dlg .q-summary')) manageQuotes();
+});
+
 /* --- the year of themes --- */
 /** Prayers and blessings of your own have their own places on the weekly page, so they aren't daily readings. */
-const isReading = q => q.kind !== 'prayer' && q.kind !== 'blessing' && !(q.mine && (q.kind === 'psalm' || q.text.length > 600));  // your psalms and longer pieces are the week's Reflection
+const isReading = q => q.kind !== 'prayer' && q.kind !== 'blessing' && !(ownish(q) && (q.kind === 'psalm' || q.text.length > 600));  // your psalms and longer pieces are the week's Reflection
 const quotePlan = () => state.settings.quotePlan || 'christian';
 /** The season for a date under the chosen plan (null when the plan is off). */
 function seasonOn(iso) {
@@ -1646,6 +1708,9 @@ function manageQuotes() {
         el('button', { type: 'button', class: 'theme-chip' + (!quoteThemeFilter ? ' on' : ''), onclick: () => { quoteThemeFilter = ''; draw(); } }, 'All'),
         ...themes.map(([t, n]) => el('button', { type: 'button', class: 'theme-chip' + (quoteThemeFilter === t ? ' on' : ''),
           onclick: () => { quoteThemeFilter = quoteThemeFilter === t ? '' : t; draw(); } }, t, el('small', {}, String(n)))),
+        ...[['wellwrite', 'Built-in writing'], ['file', 'From your readings file']].map(([id, label]) => state.quotes.some(q => q.pack === id)
+          ? el('button', { type: 'button', class: 'theme-chip mine' + (quoteThemeFilter === '\u0000pack:' + id ? ' on' : ''), onclick: () => { quoteThemeFilter = quoteThemeFilter === '\u0000pack:' + id ? '' : '\u0000pack:' + id; draw(); } },
+            label, el('small', {}, String(state.quotes.filter(q => q.pack === id).length))) : null),
         state.quotes.some(q => q.mine)
           ? el('button', { type: 'button', class: 'theme-chip mine' + (quoteThemeFilter === '\u0000mine' ? ' on' : ''), onclick: () => { quoteThemeFilter = quoteThemeFilter === '\u0000mine' ? '' : '\u0000mine'; draw(); } },
             'My own writing', el('small', {}, String(state.quotes.filter(q => q.mine).length))) : null,
@@ -1655,7 +1720,7 @@ function manageQuotes() {
       ].filter(Boolean) : []));
       const q = find.value.trim().toLowerCase();
       const items = state.quotes
-        .filter(x => !quoteThemeFilter || (quoteThemeFilter === '\u0000none' ? !(x.themes || []).length : quoteThemeFilter === '\u0000mine' ? x.mine : (x.themes || []).includes(quoteThemeFilter)))
+        .filter(x => !quoteThemeFilter || (quoteThemeFilter === '\u0000none' ? !(x.themes || []).length : quoteThemeFilter === '\u0000mine' ? x.mine : quoteThemeFilter.startsWith('\u0000pack:') ? x.pack === quoteThemeFilter.slice(6) : (x.themes || []).includes(quoteThemeFilter)))
         .filter(x => !q || (x.text + ' ' + x.author + ' ' + x.source + ' ' + (x.title || '') + ' ' + (x.themes || []).join(' ')).toLowerCase().includes(q))
         .sort((a, b) => Number(b.fav) - Number(a.fav) || (a.author || '').localeCompare(b.author || ''));
       summary.replaceChildren(`${state.quotes.length} quote${state.quotes.length === 1 ? '' : 's'} from ${quoteAuthors().length} writer${quoteAuthors().length === 1 ? '' : 's'}` +
@@ -1731,6 +1796,7 @@ function manageQuotes() {
       el('div', { class: 'row' }, el('div', {}, 'Show the quote above my journal'), show),
       el('div', { class: 'row' }, el('div', {}, 'Each day’s quote and question follow', el('small', {}, 'The Christian year includes Advent, Christmas, Lent, Holy Week and Easter, with dates worked out each year.')), planSel),
       el('div', { class: 'row', id: 'fromRow' }, el('div', {}, 'Choose each day’s quote from'), from),
+      readingsControls(),
       el('h3', {}, 'Add a quote'),
       text,
       el('div', { class: 'q-two' }, author, source),
@@ -2021,7 +2087,7 @@ async function renderWeekView(today, season) {
   // Your own writing: a reflection each week, and your prayers and blessings taking turns with the book's.
   const readingIds = new Set(days.map(d => (quoteFor(d) || {}).id));
   const year = +days[0].slice(0, 4);
-  const own = kinds => { const pool = seasonPool(s).filter(x => x.mine && kinds.includes(x.kind || '')); return pool.length ? pool : null; };
+  const own = kinds => { const pool = seasonPool(s).filter(x => ownish(x) && kinds.includes(x.kind || '')); return pool.length ? pool : null; };
   const pickOwn = (pool, avoid) => { if (!pool) return null; const p = pool.filter(x => !avoid.has(x.id)); const from = p.length ? p : pool; return from[(week.index + year * 5) % from.length]; };
   const ownLong = own(['', 'reflection', 'fieldnote', 'psalm', 'poem']);
   const reflection = pickOwn(ownLong && (ownLong.filter(x => !isReading(x)).length ? ownLong.filter(x => !isReading(x)) : ownLong), readingIds);

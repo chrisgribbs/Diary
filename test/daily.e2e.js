@@ -25,6 +25,9 @@ app.whenReady().then(async () => {
   await js(`document.querySelector('#setupPw').value='river-stone'; document.querySelector('#setupPw2').value='river-stone'; document.querySelector('#setupForm').requestSubmit();`);
   await wait(2500);
 
+  // these checks count and match quotes, so the built-in writing is switched off (readings.e2e.js covers it)
+  await js(`await updateSetting({ builtinReadings: false }); await syncReadings(); refreshQuote();`);
+
   // --- starter quotes and the card on the opening screen
   const quotes = await js(`return state.quotes.length`);
   assert(quotes >= 15, 'starter quotes loaded');
@@ -81,7 +84,7 @@ app.whenReady().then(async () => {
   await js(`[...document.querySelectorAll('#quoteView button')].find(b => b.textContent === 'Another quote').click();`); await wait(500);
   const q2 = await text('#quoteView .wk-today blockquote');
   assert.notEqual(q1, q2, 'Another shows a different quote');
-  await js(`[...document.querySelectorAll('#quoteView button')].find(b => b.textContent === 'Write about this').click();`); await wait(1200);
+  await js(`document.querySelector('#quoteView .wk-today .btn-ink').click();`); await wait(1200);
   assert.equal(await js(`return state.mode`), 'journal');
   assert((await text('#body')).includes(q2.split('\n')[0]), 'quote written into today’s entry');
 

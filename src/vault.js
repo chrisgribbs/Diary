@@ -247,6 +247,7 @@ class Vault {
         kind: QUOTE_KINDS.includes(q.kind) ? q.kind : '',
         title: String(q.title || '').replace(/\s+/g, ' ').trim().slice(0, 120),
         mine: !!q.mine,
+        pack: /^[a-z0-9]{1,20}$/.test(q.pack || '') ? q.pack : '',
       });
       if (out.length >= 5000) break;
     }
@@ -296,6 +297,80 @@ class Vault {
   }
   getBible() { return Vault.cleanBible(this.getMeta().bible); }
   setBible(b) { return this._writeMeta({ bible: Vault.cleanBible(b) }).bible; }
+
+  // ---------- reading packs: sets of quotes kept in step with a source (built into the app, or a file) ----------
+  /** Same text and writer → same key, ignoring punctuation, case and spacing. */
+  static readingKey(text, author) {
+    const n = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+    return crypto.createHash('sha1').update(n(text) + '|' + n(author)).digest('hex').slice(0, 16);
+  }
+  static readingHash(q) {
+    return crypto.createHash('sha1').update(JSON.stringify([q.text, q.author, q.source, q.title, q.kind, q.themes])).digest('hex').slice(0, 12);
+  }
+  /**
+   * Bring a pack's quotes into the collection:
+   *  - new pieces are added; pieces changed in the pack are updated, unless you edited your copy
+   *  - pieces dropped from the pack are removed, unless you edited them
+   *  - pieces you deleted stay deleted
+   *  - your own earlier copies of the same piece (e.g. imported by hand) are replaced by the pack's, keeping ★
+   *  - "retired" keys: older versions of pieces, removed if you had imported them by hand
+   */
+  syncPack(packId, items, retired = []) {
+    this._requireKey();
+    if (!/^[a-z0-9]{1,20}$/.test(packId)) throw new Error('Bad reading pack');
+    const meta = this.getMeta();
+    const packs = meta.packs || {};
+    const was = (packs[packId] && packs[packId].items) || {};
+    let quotes = this.getQuotes();
+    const incoming = new Map();
+    for (const it of Array.isArray(items) ? items : []) {
+      if (!it || !String(it.text || '').trim()) continue;
+      const k = Vault.readingKey(it.text, it.author);
+      if (!incoming.has(k)) incoming.set(k, it);
+    }
+    const retiredSet = new Set(Array.isArray(retired) ? retired : []);
+    const fav = new Set();
+    let added = 0, updated = 0, removed = 0;
+    quotes = quotes.filter(q => {
+      if (q.pack) return true;
+      const k = Vault.readingKey(q.text, q.author);
+      if (incoming.has(k)) { if (q.fav) fav.add(k); return false; }   // replaced by the pack's copy
+      if (retiredSet.has(k)) { removed++; return false; }
+      return true;
+    });
+    const byId = new Map(quotes.map(q => [q.id, q]));
+    const touched = new Set();
+    for (const [k, it] of incoming) {
+      const id = `${packId}-${k}`;
+      const cur = byId.get(id);
+      const fresh = { text: it.text, author: it.author || '', source: it.source || '', title: it.title || '', kind: it.kind || '',
+        themes: it.themes || [], mine: !!it.mine, pack: packId, id, fav: (cur && cur.fav) || fav.has(k) };
+      if (!cur) {
+        if (was[k] && !fav.has(k)) continue;           // you deleted it earlier
+        quotes.push(fresh); added++; touched.add(id);
+      } else if (Vault.readingHash(cur) === was[k]) { // unchanged by you: take the pack's version
+        const i = quotes.indexOf(cur);
+        quotes[i] = fresh; touched.add(id);
+        if (Vault.readingHash(Vault.cleanQuotes([fresh])[0]) !== was[k]) updated++;
+      }
+    }
+    quotes = quotes.filter(q => {
+      if (q.pack !== packId) return true;
+      const k = q.id.slice(packId.length + 1);
+      if (incoming.has(k)) return true;
+      if (Vault.readingHash(q) === was[k]) { removed++; return false; }   // dropped from the pack, not edited
+      return true;
+    });
+    const clean = Vault.cleanQuotes(quotes);
+    const next = {};
+    for (const [k] of incoming) {
+      const q = clean.find(x => x.id === `${packId}-${k}`);
+      next[k] = q && touched.has(q.id) ? Vault.readingHash(q) : was[k] || (q ? 'edited' : 'deleted');
+    }
+    packs[packId] = { items: next, synced: new Date().toISOString() };
+    this._writeMeta({ quotes: clean, quotesSeeded: true, packs });
+    return { quotes: clean, added, updated, removed };
+  }
 
   setQuotes(list) {
     return this._writeMeta({ quotes: Vault.cleanQuotes(list), quotesSeeded: true }).quotes;

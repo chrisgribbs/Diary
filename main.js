@@ -25,7 +25,7 @@ let win = null;
 let quitting = false;
 
 const DEFAULT_SETTINGS = {
-  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'quote', quoteFrom: '', quotePlan: 'christian',
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'quote', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, readingsFile: '',
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
 };
 const CHOICES = {
@@ -45,7 +45,7 @@ function writeSettings(s, { internal = false } = {}) {
   const clean = { ...readSettings() };
   for (const k of Object.keys(DEFAULT_SETTINGS)) {
     if (!(k in s) || typeof s[k] !== typeof DEFAULT_SETTINGS[k]) continue;
-    if (k === 'backupDir' && !internal) continue; // only set through the folder picker
+    if ((k === 'backupDir' || k === 'readingsFile') && !internal) continue; // only set through the pickers
     if (CHOICES[k] && !CHOICES[k].includes(s[k])) continue;
     clean[k] = s[k];
   }
@@ -245,6 +245,44 @@ handle('quotes:pickFile', async () => {
   if (st.size > 25 * 1024 * 1024) throw new Error('That file is too large to import');
   return { name: path.basename(r.filePaths[0]), text: fs.readFileSync(r.filePaths[0], 'utf8').replace(/^\uFEFF/, '') };
 });
+// ---------- reading packs ----------
+// Built in: psalms, poems and reflections that ship with WellWrite.
+handle('readings:builtin', () => {
+  const p = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'readings', 'wellwrite.json'), 'utf8'));
+  return { name: p.name, version: p.version, items: p.items, retired: p.retired };
+});
+// Your readings file: chosen once, read again whenever it changes.
+let readingsWatch = null;
+function watchReadings() {
+  if (readingsWatch) { fs.unwatchFile(readingsWatch); readingsWatch = null; }
+  const f = readSettings().readingsFile;
+  if (!f) return;
+  readingsWatch = f;
+  fs.watchFile(f, { interval: 4000 }, (cur, prev) => {
+    if (cur.mtimeMs !== prev.mtimeMs && win && !win.isDestroyed() && vault.isUnlocked()) win.webContents.send('readings:changed');
+  });
+}
+handle('readings:pickFile', async () => {
+  const r = await dialog.showOpenDialog(win, {
+    title: 'Choose your readings file', properties: ['openFile'],
+    filters: [{ name: 'Text', extensions: ['txt', 'md'] }, { name: 'All files', extensions: ['*'] }],
+  });
+  if (r.canceled || !r.filePaths[0]) return null;
+  writeSettings({ readingsFile: r.filePaths[0] }, { internal: true });
+  watchReadings();
+  return r.filePaths[0];
+});
+handle('readings:forgetFile', () => { writeSettings({ readingsFile: '' }, { internal: true }); watchReadings(); return true; });
+handle('readings:readFile', () => {
+  const f = readSettings().readingsFile;
+  if (!f) return null;
+  if (!fs.existsSync(f)) return { name: path.basename(f), path: f, missing: true };
+  const st = fs.statSync(f);
+  if (st.size > 25 * 1024 * 1024) throw new Error('Your readings file is too large');
+  return { name: path.basename(f), path: f, modified: st.mtime.toISOString(), text: fs.readFileSync(f, 'utf8').replace(/^\uFEFF/, '') };
+});
+handle('readings:sync', (packId, items, retired) => vault.syncPack(String(packId), items, retired));
+
 handle('settings:get', () => readSettings());
 handle('settings:set', s => writeSettings(s || {}));
 handle('app:showDataFolder', () => { shell.openPath(DATA_DIR); return true; });
@@ -366,6 +404,7 @@ app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   createWindow();
+  watchReadings();
   setupUpdates();
   setTimeout(() => backups.maybeRun('start').catch(() => {}), 60000);
   setInterval(() => backups.maybeRun('timer').catch(() => {}), 30 * 60000);

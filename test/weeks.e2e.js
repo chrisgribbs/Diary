@@ -26,6 +26,8 @@ app.whenReady().then(async () => {
 
   await js(`document.querySelector('#setupPw').value='river-stone'; document.querySelector('#setupPw2').value='river-stone'; document.querySelector('#setupForm').requestSubmit();`);
   await wait(2500);
+  // these checks use their own test writing, so the built-in writing is switched off
+  if (!process.env.WELLWRITE_QUOTES_FILE) await js(`await updateSetting({ builtinReadings: false }); await syncReadings();`);
   if (process.env.WELLWRITE_QUOTES_FILE) {
     const f = fs.readFileSync(process.env.WELLWRITE_QUOTES_FILE, 'utf8');
     await js(`importPreview(parsePastedQuotes(${JSON.stringify(f)}), 'file'); await new Promise(r => setTimeout(r, 300)); document.querySelector('#dlgForm').requestSubmit();`);
