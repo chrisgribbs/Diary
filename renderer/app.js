@@ -1407,8 +1407,9 @@ function roundRobin(pool, salt) {
   return (season, avoid = () => 0, occ = new Set()) => {
     if (!pool.length) return null;
     let best = pick(season, occ, avoid);
-    // When everything that fits today has had its turn, a new round begins.
-    if (!best) { used.clear(); best = pick(season, occ, avoid); }
+    // When everything that fits today has had its turn, a new round begins — or early, if all that's left is
+    // yesterday's writer (their remaining pieces simply come early in the next round).
+    if (!best || (avoid(best) >= 200 && !best.occasion)) { used.clear(); best = pick(season, occ, avoid) || best; }
     if (best) used.add(best.id);
     return best;
   };
