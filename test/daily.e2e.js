@@ -81,6 +81,10 @@ app.whenReady().then(async () => {
   await js(`await updateSetting({ dailyCard: 'both' }); await newEntry(addDays(todayISO(), 1));`); await wait(1200);
   assert.equal(await js(`return document.querySelectorAll('#quoteSlot .quote-card').length`), 2, 'quote and verse on tomorrow’s entry');
   await shot('d4b-other-day');
+  // a long title wraps instead of being cut off
+  await js(`const t = document.querySelector('#title'); t.value = 'Saturday, 31 October 2026 - Working out what rest really means when the week has been long'; t.dispatchEvent(new Event('input'));`); await wait(200);
+  assert.ok(await js(`const t = document.querySelector('#title'); return t.offsetHeight > 60 && t.scrollHeight <= t.clientHeight + 2`), 'long title wraps onto a second line');
+  await shot('d4d-long-title');
   // change the Bible version right from the verse card
   await js(`document.querySelector('#quoteSlot .quote-card.verse .version-btn').click();`); await wait(500);
   assert.ok(await js(`return [...document.querySelectorAll('#popover .menu-item')].some(b => b.textContent.startsWith('King James'))`), 'versions listed');

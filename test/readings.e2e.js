@@ -78,6 +78,12 @@ app.whenReady().then(async () => {
   assert.ok(await js(`return !!document.querySelector('#dlg .readings-box #pickReadings')`), 'readings file in Settings');
   assert.ok(await js(`return document.querySelector('#dlg').getBoundingClientRect().width > 1100`), 'Settings fills the window');
   await shot('r5-settings-readings');
+  // each area is its own tab
+  for (const t of ['general', 'bible', 'privacy', 'backups', 'wordpress', 'about']) {
+    await js(`document.querySelector('.set-tab[data-tab=${t}]').click();`); await wait(250);
+    assert.equal(await js(`return [...document.querySelectorAll('.set-panel')].filter(p => !p.hidden).map(p => p.dataset.tab).join()`), t);
+    await shot('r6-settings-' + t);
+  }
   await js(`document.querySelector('#dlg').close();`);
 
   assert.deepEqual(errors, [], 'no console errors');

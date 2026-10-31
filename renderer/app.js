@@ -603,7 +603,7 @@ async function openEntry(id, { via, keepMode } = {}) {
   if (via === 'link' && from) state.trail.push(from);
   else if (via !== 'back') state.trail = [];
   state.current = { id: e.id, date: e.date, time: e.time, title: e.title, tags: [...e.tags], category: e.category || '', saved: true };
-  titleIn.value = e.title || dateTitle(e.date);
+  titleIn.value = e.title || dateTitle(e.date); requestAnimationFrame(fitTitle);
   body.innerHTML = clean(e.html);
   decorateLinks();
   renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink(); renderQuoteSlot();
@@ -621,7 +621,7 @@ async function newEntry(date = todayISO()) {
   await saveNow();
   state.current = { id: crypto.randomUUID(), date, time: date === todayISO() ? nowTime() : '', title: '', tags: [], category: catById(state.category) ? state.category : '', saved: false };
   state.trail = [];
-  titleIn.value = dateTitle(date); body.innerHTML = '';
+  titleIn.value = dateTitle(date); requestAnimationFrame(fitTitle); body.innerHTML = '';
   renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink(); renderQuoteSlot();
   $('#saveState').textContent = 'Not saved yet';
   document.querySelectorAll('#list .item.active').forEach(n => n.classList.remove('active'));
@@ -673,7 +673,10 @@ function updateCounts() {
 }
 
 body.addEventListener('input', () => { markDirty(); updateCounts(); });
-titleIn.addEventListener('input', markDirty);
+titleIn.addEventListener('input', () => { titleIn.value = titleIn.value.replace(/\s*\n+\s*/g, ' '); fitTitle(); markDirty(); });
+/** The title wraps onto as many lines as it needs, so a long one is never cut off. */
+function fitTitle() { titleIn.style.height = 'auto'; titleIn.style.height = titleIn.scrollHeight + 'px'; }
+window.addEventListener('resize', () => fitTitle());
 titleIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#tagInput').focus(); } });
 // While the title is still just the date, clicking into it puts the cursor at the end, ready to add to it.
 titleIn.addEventListener('focus', () => {
@@ -710,7 +713,7 @@ dateInput.addEventListener('change', () => {
   // If the title is still just the date, keep it in step with the new date.
   const wasDefault = titleIn.value.trim() === dateTitle(state.current.date);
   state.current.date = dateInput.value;
-  if (wasDefault) titleIn.value = dateTitle(state.current.date);
+  if (wasDefault) { titleIn.value = dateTitle(state.current.date); fitTitle(); }
   renderStamp(); markDirty();
 });
 $('#stampTime').onclick = () => { timeInput.value = state.current.time || nowTime(); timeInput.showPicker(); };
@@ -2222,6 +2225,7 @@ async function exportQuotes() {
 
 /* ---------- views: Journal / Bible / Quote ---------- */
 function setMode(mode) {
+  if (mode === 'journal') requestAnimationFrame(() => fitTitle());
   if (!['journal', 'bible', 'quote'].includes(mode)) mode = 'journal';
   if (state.mode === 'journal' && mode !== 'journal') saveNow();
   state.mode = mode;
@@ -2780,10 +2784,16 @@ async function updateSetting(patch) {
   applySettings();
 }
 
+/** Settings, as a page with tabs down the side: each area has its own place. */
+const SETTINGS_TABS = [
+  ['general', 'General'], ['readings', 'Quotes & readings'], ['bible', 'Bible'], ['privacy', 'Privacy & lock'],
+  ['backups', 'Backups'], ['wordpress', 'WordPress'], ['about', 'About'],
+];
 function openSettings(section) {
-  if (section) setTimeout(() => { const h = document.getElementById('set-' + section); if (h) h.scrollIntoView({ block: 'start' }); }, 30);
+  let tab = SETTINGS_TABS.some(([k]) => k === section) ? section : (() => { try { return localStorage.getItem('settingsTab') || 'general'; } catch { return 'general'; } })();
+  if (!SETTINGS_TABS.some(([k]) => k === tab)) tab = 'general';
   return openDialog((f, done) => {
-    f.classList.add('page');
+    f.classList.add('page', 'settings-page');
     const s = state.settings;
     const totalWords = state.metas.reduce((a, m) => a + m.words, 0);
     const photos = state.metas.reduce((a, m) => a + m.images, 0);
@@ -2796,56 +2806,75 @@ function openSettings(section) {
     const check = (val, on) => { const c = el('input', { type: 'checkbox', onchange: e => on(e.target.checked) }); c.checked = val; return c; };
     const size = el('input', { type: 'range', min: 15, max: 26, step: 1, value: s.fontSize, oninput: e => updateSetting({ fontSize: +e.target.value }) });
     const row = (label, help, control) => el('div', { class: 'row' }, el('div', {}, label, help ? el('small', {}, help) : null), control);
+    const panel = (key, title, intro, ...kids) => el('section', { class: 'set-panel', 'data-tab': key, id: 'set-' + key, hidden: key !== tab },
+      el('h2', {}, title), intro ? el('p', { class: 'set-intro' }, intro) : null, ...kids.filter(k => k != null));
 
-    f.append(
-      el('h2', {}, 'Settings'),
-      el('div', { class: 'stat-line' },
-        el('div', {}, el('b', {}, state.metas.length.toLocaleString()), 'entries'),
-        el('div', {}, el('b', {}, totalWords.toLocaleString()), 'words'),
-        el('div', {}, el('b', {}, photos.toLocaleString()), 'photos'),
-        el('div', {}, el('b', {}, String(streak())), 'day streak')),
-      since ? el('p', { style: 'margin-top:6px' }, `Writing since ${fmt(since, { day: 'numeric', month: 'long', year: 'numeric' })}.`) : null,
+    const panels = [
+      panel('general', 'General', null,
+        el('div', { class: 'stat-line' },
+          el('div', {}, el('b', {}, state.metas.length.toLocaleString()), 'entries'),
+          el('div', {}, el('b', {}, totalWords.toLocaleString()), 'words'),
+          el('div', {}, el('b', {}, photos.toLocaleString()), 'photos'),
+          el('div', {}, el('b', {}, String(streak())), 'day streak')),
+        since ? el('p', { style: 'margin-top:6px' }, `Writing since ${fmt(since, { day: 'numeric', month: 'long', year: 'numeric' })}.`) : null,
+        el('h3', {}, 'Writing'),
+        row('Theme', null, select(s.theme, [['system', 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
+        row('Text size', null, size),
+        row('Check spelling', 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
+        row('Categories', 'Group entries into sections, like a notebook.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageCategories(); } }, 'Edit categories'))),
 
-      el('h3', {}, 'Writing'),
-      row('Theme', null, select(s.theme, [['system', 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
-      row('Text size', null, size),
-      row('Daily quote', 'Choose what appears above your journal with “Above journal” at the top right.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Your quotes')),
-      row('Categories', 'Group entries into sections, like a notebook.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageCategories(); } }, 'Edit categories')),
-      row('Check spelling', 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
+      panel('readings', 'Quotes & readings', 'The quote and question each day, your own writing for each week, and the week pictures.',
+        row('Your quotes', 'Add, edit and theme quotes, and choose whether they follow the Christian year or a theme each month.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Your quotes')),
+        row('Above your journal', 'Choose the quote, the verse, both or neither with “Above journal” at the top right of an entry.', null),
+        readingsControls(() => openSettings('readings'))),
 
-      el('h3', { id: 'set-readings' }, 'Readings'),
-      readingsControls(() => openSettings('readings')),
+      panel('bible', 'Bible', 'The version used for the verse of the day, the weekly pages and reading plans. You can also switch version from the ▾ under any verse.',
+        bibleVersionControls(() => openSettings('bible')),
+        row('Reading plans', 'Read through the Bible, the New Testament, the Gospels or the Psalms.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); setMode('bible'); } }, 'Open reading plans'))),
 
-      el('h3', { id: 'set-wordpress' }, 'WordPress'),
-      wordpressControls(() => openSettings('wordpress')),
+      panel('privacy', 'Privacy & lock', 'Your journal is encrypted with your password. When it locks, your writing is hidden.',
+        row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),
+        row('Remember my password', 'When WellWrite locks, your writing is hidden either way. With these, you open it again with one click.', trustSelect()),
+        row('Lock when minimised', 'Also locks when Windows locks or the computer sleeps.', check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
+        row('Password', null, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); changePassword(); } }, 'Change password'))),
 
-      el('h3', { id: 'set-bible' }, 'Bible versions'),
-      bibleVersionControls(() => openSettings('bible')),
+      panel('backups', 'Backups', 'Backups are encrypted with your password, so they are safe to keep online or on a USB drive.',
+        el('div', { id: 'backupSection' }),
+        el('h3', {}, 'Backup files'),
+        el('div', { class: 'btns' },
+          el('button', { type: 'button', class: 'btn-plain', onclick: doBackup }, 'Save a backup file'),
+          el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); doImport(); } }, 'Import a backup file'),
+          state.backup && state.backup.google.connected
+            ? el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); restoreFromDrive('import'); } }, 'Restore from Google Drive') : null),
+        el('h3', {}, 'A readable copy'),
+        row('Export readable copy', 'Every entry as one web page you can open, print or keep. It isn’t encrypted.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); doExportReadable(); } }, 'Export')),
+        el('p', { class: 'path', style: 'margin-top:14px' }, 'Journal folder: ', state.dataDir, ' ',
+          el('button', { type: 'button', class: 'btn-link', onclick: () => api.showDataFolder() }, 'Show folder'))),
 
-      el('h3', {}, 'Privacy'),
-      row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),
-      row('Remember my password', 'When WellWrite locks, your writing is hidden either way. With these, you open it again with one click.', trustSelect()),
-      row('Lock when minimised', 'Also locks when Windows locks or the computer sleeps.', check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
-      row('Password', null, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); changePassword(); } }, 'Change password')),
+      panel('wordpress', 'WordPress', 'Post entries to your own website. Nothing is sent unless you press “Post to WordPress” on an entry.',
+        wordpressControls(() => openSettings('wordpress'))),
 
-      el('h3', { id: 'set-backups' }, 'Backups'),
-      el('p', {}, 'Backups are encrypted with your password, so they are safe to keep online or on a USB drive.'),
-      el('div', { id: 'backupSection' }),
-      el('div', { class: 'btns', style: 'margin-top:14px' },
-        el('button', { type: 'button', class: 'btn-plain', onclick: doBackup }, 'Save a backup file'),
-        el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); doImport(); } }, 'Import a backup file'),
-        state.backup && state.backup.google.connected
-          ? el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); restoreFromDrive('import'); } }, 'Restore from Google Drive') : null,
-        el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); doExportReadable(); } }, 'Export readable copy')),
-      el('p', { class: 'path', style: 'margin-top:14px' }, 'Journal folder: ', state.dataDir, ' ',
-        el('button', { type: 'button', class: 'btn-link', onclick: () => api.showDataFolder() }, 'Show folder')),
+      panel('about', 'About', null,
+        el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, 'Updates install automatically when you restart.')),
+          el('button', { type: 'button', class: 'btn-plain', onclick: checkUpdates }, 'Check for updates')),
+        el('p', { class: 'set-intro' }, 'Bible texts: World English Bible and King James Version (public domain); other versions from API.Bible. Week pictures: public-domain works from Wikimedia Commons.')),
+    ];
 
-      el('h3', {}, 'About'),
-      el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, 'Updates install automatically when you restart.')),
-        el('button', { type: 'button', class: 'btn-plain', onclick: checkUpdates }, 'Check for updates')),
-
-      el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Done')),
-    );
+    const nav = el('nav', { class: 'set-nav', role: 'tablist', 'aria-label': 'Settings' },
+      el('p', { class: 'set-nav-title' }, 'Settings'),
+      ...SETTINGS_TABS.map(([key, label]) => el('button', { type: 'button', role: 'tab', class: 'set-tab' + (key === tab ? ' on' : ''), 'data-tab': key, 'aria-selected': String(key === tab),
+        onclick: () => show(key) }, label)),
+      el('button', { type: 'button', class: 'btn-ink set-done', onclick: () => done() }, 'Done'));
+    const content = el('div', { class: 'set-content' }, ...panels);
+    const show = key => {
+      tab = key;
+      try { localStorage.setItem('settingsTab', key); } catch {}
+      for (const b of nav.querySelectorAll('.set-tab')) { const on = b.dataset.tab === key; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); }
+      for (const p of panels) p.hidden = p.dataset.tab !== key;
+      content.scrollTop = 0;
+    };
+    f.append(el('div', { class: 'set-layout' }, nav, content));
+    setTimeout(() => { const b = nav.querySelector('.set-tab.on'); if (b) b.focus({ focusVisible: false }); });
     renderBackupSection();
     refreshBackupInfo();
   });
