@@ -41,7 +41,7 @@ app.whenReady().then(async () => {
   assert.equal(await text('#quoteView .wk-number b'), String(wk.number));
   assert.match(await text('#quoteView .wk-running'), /^Theme: /);
   assert.ok(await js(`return document.querySelectorAll('#quoteView .wk-scripture p').length`) >= 5, 'verses shown');
-  assert.match(await text('#quoteView .wk-scripture .wk-refs'), /\(.+, WEB\)/);
+  assert.match(await text('#quoteView .wk-scripture .wk-refs'), /\(.+, WEB ▾\)/);
   assert.ok((await text('#quoteView .wk-prayer')).length > 20, 'a prayer');
   assert.ok((await text('#quoteView .wk-blessing')).startsWith('A Benediction'));
   assert.ok(await js(`return document.querySelectorAll('#quoteView .wk-reading').length`) >= 1, 'readings for the week');

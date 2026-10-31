@@ -67,7 +67,7 @@ server.listen(0, '127.0.0.1', () => {
     // the week page uses it, with its copyright
     await js(`document.querySelector('.modeswitch [data-mode=quote]').click();`);
     assert.ok(await until(`document.querySelector('#quoteView .wk-scripture') && document.querySelector('#quoteView .wk-scripture').innerText.includes('TSV line one')`), 'week verses from API.Bible');
-    assert.match(await text('#quoteView .wk-scripture .wk-refs'), /, TSV\)/);
+    assert.match(await text('#quoteView .wk-scripture .wk-refs'), /, TSV ▾\)/);
     assert.match(await text('#quoteView .wk-copy'), /Test Society/);
     assert.ok(hits.some(h => h.startsWith('/fums?t=tok-')), 'fair use reported');
     await js(`document.querySelector('#quoteView .wk-scripture').scrollIntoView()`); await shot('a4-week-tsv');

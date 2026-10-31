@@ -769,6 +769,30 @@ function showPopover(rect, build, onClose) {
 }
 function closePopover() { if (popClose) { const f = popClose; popClose = null; f(); } }
 
+// --- Bible version, changed from wherever a verse is shown
+/** The version name under a verse ("WEB"), as a button that opens the list of versions. */
+function versionButton(label) {
+  return el('button', { type: 'button', class: 'version-btn', title: 'Change Bible version', onclick: e => versionMenu(e.currentTarget) }, el('cite', {}, label), ' ▾');
+}
+async function versionMenu(anchor) {
+  try { state.bible = await api.bibleInfo(); } catch {}
+  const b = state.bible;
+  if (!b) return;
+  showPopover(anchor.getBoundingClientRect(), pop => {
+    pop.append(el('div', { class: 'menu-head' }, 'Bible version'));
+    for (const [id, name] of Object.entries(b.translations)) {
+      pop.append(el('button', { type: 'button', class: 'menu-item' + (b.state.translation === id ? ' on' : ''), onclick: async () => {
+        closePopover();
+        if (b.state.translation === id) return;
+        await saveBible({ translation: id });
+        refreshQuote();
+        toast(`Now reading the ${name}`);
+      } }, name));
+    }
+    pop.append(el('button', { type: 'button', class: 'menu-item subtle', onclick: () => { closePopover(); openSettings('bible'); } }, 'More versions in Settings…'));
+  });
+}
+
 // --- categories
 async function saveCategories(list) {
   try { state.categories = await api.setCategories(list); }
@@ -1175,7 +1199,17 @@ function bibleVersionControls(redraw) {
       const key = el('input', { type: 'password', id: 'apiBibleKey', placeholder: 'Your API.Bible key', autocomplete: 'off', spellcheck: 'false' });
       const go = el('button', { type: 'button', class: 'btn-plain', id: 'apiBibleConnect', onclick: async () => {
         go.disabled = true; go.textContent = 'Checking…';
-        try { await api.apiBibleSetKey(key.value); toast('Connected to API.Bible'); redraw(); chooseBibleVersions(redraw); }
+        try {
+          await api.apiBibleSetKey(key.value);
+          // Ready straight away: the popular English versions your key allows (more can be ticked in "Choose versions…").
+          const list = await api.apiBibleList('eng').catch(() => []);
+          const want = ['NIV', 'ESV', 'NLT', 'NKJV', 'NASB', 'CSB', 'BSB', 'NRSV', 'MSG', 'AMP', 'ASV', 'LSV', 'FBV'];
+          const picks = want.map(a => list.find(b => (b.abbr || '').toUpperCase().replace(/\d+$/, '') === a)).filter(Boolean).slice(0, 8);
+          if (picks.length) { await api.apiBibleSetVersions(picks); try { state.bible = await api.bibleInfo(); } catch {} }
+          toast(picks.length ? `Connected: ${picks.map(b => b.abbr).join(', ')} added` : 'Connected to API.Bible');
+          redraw();
+          if (!picks.length) chooseBibleVersions(redraw);
+        }
         catch (e) { toast(e.message); go.disabled = false; go.textContent = 'Connect'; }
       } }, 'Connect');
       rows.push(el('div', { class: 'row' }, el('div', {}, 'More versions from API.Bible',
@@ -1506,7 +1540,7 @@ function verseCard(v, iso, where) {
   const btn = (label, fn, cls = 'q-btn') => el('button', { type: 'button', class: cls, onclick: fn }, label);
   return el('figure', { class: 'quote-card verse ' + where },
     el('blockquote', {}, v.text),
-    el('figcaption', {}, '— ' + v.ref + ' ', el('cite', {}, v.translation)),
+    el('figcaption', {}, '— ' + v.ref + ' ', versionButton(v.translation)),
     v.copyright ? el('p', { class: 'q-copy' }, v.copyright) : null,
     el('div', { class: 'q-actions' },
       btn('Write about this', () => writeAboutQuote({ text: v.text, author: v.ref, source: v.translation }, iso), 'q-btn primary'),
@@ -2313,7 +2347,7 @@ async function renderWeekView(today, season) {
     el('hr', { class: 'wk-rule swash' }),
     shown.length ? el('section', { class: 'wk-scripture' },
       ...shown.map(verseParagraph),
-      el('p', { class: 'wk-refs' }, '(' + shown.map(v => v.ref).join('; ') + ', ' + shown[0].translation + ')'),
+      el('p', { class: 'wk-refs' }, '(' + shown.map(v => v.ref).join('; ') + ', ', versionButton(shown[0].translation), ')'),
       shown[0].copyright ? el('p', { class: 'wk-refs wk-copy' }, shown[0].copyright) : null) : null,
     el('hr', { class: 'wk-rule' }),
     reflection ? el('section', { class: 'wk-reflection' + (['psalm', 'poem'].includes(reflection.kind) ? ' verse' : '') },

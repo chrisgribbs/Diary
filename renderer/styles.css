@@ -707,3 +707,7 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 
 .q-occ-row { margin: 0 0 6px; }
 .q-occ-row select { width: 100%; }
+
+.version-btn { all: unset; cursor: pointer; color: inherit; border-bottom: 1px dotted currentColor; }
+.version-btn:hover, .version-btn:focus-visible { color: var(--ribbon); }
+.menu-head { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--pencil); padding: 6px 12px 4px; }

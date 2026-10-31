@@ -81,6 +81,16 @@ app.whenReady().then(async () => {
   await js(`await updateSetting({ dailyCard: 'both' }); await newEntry(addDays(todayISO(), 1));`); await wait(1200);
   assert.equal(await js(`return document.querySelectorAll('#quoteSlot .quote-card').length`), 2, 'quote and verse on tomorrow’s entry');
   await shot('d4b-other-day');
+  // change the Bible version right from the verse card
+  await js(`document.querySelector('#quoteSlot .quote-card.verse .version-btn').click();`); await wait(500);
+  assert.ok(await js(`return [...document.querySelectorAll('#popover .menu-item')].some(b => b.textContent.startsWith('King James'))`), 'versions listed');
+  await shot('d4c-version-menu');
+  await js(`[...document.querySelectorAll('#popover .menu-item')].find(b => b.textContent.startsWith('King James')).click();`); await wait(1000);
+  assert.equal(await js(`return state.bible.state.translation`), 'kjv');
+  assert.match(await js(`return document.querySelector('#quoteSlot .quote-card.verse figcaption').innerText`), /KJV/);
+  await js(`document.querySelector('#quoteSlot .quote-card.verse .version-btn').click();`); await wait(400);
+  await js(`[...document.querySelectorAll('#popover .menu-item')].find(b => b.textContent.startsWith('World English')).click();`); await wait(800);
+  assert.equal(await js(`return state.bible.state.translation`), 'web');
   await js(`await newEntry(todayISO());`); await wait(600);
 
   // --- quote view
