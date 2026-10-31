@@ -573,6 +573,7 @@ function showEmpty() {
 
 function showSheet() {
   $('#empty').hidden = true; $('#sheet').hidden = false; $('#pageFoot').hidden = false;
+  updateWpButton();
   $('#toolbar').removeAttribute('aria-disabled');
 }
 
@@ -716,6 +717,163 @@ $('#stampTime').onclick = () => { timeInput.value = state.current.time || nowTim
 timeInput.addEventListener('change', () => { state.current.time = timeInput.value; renderStamp(); markDirty(); });
 
 // Delete
+/* ---------- WordPress: post an entry to your own site ---------- */
+let wpConnected = false;
+async function updateWpButton() {
+  const b = $('#wpBtn');
+  try { wpConnected = (await api.wpStatus()).connected; } catch { wpConnected = false; }
+  const c = state.current;
+  b.hidden = !wpConnected || !c;
+  if (b.hidden) return;
+  let rec = null; try { rec = await api.wpRecord(c.id); } catch {}
+  if (state.current !== c) return;
+  b.textContent = rec ? (rec.status === 'publish' ? 'Update on WordPress' : 'Update WordPress draft') : 'Post to WordPress';
+}
+$('#wpBtn').onclick = () => postToWordPress();
+
+/**
+ * The entry as WordPress blocks, so it stays editable in the block editor: paragraphs, headings, lists, quotes
+ * (with the writer as the citation), separators and images. Photos become ⟦img:N:url⟧ / ⟦img:N:id⟧ placeholders
+ * that are filled in once they're uploaded. Links to other entries point at their posts, if posted; otherwise plain text.
+ */
+function entryToWordPress(html, links = {}) {
+  const root = document.createElement('div');
+  root.innerHTML = clean(html);
+  const images = [];
+  const imgIndex = src => { let i = images.indexOf(src); if (i < 0) { images.push(src); i = images.length - 1; } return i; };
+  for (const a of root.querySelectorAll('a[href^="wellwrite:entry/"]')) {
+    const url = links[a.getAttribute('href').slice('wellwrite:entry/'.length)];
+    if (url) { const n = el('a', { href: url }, a.textContent); a.replaceWith(n); } else a.replaceWith(document.createTextNode(a.textContent));
+  }
+  for (const n of root.querySelectorAll('*')) for (const at of [...n.attributes]) if (!['href', 'src', 'alt'].includes(at.name)) n.removeAttribute(at.name);
+  const blocks = [];
+  const para = h => { if (h.replace(/<br\s*\/?>|&nbsp;|\s/g, '')) blocks.push(`<!-- wp:paragraph -->
+<p>${h.trim()}</p>
+<!-- /wp:paragraph -->`); };
+  const image = src => { if (!/^data:image\//.test(src)) return; const i = imgIndex(src);
+    blocks.push(`<!-- wp:image {"id":⟦img:${i}:id⟧,"sizeSlug":"large","linkDestination":"none"} -->
+<figure class="wp-block-image size-large"><img src="⟦img:${i}:url⟧" alt="" class="wp-image-⟦img:${i}:id⟧"/></figure>
+<!-- /wp:image -->`); };
+  // A paragraph with photos in it: the words around each photo stay paragraphs, each photo its own block.
+  const withImages = node => {
+    let buf = '';
+    for (const k of node.childNodes) {
+      if (k.nodeName === 'IMG') { para(buf); buf = ''; image(k.getAttribute('src') || ''); }
+      else if (k.nodeType === 1 && k.querySelector && k.querySelector('img')) { para(buf); buf = ''; withImages(k); }
+      else buf += k.nodeType === 3 ? escHtml(k.textContent) : k.outerHTML;
+    }
+    para(buf);
+  };
+  for (const n of [...root.childNodes]) {
+    const tag = n.nodeName;
+    if (n.nodeType === 3) { para(escHtml(n.textContent)); continue; }
+    if (n.nodeType !== 1) continue;
+    if (/^H[1-6]$/.test(tag)) {
+      const level = Math.max(2, +tag[1]);
+      blocks.push(`<!-- wp:heading${level === 2 ? '' : ` {"level":${level}}`} -->
+<h${level} class="wp-block-heading">${n.innerHTML}</h${level}>
+<!-- /wp:heading -->`);
+    } else if (tag === 'UL' || tag === 'OL') {
+      const items = [...n.children].filter(li => li.nodeName === 'LI').map(li => `<!-- wp:list-item -->
+<li>${li.innerHTML}</li>
+<!-- /wp:list-item -->`).join('\n');
+      blocks.push(`<!-- wp:list${tag === 'OL' ? ' {"ordered":true}' : ''} -->
+<${tag.toLowerCase()} class="wp-block-list">${items}</${tag.toLowerCase()}>
+<!-- /wp:list -->`);
+    } else if (tag === 'BLOCKQUOTE') {
+      // "— Writer, Book" on the last line becomes the quote's citation
+      const parts = n.innerHTML.split(/<br\s*\/?>/i);
+      let cite = '';
+      const last = (parts[parts.length - 1] || '').replace(/<[^>]+>/g, '').trim();
+      if (/^[—–-]\s*\S/.test(last)) { cite = parts.pop().trim().replace(/^[—–-]\s*/, ''); }
+      const inner = parts.join('<br>').replace(/(<br>)+$/, '').trim();
+      blocks.push(`<!-- wp:quote -->
+<blockquote class="wp-block-quote"><!-- wp:paragraph -->
+<p>${inner}</p>
+<!-- /wp:paragraph -->${cite ? `<cite>${cite}</cite>` : ''}</blockquote>
+<!-- /wp:quote -->`);
+    } else if (tag === 'HR') {
+      blocks.push('<!-- wp:separator -->\n<hr class="wp-block-separator has-alpha-channel-opacity"/>\n<!-- /wp:separator -->');
+    } else if (tag === 'PRE') {
+      blocks.push(`<!-- wp:preformatted -->
+<pre class="wp-block-preformatted">${n.innerHTML}</pre>
+<!-- /wp:preformatted -->`);
+    } else if (tag === 'IMG') {
+      image(n.getAttribute('src') || '');
+    } else if (n.querySelector('img')) {
+      withImages(n);
+    } else if (tag === 'DIV' && n.querySelector('p,h1,h2,h3,ul,ol,blockquote')) {
+      blocks.push(...entryToWordPress(n.innerHTML, links).content.split('\n\n').filter(Boolean));   // nested block content
+    } else {
+      para(n.innerHTML);
+    }
+  }
+  return { content: blocks.join('\n\n'), images };
+}
+const escHtml = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+async function postToWordPress() {
+  const c = state.current;
+  if (!c) return;
+  saveNow();
+  let st; try { st = await api.wpStatus(); } catch { st = { connected: false }; }
+  if (!st.connected) { toast('Connect your WordPress site first'); openSettings('wordpress'); return; }
+  const [rec, links] = await Promise.all([api.wpRecord(c.id).catch(() => null), api.wpLinks().catch(() => ({}))]);
+  const conv = entryToWordPress(body.innerHTML, links);
+  const title = titleIn.value.trim() || dateTitle(c.date);
+  // the week's picture, as an option for the featured image
+  let weekPic = null;
+  try {
+    const s = seasonOn(c.date), wk = s && window.WellWriteWeeks && window.WellWriteWeeks.weekOf(s);
+    if (wk) { const info = await api.pictureInfo(wk.key); if (info && info.dataUrl) weekPic = { dataUrl: info.dataUrl, credit: info.credit }; }
+  } catch {}
+  const cat = catById(c.category);
+  const catPathSlash = cat ? (catById(cat.parent) ? `${catById(cat.parent).name} / ${cat.name}` : cat.name) : '';
+  return openDialog((f, done) => {
+    const status = el('select', { id: 'wpStatus' }, el('option', { value: 'draft' }, 'Save as a draft'), el('option', { value: 'publish' }, 'Publish now'), el('option', { value: 'private' }, 'Publish privately (only you can see it)'));
+    status.value = rec && rec.status && rec.status !== 'draft' ? rec.status : 'draft';
+    const feat = el('select', { id: 'wpFeatured' },
+      conv.images.length ? el('option', { value: 'first' }, 'The first photo in this entry') : null,
+      weekPic ? el('option', { value: 'week' }, 'This week’s picture' + (weekPic.credit ? ` (${weekPic.credit.title})` : '')) : null,
+      el('option', { value: 'none' }, 'No featured image'));
+    feat.value = conv.images.length ? 'first' : 'none';
+    const useDate = el('input', { type: 'checkbox', id: 'wpUseDate' }); useDate.checked = true;
+    const catBox = el('input', { type: 'checkbox' }); catBox.checked = !!catPathSlash;
+    const tagBox = el('input', { type: 'checkbox' }); tagBox.checked = (c.tags || []).length > 0;
+    const go = el('button', { type: 'submit', class: 'btn-ink', id: 'wpGo' }, rec ? 'Update post' : 'Send to WordPress');
+    const words = (body.innerText.trim().match(/\S+/g) || []).length;
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      go.disabled = true; go.textContent = conv.images.length ? 'Uploading photos…' : 'Sending…';
+      try {
+        const featured = feat.value === 'first' ? conv.images[0] : feat.value === 'week' ? weekPic.dataUrl : null;
+        const r = await api.wpPublish(c.id, {
+          title, content: conv.content, images: conv.images, featured, status: status.value,
+          date: useDate.checked ? `${c.date}T${/^\d\d:\d\d$/.test(c.time || '') ? c.time : '09:00'}:00` : null,
+          categories: catBox.checked && catPathSlash ? [catPathSlash] : [], tags: tagBox.checked ? (c.tags || []) : [],
+          slugBase: title.toLowerCase(),
+        });
+        done();
+        updateWpButton();
+        toast(r.status === 'publish' ? 'Published on your site' : r.status === 'private' ? 'Posted privately' : 'Saved as a draft on your site');
+        if (r.link && status.value !== 'draft') api.wpOpen(r.link);
+      } catch (x) { toast(x.message); go.disabled = false; go.textContent = rec ? 'Update post' : 'Send to WordPress'; }
+    });
+    const row = (label, help, control) => el('div', { class: 'row' }, el('div', {}, label, help ? el('small', {}, help) : null), control);
+    f.append(
+      el('h2', {}, rec ? 'Update on WordPress' : 'Post to WordPress'),
+      el('p', {}, `To ${st.site.replace(/^https?:\/\//, '')}. ${rec ? 'This updates the same post' + (rec.link ? '' : '') + '.' : 'Nothing else from your journal is sent.'}`),
+      el('div', { class: 'wp-preview' }, el('b', {}, title), el('small', {}, `${words} words${conv.images.length ? ` · ${conv.images.length} photo${conv.images.length === 1 ? '' : 's'}` : ''} · headings, lists, quotes and links kept`)),
+      row('Status', 'Drafts appear in WordPress for you to check before publishing.', status),
+      row('Featured image', null, feat),
+      row('Use the entry’s date', fmt(c.date, { day: 'numeric', month: 'long', year: 'numeric' }) + (c.date > todayISO() ? ' — a future date schedules the post' : ''), useDate),
+      catPathSlash ? row('Category', catPathSlash + ' (created on your site if it’s not there)', catBox) : null,
+      (c.tags || []).length ? row('Tags', (c.tags || []).map(t => '#' + t).join(' '), tagBox) : null,
+      rec && rec.link ? el('p', {}, el('button', { type: 'button', class: 'btn-link', onclick: () => api.wpOpen(rec.link) }, 'View the post on your site')) : null,
+      el('div', { class: 'btns' }, go, el('button', { type: 'button', class: 'btn-plain', onclick: () => done() }, 'Cancel')));
+  });
+}
+
 $('#deleteBtn').onclick = async () => {
   const c = state.current; if (!c) return;
   const ok = await confirmDialog({ title: 'Delete this entry?', text: 'It will be removed from your journal for good. Backups you have already saved keep their copy.', ok: 'Delete entry', danger: true });
@@ -1184,6 +1342,32 @@ function suggestThemes(text, exclude = []) {
 }
 
 /** A comma-separated themes box with clickable suggestions underneath. */
+/** Connect your own WordPress site (an Application Password from Users → Profile). */
+function wordpressControls(redraw) {
+  const box = el('div', { class: 'readings-box', id: 'wordpressBox' });
+  (async () => {
+    let st; try { st = await api.wpStatus(); } catch { st = { connected: false }; }
+    if (st.connected) {
+      box.replaceChildren(el('div', { class: 'row' }, el('div', {}, `Connected to ${st.site.replace(/^https?:\/\//, '')}`,
+        el('small', {}, `As ${st.name || st.user}. Use “Post to WordPress” at the bottom of any entry; posts are drafts unless you choose otherwise.`)),
+        el('button', { type: 'button', class: 'btn-link danger', onclick: async () => { await api.wpForget(); updateWpButton(); redraw(); } }, 'Disconnect')));
+      return;
+    }
+    const site = el('input', { type: 'text', id: 'wpSite', placeholder: 'yoursite.com', autocomplete: 'off', spellcheck: 'false' });
+    const user = el('input', { type: 'text', id: 'wpUser', placeholder: 'WordPress username', autocomplete: 'off', spellcheck: 'false' });
+    const pass = el('input', { type: 'password', id: 'wpPass', placeholder: 'Application password', autocomplete: 'off' });
+    const go = el('button', { type: 'button', class: 'btn-plain', id: 'wpConnect', onclick: async () => {
+      go.disabled = true; go.textContent = 'Checking…';
+      try { const r = await api.wpConnect(site.value, user.value, pass.value); toast(`Connected to ${r.site.replace(/^https?:\/\//, '')}`); updateWpButton(); redraw(); }
+      catch (e) { toast(e.message); go.disabled = false; go.textContent = 'Connect'; }
+    } }, 'Connect');
+    box.replaceChildren(
+      el('p', {}, 'Post entries to your own WordPress site. In WordPress, go to Users → Profile → Application Passwords, type “WellWrite”, click Add, and paste the password it shows here. It’s kept encrypted on this computer.'),
+      el('div', { class: 'wp-fields' }, site, user, pass, go));
+  })();
+  return box;
+}
+
 /** Bible versions: the one used everywhere, and more versions from API.Bible with your own key. */
 function bibleVersionControls(redraw) {
   const box = el('div', { class: 'readings-box', id: 'bibleVersions' });
@@ -2631,6 +2815,9 @@ function openSettings(section) {
 
       el('h3', { id: 'set-readings' }, 'Readings'),
       readingsControls(() => openSettings('readings')),
+
+      el('h3', { id: 'set-wordpress' }, 'WordPress'),
+      wordpressControls(() => openSettings('wordpress')),
 
       el('h3', { id: 'set-bible' }, 'Bible versions'),
       bibleVersionControls(() => openSettings('bible')),

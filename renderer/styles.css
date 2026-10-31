@@ -711,3 +711,8 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .version-btn { all: unset; cursor: pointer; color: inherit; border-bottom: 1px dotted currentColor; }
 .version-btn:hover, .version-btn:focus-visible { color: var(--ribbon); }
 .menu-head { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--pencil); padding: 6px 12px 4px; }
+
+.wp-fields { display: grid; grid-template-columns: 1.3fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; }
+.wp-preview { display: grid; gap: 3px; padding: 12px 14px; border-radius: 8px; background: color-mix(in srgb, var(--foil) 10%, transparent); margin: 0 0 14px; }
+.wp-preview small { color: var(--pencil); }
+#wpBtn { margin-left: auto; margin-right: 16px; }

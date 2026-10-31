@@ -474,6 +474,19 @@ class Vault {
     if (fs.existsSync(f)) fs.unlinkSync(f);
     return true;
   }
+  // ---------- WordPress: which post each entry became (and its uploaded photos) ----------
+  wpRecord(entryId) { this._requireKey(); return (this.getMeta().wpPosts || {})[entryId] || null; }
+  setWpRecord(entryId, rec) {
+    this._requireKey();
+    if (!ID_RE.test(entryId)) throw new Error('Bad entry');
+    const all = { ...(this.getMeta().wpPosts || {}) };
+    if (rec) all[entryId] = { postId: +rec.postId || 0, link: String(rec.link || '').slice(0, 500), status: String(rec.status || ''), updated: rec.updated || '', media: rec.media || {} };
+    else delete all[entryId];
+    this._writeMeta({ wpPosts: all });
+    return all[entryId] || null;
+  }
+  wpLinks() { this._requireKey(); const all = this.getMeta().wpPosts || {}; return Object.fromEntries(Object.entries(all).map(([k, v]) => [k, v.link])); }
+
   /** Where each week's picture came from: 'default:<file>' (WellWrite's), 'mine', or 'removed' (show none). */
   pictureOrigins() { this._requireKey(); return this.getMeta().pictureOrigins || {}; }
   setPictureOrigin(key, origin) {

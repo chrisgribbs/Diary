@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { Vault } = require('./src/vault');
 const { ApiBible } = require('./src/apibible');
+const { WordPress } = require('./src/wordpress');
 const { BOOKS } = require('./src/bible-books');
 const { autoUpdater } = require('electron-updater');
 const { migrateJournal } = require('./src/migrate');
@@ -267,6 +268,29 @@ handle('bible:verseOfDay', async (dayNumber, translation) => {
   return verseIn(bible.VERSES[i], translation);
 });
 handle('bible:verses', (refs, translation) => Promise.all((Array.isArray(refs) ? refs.slice(0, 20) : []).map(r => verseIn(String(r), translation))));
+// ---------- WordPress ----------
+const wordpress = new WordPress({
+  file: path.join(DATA_DIR, 'wordpress.json'),
+  available: () => process.env.WELLWRITE_TEST_TRUST === '1' || safeStorage.isEncryptionAvailable(),
+  protect: s => process.env.WELLWRITE_TEST_TRUST === '1' ? 't:' + Buffer.from(s).toString('base64') : safeStorage.encryptString(s).toString('base64'),
+  unprotect: s => s.startsWith('t:') ? Buffer.from(s.slice(2), 'base64').toString() : safeStorage.decryptString(Buffer.from(s, 'base64')),
+  fetch: (url, opts) => net.fetch(url, opts),
+});
+handle('wp:status', () => wordpress.status());
+handle('wp:connect', (site, user, password) => wordpress.connect(site, user, password));
+handle('wp:forget', () => wordpress.forget());
+handle('wp:record', entryId => vault.wpRecord(String(entryId)));
+handle('wp:links', () => vault.wpLinks());
+handle('wp:publish', async (entryId, payload) => {
+  entryId = String(entryId);
+  const rec = await wordpress.publish(payload || {}, vault.wpRecord(entryId) || {});
+  return vault.setWpRecord(entryId, rec);
+});
+handle('wp:open', url => {
+  const st = wordpress.status();
+  if (typeof url === 'string' && st.site && url.startsWith(new URL(st.site).origin)) shell.openExternal(url);
+  return true;
+});
 handle('apibible:status', () => apiBible.status());
 handle('apibible:setKey', key => apiBible.setKey(key));
 handle('apibible:forget', () => { const st = vault.isUnlocked() ? vault.getBible() : null; if (st && apiId(st.translation)) vault.setBible({ ...st, translation: 'web' }); return apiBible.forget(); });
