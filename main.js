@@ -25,7 +25,7 @@ let win = null;
 let quitting = false;
 
 const DEFAULT_SETTINGS = {
-  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'quote', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, readingsFile: '',
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, readingsFile: '', weekPictures: true, shownBoth: true,
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
 };
 const CHOICES = {
@@ -37,8 +37,13 @@ const CHOICES = {
 };
 
 function readSettings() {
-  try { return { ...DEFAULT_SETTINGS, ...JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')) }; }
+  let raw;
+  try { raw = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')); }
   catch { return { ...DEFAULT_SETTINGS }; }
+  const s = { ...DEFAULT_SETTINGS, ...raw };
+  // 1.9: the quote and the verse above the journal are both shown by default (once; your later choice is kept).
+  if (raw.shownBoth === undefined) { s.shownBoth = true; if (s.dailyCard === 'quote') s.dailyCard = 'both'; try { fs.writeFileSync(SETTINGS_FILE, JSON.stringify(s, null, 2)); } catch {} }
+  return s;
 }
 function writeSettings(s, { internal = false } = {}) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -219,10 +224,47 @@ handle('bible:setState', st => vault.setBible(st));
 handle('bible:reading', (plan, day, translation) => bible.reading(plan, day, translation));
 handle('bible:verseOfDay', (dayNumber, translation) => bible.verseOfDay(dayNumber, translation));
 handle('bible:verses', (refs, translation) => (Array.isArray(refs) ? refs.slice(0, 20) : []).map(r => bible.verseText(String(r), translation === 'kjv' ? 'kjv' : 'web')));
+// A picture for each week: WellWrite's own choice (public-domain art and photos, fetched once from Wikimedia
+// Commons and then kept, encrypted, in the journal), or one you choose.
+const DEFAULT_PICTURES = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'pictures.json'), 'utf8'));
+const pictureUrl = file => (process.env.WELLWRITE_PICTURES_URL || 'https://commons.wikimedia.org/wiki/Special:FilePath/{file}?width=1800')
+  .replace('{file}', encodeURIComponent(file.replace(/ /g, '_')));
+const credit = key => { const d = DEFAULT_PICTURES[key]; return d ? { title: d.title, artist: d.artist, year: d.year, licence: d.licence, file: d.file } : null; };
+handle('pictures:info', key => {
+  const origin = vault.pictureOrigins()[key] || '';
+  const dataUrl = origin === 'removed' ? null : vault.getPicture(key);
+  const isDefault = !!dataUrl && origin.startsWith('default:');
+  return { dataUrl, origin: !dataUrl ? (origin === 'removed' ? 'removed' : 'none') : isDefault ? 'default' : 'mine',
+    credit: isDefault ? credit(key) : null, hasDefault: !!DEFAULT_PICTURES[key] };
+});
+const fetching = new Map();
+handle('pictures:fetchDefault', key => {
+  if (!Vault.pictureKeyOk(key) || !DEFAULT_PICTURES[key]) return null;
+  if (!readSettings().weekPictures) return null;
+  if (fetching.has(key)) return fetching.get(key);
+  const job = (async () => {
+    const d = DEFAULT_PICTURES[key];
+    const res = await net.fetch(pictureUrl(d.file), { headers: { 'User-Agent': `WellWrite/${APP_VERSION} (https://github.com/chrisgribbs/Diary)` } });
+    if (!res.ok) throw new Error('Picture not available (' + res.status + ')');
+    const type = (res.headers.get('content-type') || '').split(';')[0].trim();
+    if (!/^image\/(jpeg|png|webp)$/.test(type)) throw new Error('Not a picture');
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > 8 * 1024 * 1024) throw new Error('Picture too large');
+    const origin = vault.pictureOrigins()[key] || '';
+    if (vault.getPicture(key) && !origin.startsWith('default:')) return null;   // you chose one meanwhile
+    if (origin === 'removed') return null;
+    vault.setPicture(key, `data:${type};base64,${buf.toString('base64')}`);
+    vault.setPictureOrigin(key, 'default:' + d.file);
+    return true;
+  })().finally(() => fetching.delete(key));
+  fetching.set(key, job);
+  return job;
+});
 handle('pictures:get', key => vault.getPicture(key));
 handle('pictures:keys', () => vault.pictureKeys());
-handle('pictures:set', (key, dataUrl) => vault.setPicture(key, dataUrl));
-handle('pictures:remove', key => vault.removePicture(key));
+handle('pictures:set', (key, dataUrl) => { vault.setPicture(key, dataUrl); vault.setPictureOrigin(key, 'mine'); return true; });
+handle('pictures:remove', key => { vault.removePicture(key); vault.setPictureOrigin(key, DEFAULT_PICTURES[key] ? 'removed' : ''); return true; });
+handle('pictures:restoreDefault', key => { vault.removePicture(key); vault.setPictureOrigin(key, ''); return true; });
 handle('quotes:get', () => vault.getQuotes());
 handle('quotes:set', list => vault.setQuotes(list));
 handle('quotes:export', async text => {

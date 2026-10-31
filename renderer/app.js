@@ -1165,10 +1165,14 @@ function readingsControls() {
   const draw = () => {
     const b = el('input', { type: 'checkbox', id: 'builtinReadings' }); b.checked = state.settings.builtinReadings !== false;
     b.addEventListener('change', async () => { await updateSetting({ builtinReadings: b.checked }); await syncReadings(); manageQuotes(); refreshQuote(); });
+    const pics = el('input', { type: 'checkbox', id: 'weekPictures' }); pics.checked = state.settings.weekPictures !== false;
+    pics.addEventListener('change', async () => { await updateSetting({ weekPictures: pics.checked }); state.pictures = {}; pictureTried.clear(); refreshQuote(); });
     const f = readings.file;
     box.replaceChildren(
       el('div', { class: 'row' }, el('div', {}, readings.builtin ? readings.builtin.name : 'Built-in readings',
         el('small', {}, `${readings.builtin ? readings.builtin.count : ''} pieces that come with WellWrite. They become each week’s Reflection, and updates arrive with the app.`)), b),
+      el('div', { class: 'row' }, el('div', {}, 'A picture for each week',
+        el('small', {}, 'Public-domain paintings and photographs, fetched once and kept in your journal. Change any week’s picture on its page.')), pics),
       el('div', { class: 'row' },
         el('div', {}, 'Your readings file',
           el('small', {}, !f ? 'Choose a text file of quotes once; WellWrite keeps your collection in step with it whenever it changes. Replacing the file replaces its readings — nothing doubles up.'
@@ -1315,14 +1319,13 @@ function quoteCard(iso, where) {
   const btn = (label, fn, cls = 'q-btn') => el('button', { type: 'button', class: cls, onclick: fn }, label);
   const star = el('button', { type: 'button', class: 'q-star' + (q.fav ? ' on' : ''), title: q.fav ? 'Remove from favourites' : 'Add to favourites', 'aria-pressed': String(q.fav),
     onclick: async () => { await saveQuotes(state.quotes.map(x => (x.id === q.id ? { ...x, fav: !x.fav } : x))); refreshQuote(); } }, q.fav ? '★' : '☆');
-  const season = seasonOn(iso), prompt = promptFor(iso);
+  const season = seasonOn(iso);
   return el('figure', { class: 'quote-card ' + where },
     season ? el('p', { class: 'q-season' }, `${season.name}, day ${season.dayIndex + 1}`) : null,
     el('blockquote', {}, q.text),
     el('figcaption', {}, '— ' + (q.author || 'Unknown') + (q.source ? ', ' : ''), q.source ? el('cite', {}, q.source) : null),
-    prompt ? el('p', { class: 'q-prompt' }, prompt) : null,
     el('div', { class: 'q-actions' },
-      btn('Write about this', () => writeAboutQuote(q, iso, prompt), 'q-btn primary'),
+      btn('Write about this', () => writeAboutQuote(q, iso), 'q-btn primary'),
       state.quotes.length > 1 ? btn('Another', () => { state.quoteSkip[iso] = (state.quoteSkip[iso] || 0) + 1; refreshQuote(); }) : null,
       star,
       btn('Your quotes', () => manageQuotes()),
@@ -1371,7 +1374,7 @@ async function fillDaily(box, iso, where) {
 function renderQuoteSlot() {
   const slot = $('#quoteSlot');
   const c = state.current;
-  if (!c || c.date !== todayISO()) { slot.hidden = true; slot.replaceChildren(); return; }
+  if (!c) { slot.hidden = true; slot.replaceChildren(); return; }   // every entry shows the quote and verse for its own day
   // Once you've written about today's quote or verse, don't keep showing it.
   const used = [...body.querySelectorAll('blockquote')].map(b => b.textContent).join('\n');
   const q = quoteFor(c.date);
@@ -2025,6 +2028,13 @@ function biblePlanSettings() {
   });
 }
 
+/** A Bible passage: prose as a paragraph; poetry one line per line, long lines wrapping with a hanging indent. */
+function verseParagraph(v) {
+  const lines = v.text.split('\n');
+  if (lines.length === 1) return el('p', {}, v.text);
+  return el('p', { class: 'poetry' }, ...lines.map(l => el('span', { class: 'vl' }, l)));
+}
+
 // --- The weekly page, laid out like a devotional book
 const addDays = (iso, n) => { const d = dateOf(iso); d.setDate(d.getDate() + n); return isoOf(d); };
 const bibleTr = () => (state.bible && state.bible.state.translation) || 'web';
@@ -2034,11 +2044,23 @@ async function versesFor(refs) {
   if (!state.verseCache[k]) state.verseCache[k] = await api.verses(refs, bibleTr());
   return state.verseCache[k];
 }
+/** The week's picture: { dataUrl, origin: 'default' | 'mine' | 'removed' | 'none', credit, hasDefault }. */
 async function pictureFor(key) {
   if (!(key in state.pictures)) {
-    try { state.pictures[key] = (await api.getPicture(key)) || ''; } catch { state.pictures[key] = ''; }
+    try { state.pictures[key] = await api.pictureInfo(key); } catch { state.pictures[key] = { dataUrl: null, origin: 'none' }; }
   }
   return state.pictures[key];
+}
+/** Fetch WellWrite's picture for a week the first time it's shown (it is then kept in the journal). */
+const pictureTried = new Set();
+function fetchWeekPicture(key) {
+  if (pictureTried.has(key) || state.settings.weekPictures === false) return;
+  pictureTried.add(key);
+  api.fetchDefaultPicture(key).then(ok => {
+    if (!ok) return;
+    delete state.pictures[key];
+    if (state.mode === 'quote') renderQuoteView();
+  }).catch(() => {});   // offline or unavailable: the "Add a picture" button stays, and it's tried again next time
 }
 /** Shrink a chosen picture to a sensible size before it is encrypted and stored. */
 async function shrinkPicture(file, max = 1800) {
@@ -2058,7 +2080,7 @@ function choosePicture(key) {
     try {
       const url = await shrinkPicture(f);
       await api.setPicture(key, url);
-      state.pictures[key] = url;
+      delete state.pictures[key];
       toast('Picture added to this week');
     } catch (e) { toast('That picture couldn’t be used: ' + (e.message || e)); }
     renderQuoteView();
@@ -2077,8 +2099,11 @@ async function renderWeekView(today, season) {
   const days = Array.from({ length: week.lastDay - week.firstDay + 1 }, (_, i) => addDays(start, i));
   const focus = days.includes(today) ? today : days[0];
   const q = quoteFor(focus), prompt = promptFor(focus);
-  const [verses, blessing, picture] = await Promise.all([versesFor(week.verses), versesFor([week.blessing]), pictureFor(week.key)]);
+  const [verses, blessing, pic] = await Promise.all([versesFor(week.verses), versesFor([week.blessing]), pictureFor(week.key)]);
+  // With week pictures switched off, WellWrite's own pictures aren't shown (yours still are).
+  const picture = state.settings.weekPictures === false && pic.origin === 'default' ? { ...pic, dataUrl: null, origin: 'none', credit: null } : pic;
   if (state.mode !== 'quote') return;
+  if (!picture.dataUrl && picture.origin === 'none' && picture.hasDefault) fetchWeekPicture(week.key);
   const btn = (label, fn, cls = 'btn-plain', title) => el('button', { type: 'button', class: cls, onclick: fn, title }, label);
   const short = d => fmt(d, { day: 'numeric', month: 'short' });
   const goWeek = n => { state.weekAt = n < 0 ? addDays(days[0], -1) : addDays(days.at(-1), 1); renderQuoteView(); $('#quoteView').scrollTop = 0; };
@@ -2100,12 +2125,19 @@ async function renderWeekView(today, season) {
       btn('‹ Previous week', () => goWeek(-1), 'btn-link'),
       !days.includes(today) ? btn('Back to this week', () => { state.weekAt = null; renderQuoteView(); }, 'btn-link') : el('span', {}, `${short(days[0])} – ${short(days.at(-1))}`),
       btn('Next week ›', () => goWeek(1), 'btn-link')),
-    picture
-      ? el('figure', { class: 'wk-picture' }, el('img', { src: picture, alt: '' }),
+    picture.dataUrl
+      ? el('figure', { class: 'wk-picture' }, el('img', { src: picture.dataUrl, alt: picture.credit ? picture.credit.title : '' }),
         el('div', { class: 'wk-picture-tools' },
-          btn('Change picture', () => choosePicture(week.key), 'pic-btn'),
-          btn('Remove', async () => { await api.removePicture(week.key); state.pictures[week.key] = ''; renderQuoteView(); }, 'pic-btn')))
-      : btn('＋ Add a picture for this week', () => choosePicture(week.key), 'wk-add-picture', 'The picture comes back with this week each year'),
+          btn(picture.origin === 'default' ? 'Use my own picture' : 'Change picture', () => choosePicture(week.key), 'pic-btn'),
+          picture.origin === 'mine' && picture.hasDefault && state.settings.weekPictures !== false
+            ? btn('Use WellWrite’s picture', async () => { await api.restoreDefaultPicture(week.key); delete state.pictures[week.key]; pictureTried.delete(week.key); renderQuoteView(); }, 'pic-btn') : null,
+          btn('Remove', async () => { await api.removePicture(week.key); delete state.pictures[week.key]; renderQuoteView(); }, 'pic-btn')),
+        picture.credit ? el('figcaption', { class: 'wk-credit' },
+          el('i', {}, picture.credit.title), `, ${picture.credit.artist}${picture.credit.year ? ` (${picture.credit.year})` : ''} · ${picture.credit.licence}, Wikimedia Commons`) : null)
+      : el('div', { class: 'wk-add-row' },
+          btn('＋ Add a picture for this week', () => choosePicture(week.key), 'wk-add-picture', 'The picture comes back with this week each year'),
+          picture.origin === 'removed' && picture.hasDefault && state.settings.weekPictures !== false
+            ? btn('Use WellWrite’s picture', async () => { await api.restoreDefaultPicture(week.key); delete state.pictures[week.key]; pictureTried.delete(week.key); renderQuoteView(); }, 'btn-link small') : null),
     el('p', { class: 'wk-running' }, `Theme: ${s.name}`),
     el('div', { class: 'wk-head' },
       el('p', { class: 'wk-label' }, 'Week'),
@@ -2114,7 +2146,7 @@ async function renderWeekView(today, season) {
       el('p', { class: 'wk-about' }, `${s.about}. Week ${week.number} of ${week.weeks}.`)),
     el('hr', { class: 'wk-rule swash' }),
     shown.length ? el('section', { class: 'wk-scripture' },
-      ...shown.map(v => el('p', {}, v.text)),
+      ...shown.map(verseParagraph),
       el('p', { class: 'wk-refs' }, '(' + shown.map(v => v.ref).join('; ') + ', ' + shown[0].translation + ')')) : null,
     el('hr', { class: 'wk-rule' }),
     reflection ? el('section', { class: 'wk-reflection' + (['psalm', 'poem'].includes(reflection.kind) ? ' verse' : '') },
@@ -2144,7 +2176,7 @@ async function renderWeekView(today, season) {
       : el('section', { class: 'wk-prayer' }, el('p', {}, week.prayer)),
     el('hr', { class: 'wk-rule' }),
     myBlessing ? el('section', { class: 'wk-blessing' }, el('h4', {}, 'A Benediction'), el('p', {}, myBlessing.text), sign(myBlessing))
-      : blessing[0] ? el('section', { class: 'wk-blessing' }, el('h4', {}, 'A Benediction'), el('p', {}, blessing[0].text), el('p', { class: 'wk-refs' }, `${blessing[0].ref}, ${blessing[0].translation}`)) : null,
+      : blessing[0] ? el('section', { class: 'wk-blessing' }, el('h4', {}, 'A Benediction'), verseParagraph(blessing[0]), el('p', { class: 'wk-refs' }, `${blessing[0].ref}, ${blessing[0].translation}`)) : null,
     el('div', { class: 'wk-ornament', 'aria-hidden': 'true' }, '❦'),
     seasonYear(today),
   ].filter(Boolean)));

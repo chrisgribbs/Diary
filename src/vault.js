@@ -468,6 +468,16 @@ class Vault {
     if (fs.existsSync(f)) fs.unlinkSync(f);
     return true;
   }
+  /** Where each week's picture came from: 'default:<file>' (WellWrite's), 'mine', or 'removed' (show none). */
+  pictureOrigins() { this._requireKey(); return this.getMeta().pictureOrigins || {}; }
+  setPictureOrigin(key, origin) {
+    this._requireKey();
+    if (!Vault.pictureKeyOk(key)) throw new Error('Bad picture name');
+    const o = { ...(this.getMeta().pictureOrigins || {}) };
+    if (origin) o[key] = String(origin).slice(0, 300); else delete o[key];
+    this._writeMeta({ pictureOrigins: o });
+    return o;
+  }
   _rawPictures() {
     const out = {};
     if (!fs.existsSync(this.picturesDir)) return out;

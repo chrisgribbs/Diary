@@ -76,6 +76,13 @@ app.whenReady().then(async () => {
   await js(`[...document.querySelectorAll('#popover .menu-item')].find(b => b.textContent === 'Verse of the day').click();`); await wait(800);
   assert.equal(await js(`return document.querySelectorAll('#quoteSlot .quote-card.verse').length`), 1);
 
+  // --- an entry on another day shows that day's quote and verse too (both by default)
+  assert.equal(await js(`return state.settings.dailyCard`), 'verse');   // set above in this test
+  await js(`await updateSetting({ dailyCard: 'both' }); await newEntry(addDays(todayISO(), 1));`); await wait(1200);
+  assert.equal(await js(`return document.querySelectorAll('#quoteSlot .quote-card').length`), 2, 'quote and verse on tomorrow’s entry');
+  await shot('d4b-other-day');
+  await js(`await newEntry(todayISO());`); await wait(600);
+
   // --- quote view
   await js(`document.querySelector('.modeswitch [data-mode=quote]').click();`); await wait(500);
   const q1 = await text('#quoteView .wk-today blockquote');

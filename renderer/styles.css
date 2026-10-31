@@ -629,7 +629,7 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .wk-nav span { color: var(--pencil); }
 .wk-picture { margin: 0 0 22px; position: relative; }
 .wk-picture img { display: block; width: 100%; max-height: 360px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.08); }
-.wk-picture-tools { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
+.wk-picture-tools { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity .15s; }
 .wk-picture:hover .wk-picture-tools, .wk-picture:focus-within .wk-picture-tools { opacity: 1; }
 .pic-btn { font-size: 12px; padding: 5px 10px; border-radius: 6px; border: 0; background: rgba(20,20,20,.62); color: #fff; cursor: pointer; }
 .wk-add-picture { display: block; width: 100%; margin: 0 0 22px; padding: 18px; border: 1.5px dashed color-mix(in srgb, var(--pencil) 40%, transparent); border-radius: 6px; background: transparent; color: var(--pencil); font-size: 13px; cursor: pointer; }
@@ -683,3 +683,13 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 
 .readings-box { border-top: 1px solid color-mix(in srgb, var(--pencil) 20%, transparent); margin-top: 4px; }
 .readings-btns { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+
+/* Bible poetry: each line on its own; a line too long for the page wraps indented beneath itself */
+.wk-scripture p.poetry, .wk-blessing p.poetry { text-indent: 0; white-space: normal; }
+.wk-scripture .vl, .wk-blessing .vl { display: block; padding-left: 1.6em; text-indent: -1.6em; }
+.wk-scripture p.poetry + p, .wk-scripture p + p.poetry { margin-top: .5em; }
+
+.wk-credit { margin-top: 6px; font-size: 11.5px; color: var(--pencil); text-align: right; }
+.wk-add-row { margin: 0 0 22px; text-align: center; }
+.wk-add-row .wk-add-picture { margin-bottom: 6px; }
+.wk-picture-tools { flex-wrap: wrap; justify-content: flex-end; }
