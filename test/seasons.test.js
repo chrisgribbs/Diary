@@ -114,3 +114,14 @@ assert.equal(adv.number, 4); assert.equal(adv.title, 'Let it be'); assert.equal(
 assert.equal(WK.weekOf(W.seasonOn('2027-01-03', 'christian')).title, 'Pondering in the heart'); // Christmas week 2, across New Year
 assert.equal(WK.weekOf(W.seasonOn('2027-03-28', 'christian')).title, 'He is not here');       // Easter Day
 console.log('weekly pages tests passed');
+
+// ---- a picture listed for every week
+{
+  const pics = require('../src/pictures.json');
+  for (const [id, list] of Object.entries(WK.WEEKS)) list.forEach((w, i) => {
+    const p = pics[`${id}-${i}`];
+    assert.ok(p && p.file && p.title && p.artist && /^(Public domain|CC0)$/.test(p.licence), `picture for ${id}-${i}`);
+    assert.ok(!/^file:/i.test(p.file) && /\.(jpe?g|png|tiff?|webp)$/i.test(p.file), p.file);
+  });
+  console.log('week pictures listed:', Object.keys(pics).length);
+}

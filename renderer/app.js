@@ -114,6 +114,7 @@ function openDialog(build) {
     const done = v => { resolve(v); dlg.close(); };
     build(form, done);
     addReveal(form);
+    dlg.classList.toggle('page', form.classList.contains('page') || form.classList.contains('wide'));
     // The close event is async; ignore a stale one that lands after a new dialog opened.
     dlg.onclose = () => { if (!dlg.open) resolve(undefined); };
     dlg.showModal();
@@ -1160,11 +1161,11 @@ function suggestThemes(text, exclude = []) {
 
 /** A comma-separated themes box with clickable suggestions underneath. */
 /** The two reading packs: built-in writing (on/off) and your readings file (choose / stop). */
-function readingsControls() {
+function readingsControls(redraw = () => manageQuotes()) {
   const box = el('div', { class: 'readings-box' });
   const draw = () => {
     const b = el('input', { type: 'checkbox', id: 'builtinReadings' }); b.checked = state.settings.builtinReadings !== false;
-    b.addEventListener('change', async () => { await updateSetting({ builtinReadings: b.checked }); await syncReadings(); manageQuotes(); refreshQuote(); });
+    b.addEventListener('change', async () => { await updateSetting({ builtinReadings: b.checked }); await syncReadings(); redraw(); refreshQuote(); });
     const pics = el('input', { type: 'checkbox', id: 'weekPictures' }); pics.checked = state.settings.weekPictures !== false;
     pics.addEventListener('change', async () => { await updateSetting({ weekPictures: pics.checked }); state.pictures = {}; pictureTried.clear(); refreshQuote(); });
     const f = readings.file;
@@ -1180,11 +1181,11 @@ function readingsControls() {
         el('div', { class: 'readings-btns' },
           el('button', { type: 'button', class: 'btn-plain', id: 'pickReadings', onclick: async () => {
             const p = await api.pickReadingsFile(); if (!p) return;
-            const n = await syncReadings(); toast(`Readings loaded${n ? ` (${n} changes)` : ''}`); manageQuotes(); refreshQuote();
+            const n = await syncReadings(); toast(`Readings loaded${n ? ` (${n} changes)` : ''}`); redraw(); refreshQuote();
           } }, f ? 'Change…' : 'Choose…'),
           f ? el('button', { type: 'button', class: 'btn-link danger', onclick: async () => {
             await api.forgetReadingsFile(); await api.syncReadings('file', []); state.quotes = await api.getQuotes(); readings.file = null;
-            toast('Stopped using the readings file'); manageQuotes(); refreshQuote();
+            toast('Stopped using the readings file'); redraw(); refreshQuote();
           } }, 'Stop using') : null)));
   };
   draw();
@@ -1294,11 +1295,72 @@ function promptFor(iso) {
 
 /** The quote for a day. Following a season: the season's best-fitting quotes in order, then round again.
  *  Otherwise: the whole collection (or the chosen part of it) in a shuffled order before repeating. */
+/**
+ * The year's readings, planned day by day so the whole collection is used:
+ * each day takes the best-fitting quote for its season that hasn't been used yet this round,
+ * avoiding the writer of the last few days; only when every quote has had a turn does a quote come round again.
+ * The same plan picks the week's Reflection, prayer and blessing from your own writing.
+ */
+const yearPlans = new Map();   // `${year}|${plan}` -> { quotes: Map(iso → quote), weeks: Map(`${season}|${weekIndex}` → { reflection, prayer, blessing }) }
+let yearPlanFor = null;        // the quotes array the plans were made from
+function themeScore(q, season) {
+  const n = season.themes.length; let score = 0;
+  for (const t of q.themes || []) { const i = season.themes.indexOf(t); if (i >= 0) score += n - i; }
+  return score;
+}
+/** Picks from a pool, round by round: best fit first among those not yet used this round. */
+function roundRobin(pool, salt) {
+  const used = new Set();
+  return (season, avoid = () => 0) => {
+    if (!pool.length) return null;
+    if (used.size >= pool.length) used.clear();
+    let best = null, bestScore = -Infinity;
+    for (const q of pool) {
+      if (used.has(q.id)) continue;
+      const sc = themeScore(q, season) * 10 - avoid(q) + (strHash(q.id + salt) % 1000) / 1000;
+      if (sc > bestScore) { best = q; bestScore = sc; }
+    }
+    if (best) used.add(best.id);
+    return best;
+  };
+}
+function yearPlan(year) {
+  if (yearPlanFor !== state.quotes) { yearPlans.clear(); yearPlanFor = state.quotes; }
+  const plan = quotePlan(), k = year + '|' + plan;
+  if (yearPlans.has(k)) return yearPlans.get(k);
+  const quotes = new Map(), weeks = new Map();
+  const nextQuote = roundRobin(state.quotes.filter(isReading), 'q' + year);
+  const isLong = q => ownish(q) && ['', 'reflection', 'fieldnote', 'psalm', 'poem'].includes(q.kind || '') && !isReading(q);
+  const longs = state.quotes.filter(isLong);
+  const nextReflection = roundRobin(longs.length ? longs : state.quotes.filter(q => ownish(q) && ['', 'reflection', 'fieldnote', 'psalm', 'poem'].includes(q.kind || '')), 'r' + year);
+  const nextPrayer = roundRobin(state.quotes.filter(q => ownish(q) && q.kind === 'prayer'), 'p' + year);
+  const nextBlessing = roundRobin(state.quotes.filter(q => ownish(q) && q.kind === 'blessing'), 'b' + year);
+  const recent = [];
+  for (let d = `${year}-01-01`; d.startsWith(String(year)); d = addDays(d, 1)) {
+    const s = seasonOn(d);
+    if (!s) break;
+    const q = nextQuote(s, x => (x.author === recent[recent.length - 1] ? 200 : recent.includes(x.author) ? 30 : 0));
+    if (q) { quotes.set(d, q); recent.push(q.author); if (recent.length > 3) recent.shift(); }
+    const wk = window.WellWriteWeeks && window.WellWriteWeeks.weekOf(s);
+    const wkKey = wk && `${s.id}|${wk.index}`;
+    if (wk && !weeks.has(wkKey)) {
+      weeks.set(wkKey, { reflection: nextReflection(s), prayer: wk.number % 2 === 0 ? nextPrayer(s) : null, blessing: wk.number % 2 === 1 ? nextBlessing(s) : null });
+    }
+  }
+  const out = { quotes, weeks };
+  yearPlans.set(k, out);
+  return out;
+}
+
 function quoteFor(iso) {
   const season = seasonOn(iso);
   if (season) {
-    const pool = seasonPool(season).filter(isReading);
-    if (pool.length >= 3) return pool[(season.dayIndex + (state.quoteSkip[iso] || 0)) % pool.length];
+    const skip = state.quoteSkip[iso] || 0;
+    const planned = yearPlan(+iso.slice(0, 4)).quotes.get(iso);
+    if (!skip && planned) return planned;
+    // "Another": the season's best-fitting quotes in turn, never the day's own quote
+    const pool = seasonPool(season).filter(q => isReading(q) && q !== planned);
+    if (pool.length >= 2) return pool[(season.dayIndex + skip - 1) % pool.length];
   }
   const pool = [...quotePool()].sort((a, b) => strHash(a.id) - strHash(b.id));
   if (!pool.length) return null;
@@ -2110,14 +2172,12 @@ async function renderWeekView(today, season) {
   const sign = x => el('p', { class: 'wk-sign' }, x.author || 'Unknown', x.source ? ', ' : '', x.source ? el('cite', {}, x.source) : null);
   const shown = verses.filter(Boolean);
   // Your own writing: a reflection each week, and your prayers and blessings taking turns with the book's.
-  const readingIds = new Set(days.map(d => (quoteFor(d) || {}).id));
   const year = +days[0].slice(0, 4);
-  const own = kinds => { const pool = seasonPool(s).filter(x => ownish(x) && kinds.includes(x.kind || '')); return pool.length ? pool : null; };
-  const pickOwn = (pool, avoid) => { if (!pool) return null; const p = pool.filter(x => !avoid.has(x.id)); const from = p.length ? p : pool; return from[(week.index + year * 5) % from.length]; };
-  const ownLong = own(['', 'reflection', 'fieldnote', 'psalm', 'poem']);
-  const reflection = pickOwn(ownLong && (ownLong.filter(x => !isReading(x)).length ? ownLong.filter(x => !isReading(x)) : ownLong), readingIds);
-  const myPrayer = week.number % 2 === 0 ? pickOwn(own(['prayer']), readingIds) : null;
-  const myBlessing = week.number % 2 === 1 ? pickOwn(own(['blessing']), readingIds) : null;
+  // Planned across the year (see yearPlan), so each piece of your writing has its turn before any comes round again.
+  const wp = yearPlan(year).weeks.get(`${s.id}|${week.index}`) || {};
+  const reflection = wp.reflection || null;
+  const myPrayer = wp.prayer || null;
+  const myBlessing = wp.blessing || null;
   const kindHead = { psalm: 'A Psalm', poem: 'A Poem', reflection: 'A Reflection', fieldnote: 'From the field', '': 'A Reflection' };
 
   box.replaceChildren(el('article', { class: 'week-page' }, ...[
@@ -2398,6 +2458,7 @@ async function updateSetting(patch) {
 function openSettings(section) {
   if (section) setTimeout(() => { const h = document.getElementById('set-' + section); if (h) h.scrollIntoView({ block: 'start' }); }, 30);
   return openDialog((f, done) => {
+    f.classList.add('page');
     const s = state.settings;
     const totalWords = state.metas.reduce((a, m) => a + m.words, 0);
     const photos = state.metas.reduce((a, m) => a + m.images, 0);
@@ -2426,6 +2487,9 @@ function openSettings(section) {
       row('Daily quote', 'Choose what appears above your journal with “Above journal” at the top right.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Your quotes')),
       row('Categories', 'Group entries into sections, like a notebook.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageCategories(); } }, 'Edit categories')),
       row('Check spelling', 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
+
+      el('h3', { id: 'set-readings' }, 'Readings'),
+      readingsControls(() => openSettings('readings')),
 
       el('h3', {}, 'Privacy'),
       row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),

@@ -693,3 +693,7 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .wk-add-row { margin: 0 0 22px; text-align: center; }
 .wk-add-row .wk-add-picture { margin-bottom: 6px; }
 .wk-picture-tools { flex-wrap: wrap; justify-content: flex-end; }
+
+/* Settings and Your quotes fill the window: no little box to scroll around in */
+.dlg.page { width: calc(100vw - 40px); max-width: none; height: calc(100vh - 40px); max-height: none; border-radius: 10px; }
+.dlg.page form { max-height: none; height: 100%; box-sizing: border-box; padding: 34px max(40px, calc((100% - 820px) / 2)) 30px; }

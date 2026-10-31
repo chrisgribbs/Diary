@@ -1,1 +1,632 @@
-{}
+{
+ "advent-0": {
+  "file": "Mondaufgang am Meer (C D Friedrich).jpg",
+  "title": "Moonrise by the Sea",
+  "artist": "Caspar David Friedrich",
+  "year": "1822",
+  "licence": "Public domain"
+ },
+ "advent-1": {
+  "file": "Looking Down Yosemite-Valley.jpg",
+  "title": "Looking Down Yosemite Valley",
+  "artist": "Albert Bierstadt",
+  "year": "1865",
+  "licence": "Public domain"
+ },
+ "advent-2": {
+  "file": "Kuindzhi Moonlit night on the Dnieper 1880 grm x2.jpg",
+  "title": "Moonlit Night on the Dnieper",
+  "artist": "Arkhip Kuindzhi",
+  "year": "1880",
+  "licence": "Public domain"
+ },
+ "advent-3": {
+  "file": "Henry Ossawa Tanner - The Annunciation.jpg",
+  "title": "The Annunciation",
+  "artist": "Henry Ossawa Tanner",
+  "year": "1898",
+  "licence": "Public domain"
+ },
+ "christmas-0": {
+  "file": "Gerard van Honthorst - Adoration of the Shepherds (1622).jpg",
+  "title": "Adoration of the Shepherds",
+  "artist": "Gerard van Honthorst",
+  "year": "1622",
+  "licence": "Public domain"
+ },
+ "christmas-1": {
+  "file": "Merson Rest on the Flight into Egypt.jpg",
+  "title": "Rest on the Flight into Egypt",
+  "artist": "Luc-Olivier Merson",
+  "year": "1879",
+  "licence": "Public domain"
+ },
+ "epiphany-0": {
+  "file": "Edward Burne-Jones - The Star of Bethlehem - Google Art Project.jpg",
+  "title": "The Star of Bethlehem",
+  "artist": "Edward Burne-Jones",
+  "year": "1887-1891",
+  "licence": "Public domain"
+ },
+ "epiphany-1": {
+  "file": "John Constable - The Hay Wain (1821).jpg",
+  "title": "The Hay Wain",
+  "artist": "John Constable",
+  "year": "1821",
+  "licence": "Public domain"
+ },
+ "epiphany-2": {
+  "file": "View from Mount Holyoke, Northampton, Massachusetts, after a Thunderstorm—The Oxbow MET DP-12550-007.jpg",
+  "title": "View from Mount Holyoke (The Oxbow)",
+  "artist": "Thomas Cole",
+  "year": "1836",
+  "licence": "Public domain"
+ },
+ "epiphany-3": {
+  "file": "Paolo Veronese 008.jpg",
+  "title": "The Wedding at Cana",
+  "artist": "Paolo Veronese",
+  "year": "1563",
+  "licence": "Public domain"
+ },
+ "love-0": {
+  "file": "El Lavatorio (Tintoretto).jpg",
+  "title": "Christ Washing the Disciples' Feet",
+  "artist": "Jacopo Tintoretto",
+  "year": "c. 1548-1549",
+  "licence": "Public domain"
+ },
+ "love-1": {
+  "file": "Caspar David Friedrich - Two Men Contemplating the Moon - Google Art Project.jpg",
+  "title": "Two Men Contemplating the Moon",
+  "artist": "Caspar David Friedrich",
+  "year": "c. 1825-1830",
+  "licence": "Public domain"
+ },
+ "love-2": {
+  "file": "Rembrandt - Landscape with the Good Samaritan - WGA19228.jpg",
+  "title": "Landscape with the Good Samaritan",
+  "artist": "Rembrandt",
+  "year": "1638",
+  "licence": "Public domain"
+ },
+ "love-3": {
+  "file": "Frukost under stora björken av Carl Larsson 1896.jpg",
+  "title": "Breakfast under the Big Birch",
+  "artist": "Carl Larsson",
+  "year": "1896",
+  "licence": "Public domain"
+ },
+ "love-4": {
+  "file": "Claude Monet, Impression, soleil levant.jpg",
+  "title": "Impression, Sunrise",
+  "artist": "Claude Monet",
+  "year": "1872",
+  "licence": "Public domain"
+ },
+ "lent-0": {
+  "file": "ISS-47 Sunrise on our Planet Earth.jpg",
+  "title": "Sunrise on our Planet Earth",
+  "artist": "NASA (ISS Expedition 47)",
+  "year": "2016",
+  "licence": "Public domain"
+ },
+ "lent-1": {
+  "file": "Frederic Edwin Church - Twilight in the Wilderness.jpg",
+  "title": "Twilight in the Wilderness",
+  "artist": "Frederic Edwin Church",
+  "year": "1860",
+  "licence": "Public domain"
+ },
+ "lent-2": {
+  "file": "Claude Monet - Poppy Field - Google Art Project.jpg",
+  "title": "Poppy Field",
+  "artist": "Claude Monet",
+  "year": "c. 1873",
+  "licence": "Public domain"
+ },
+ "lent-3": {
+  "file": "Rembrandt Harmensz van Rijn - Return of the Prodigal Son - Google Art Project.jpg",
+  "title": "The Return of the Prodigal Son",
+  "artist": "Rembrandt",
+  "year": "c. 1668",
+  "licence": "Public domain"
+ },
+ "lent-4": {
+  "file": "Hans Gude - From the Inlet of Oslo - NG.M.00262 - National Museum of Art, Architecture and Design.jpg",
+  "title": "From the Inlet of Oslo",
+  "artist": "Hans Gude",
+  "year": "1872",
+  "licence": "Public domain"
+ },
+ "lent-5": {
+  "file": "Ivan Shishkin - Рожь - Google Art Project.jpg",
+  "title": "Rye",
+  "artist": "Ivan Shishkin",
+  "year": "1878",
+  "licence": "Public domain"
+ },
+ "holyweek-0": {
+  "file": "Leonardo da Vinci (1452-1519) - The Last Supper (1495-1498).jpg",
+  "title": "The Last Supper",
+  "artist": "Leonardo da Vinci",
+  "year": "1495-1498",
+  "licence": "Public domain"
+ },
+ "easter-0": {
+  "file": "Disciples running by EB.jpg",
+  "title": "The Disciples Peter and John Running to the Sepulchre",
+  "artist": "Eugène Burnand",
+  "year": "1898",
+  "licence": "Public domain"
+ },
+ "easter-1": {
+  "file": "Caspar David Friedrich, Morgen im Riesengebirge.jpg",
+  "title": "Morning in the Riesengebirge",
+  "artist": "Caspar David Friedrich",
+  "year": "1810-1811",
+  "licence": "Public domain"
+ },
+ "easter-2": {
+  "file": "1602-3 Caravaggio,Supper at Emmaus National Gallery, London.jpg",
+  "title": "Supper at Emmaus",
+  "artist": "Caravaggio",
+  "year": "1601",
+  "licence": "Public domain"
+ },
+ "easter-3": {
+  "file": "Raphael - The Miraculous Draft of Fishes - Google Art Project.jpg",
+  "title": "The Miraculous Draught of Fishes",
+  "artist": "Raphael",
+  "year": "1515-1516",
+  "licence": "Public domain"
+ },
+ "easter-4": {
+  "file": "Vincent van Gogh - Almond blossom - Google Art Project.jpg",
+  "title": "Almond Blossom",
+  "artist": "Vincent van Gogh",
+  "year": "1890",
+  "licence": "Public domain"
+ },
+ "easter-5": {
+  "file": "Vincent van Gogh - Red Vineyard at Arles (1888).jpg",
+  "title": "The Red Vineyard",
+  "artist": "Vincent van Gogh",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "easter-6": {
+  "file": "John Constable - Study of a Cloudy Sky - Google Art Project.jpg",
+  "title": "Study of a Cloudy Sky",
+  "artist": "John Constable",
+  "year": "c. 1822",
+  "licence": "Public domain"
+ },
+ "pentecost-0": {
+  "file": "The Fighting Temeraire, JMW Turner, National Gallery.jpg",
+  "title": "The Fighting Temeraire",
+  "artist": "J. M. W. Turner",
+  "year": "1839",
+  "licence": "Public domain"
+ },
+ "pentecost-1": {
+  "file": "Claude Monet - Stacks of Wheat (End of Summer) - 1985.1103 - Art Institute of Chicago.jpg",
+  "title": "Stacks of Wheat (End of Summer)",
+  "artist": "Claude Monet",
+  "year": "1890-1891",
+  "licence": "Public domain"
+ },
+ "pentecost-2": {
+  "file": "Vincent van Gogh - De oogst - Google Art Project.jpg",
+  "title": "Harvest at La Crau",
+  "artist": "Vincent van Gogh",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "pentecost-3": {
+  "file": "Hans Gude - Norwegian Highlands in Sunrise - NG.M.04186 - National Museum of Art, Architecture and Design.jpg",
+  "title": "Norwegian Highlands in Sunrise",
+  "artist": "Hans Gude",
+  "year": "",
+  "licence": "Public domain"
+ },
+ "pentecost-4": {
+  "file": "Starry Night Over the Rhone.jpg",
+  "title": "Starry Night Over the Rhône",
+  "artist": "Vincent van Gogh",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "pentecost-5": {
+  "file": "Vincent van Gogh - Orchard in Blossom (Plum Trees) - Google Art Project.jpg",
+  "title": "Orchard in Blossom (Plum Trees)",
+  "artist": "Vincent van Gogh",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "rest-0": {
+  "file": "George Inness - The Home of the Heron - Google Art Project.jpg",
+  "title": "The Home of the Heron",
+  "artist": "George Inness",
+  "year": "1893",
+  "licence": "Public domain"
+ },
+ "rest-1": {
+  "file": "Looking across lake toward mountains, \"Evening, McDonald Lake, Glacier National Park,\" Montana., 1933 - 1942 - NARA - 519861.jpg",
+  "title": "Evening, McDonald Lake, Glacier National Park",
+  "artist": "Ansel Adams / US National Archives",
+  "year": "1933-1942",
+  "licence": "Public domain"
+ },
+ "rest-2": {
+  "file": "Vincent van Gogh - Irises (1889).jpg",
+  "title": "Irises",
+  "artist": "Vincent van Gogh",
+  "year": "1889",
+  "licence": "Public domain"
+ },
+ "rest-3": {
+  "file": "Jean-François Millet - The Angelus - Google Art Project.jpg",
+  "title": "The Angelus",
+  "artist": "Jean-François Millet",
+  "year": "1857-1859",
+  "licence": "Public domain"
+ },
+ "rest-4": {
+  "file": "Jean-Baptiste-Camille Corot - Souvenir of Mortefontaine - WGA5292.jpg",
+  "title": "Souvenir of Mortefontaine",
+  "artist": "Jean-Baptiste-Camille Corot",
+  "year": "1864",
+  "licence": "Public domain"
+ },
+ "trueself-0": {
+  "file": "Amandelbloesem - s0176V1962 - Van Gogh Museum.jpg",
+  "title": "Almond Blossom",
+  "artist": "Vincent van Gogh",
+  "year": "1890",
+  "licence": "Public domain"
+ },
+ "trueself-1": {
+  "file": "Paul Gauguin - Vision of the Sermon (Jacob Wrestling with the Angel) - NG 1643 - National Galleries of Scotland.jpg",
+  "title": "Vision after the Sermon (Jacob Wrestling with the Angel)",
+  "artist": "Paul Gauguin",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "trueself-2": {
+  "file": "Caspar David Friedrich - Two Men Contemplating the Moon - WGA08256.jpg",
+  "title": "Two Men Contemplating the Moon",
+  "artist": "Caspar David Friedrich",
+  "year": "c. 1819-1820",
+  "licence": "Public domain"
+ },
+ "trueself-3": {
+  "file": "Francisco de Zurbarán - Still-Life with Pottery Jars - WGA26061.jpg",
+  "title": "Still Life with Pottery Jars",
+  "artist": "Francisco de Zurbarán",
+  "year": "c. 1636",
+  "licence": "Public domain"
+ },
+ "trueself-4": {
+  "file": "Frederic Edwin Church - Rainy Season in the Tropics - Google Art Project.jpg",
+  "title": "Rainy Season in the Tropics",
+  "artist": "Frederic Edwin Church",
+  "year": "1866",
+  "licence": "Public domain"
+ },
+ "creation-0": {
+  "file": "NASA’s Webb Reveals Cosmic Cliffs, Glittering Landscape of Star Birth.png",
+  "title": "Cosmic Cliffs in the Carina Nebula",
+  "artist": "NASA, ESA, CSA, STScI (James Webb Space Telescope)",
+  "year": "2022",
+  "licence": "Public domain"
+ },
+ "creation-1": {
+  "file": "The Milky Way above Grand Prismatic Spring (33668265111).jpg",
+  "title": "The Milky Way above Grand Prismatic Spring",
+  "artist": "Yellowstone National Park (NPS)",
+  "year": "2017",
+  "licence": "Public domain"
+ },
+ "creation-2": {
+  "file": "Jan Brueghel the Elder - The Entry of the Animals into Noah's Ark - Google Art Project.jpg",
+  "title": "The Entry of the Animals into Noah's Ark",
+  "artist": "Jan Brueghel the Elder",
+  "year": "1613",
+  "licence": "Public domain"
+ },
+ "creation-3": {
+  "file": "AS08-14-2383.jpg",
+  "title": "Earthrise",
+  "artist": "NASA (Apollo 8, William Anders)",
+  "year": "1968",
+  "licence": "Public domain"
+ },
+ "creation-4": {
+  "file": "Pieter Bruegel the Elder - The Corn Harvest (August) - WGA03451.jpg",
+  "title": "The Harvesters",
+  "artist": "Pieter Bruegel the Elder",
+  "year": "1565",
+  "licence": "Public domain"
+ },
+ "courage-0": {
+  "file": "Albert Bierstadt - Among the Sierra Nevada, California - Google Art Project.jpg",
+  "title": "Among the Sierra Nevada, California",
+  "artist": "Albert Bierstadt",
+  "year": "1868",
+  "licence": "Public domain"
+ },
+ "courage-1": {
+  "file": "John Atkinson Grimshaw - A moonlit lane.jpg",
+  "title": "A Moonlit Lane",
+  "artist": "John Atkinson Grimshaw",
+  "year": "c. 1874",
+  "licence": "Public domain"
+ },
+ "courage-2": {
+  "file": "Eugène Delacroix - Christ on the Sea of Galilee - Walters 37186.jpg",
+  "title": "Christ on the Sea of Galilee",
+  "artist": "Eugène Delacroix",
+  "year": "1854",
+  "licence": "Public domain"
+ },
+ "courage-3": {
+  "file": "Hovhannes Aivazovsky - The Ninth Wave - Google Art Project.jpg",
+  "title": "The Ninth Wave",
+  "artist": "Ivan Aivazovsky",
+  "year": "1850",
+  "licence": "Public domain"
+ },
+ "courage-4": {
+  "file": "Meindert Hobbema - The Alley at Middelharnis - WGA11427.jpg",
+  "title": "The Avenue at Middelharnis",
+  "artist": "Meindert Hobbema",
+  "year": "1689",
+  "licence": "Public domain"
+ },
+ "saints-0": {
+  "file": "Fra Angelico - Predella of the San Domenico Altarpiece - WGA00447.jpg",
+  "title": "Christ Glorified in the Court of Heaven (Fiesole predella)",
+  "artist": "Fra Angelico",
+  "year": "c. 1423-1424",
+  "licence": "Public domain"
+ },
+ "saints-1": {
+  "file": "Peace and Plenty MET DP159755.jpg",
+  "title": "Peace and Plenty",
+  "artist": "George Inness",
+  "year": "1865",
+  "licence": "Public domain"
+ },
+ "saints-2": {
+  "file": "Caspar David Friedrich - Dolmen in the Snow - WGA08234.jpg",
+  "title": "Dolmen in the Snow",
+  "artist": "Caspar David Friedrich",
+  "year": "1807",
+  "licence": "Public domain"
+ },
+ "saints-3": {
+  "file": "Joseph Mallord William Turner - Norham Castle, Sunrise - WGA23182.jpg",
+  "title": "Norham Castle, Sunrise",
+  "artist": "J. M. W. Turner",
+  "year": "c. 1845",
+  "licence": "Public domain"
+ },
+ "saints-4": {
+  "file": "Jan van Eyck The Ghent Altarpiece - Adoration of the Lamb.jpg",
+  "title": "Adoration of the Mystic Lamb (Ghent Altarpiece)",
+  "artist": "Jan van Eyck",
+  "year": "1432",
+  "licence": "Public domain"
+ },
+ "newbeginnings-0": {
+  "file": "Monet - Impression, Sunrise.jpg",
+  "title": "Impression, Sunrise",
+  "artist": "Claude Monet",
+  "year": "1872",
+  "licence": "Public domain"
+ },
+ "newbeginnings-1": {
+  "file": "Thomas Cole - View from Mount Holyoke, Northampton, Massachusetts, after a Thunderstorm-The Oxbow.jpg",
+  "title": "The Oxbow",
+  "artist": "Thomas Cole",
+  "year": "1836",
+  "licence": "Public domain"
+ },
+ "newbeginnings-2": {
+  "file": "Caspar David Friedrich - Die Lebensstufen (ca. 1834).jpg",
+  "title": "The Stages of Life",
+  "artist": "Caspar David Friedrich",
+  "year": "c. 1835",
+  "licence": "Public domain"
+ },
+ "newbeginnings-3": {
+  "file": "V&A - Raphael, The Miraculous Draught of Fishes (1515).jpg",
+  "title": "The Miraculous Draught of Fishes",
+  "artist": "Raphael",
+  "year": "1515",
+  "licence": "Public domain"
+ },
+ "newbeginnings-4": {
+  "file": "De zaaier - s0029V1962 - Van Gogh Museum.jpg",
+  "title": "The Sower",
+  "artist": "Vincent van Gogh",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "simplicity-0": {
+  "file": "Hammershøi Dust motes dancing.jpg",
+  "title": "Dust Motes Dancing in the Sunbeams",
+  "artist": "Vilhelm Hammershøi",
+  "year": "1900",
+  "licence": "Public domain"
+ },
+ "simplicity-1": {
+  "file": "Jean-François Millet - Gleaners - Google Art Project 2.jpg",
+  "title": "The Gleaners",
+  "artist": "Jean-François Millet",
+  "year": "1857",
+  "licence": "Public domain"
+ },
+ "simplicity-2": {
+  "file": "View of Haarlem with Bleaching Grounds c1665 Ruisdael.jpg",
+  "title": "View of Haarlem with Bleaching Fields",
+  "artist": "Jacob van Ruisdael",
+  "year": "c. 1665",
+  "licence": "Public domain"
+ },
+ "simplicity-3": {
+  "file": "Carl Heinrich Bloch - Suffer the Children.jpg",
+  "title": "Suffer the Little Children",
+  "artist": "Carl Heinrich Bloch",
+  "year": "c. 1870s",
+  "licence": "Public domain"
+ },
+ "simplicity-4": {
+  "file": "Claude Monet - Poppy Field - Google Art Project.jpg",
+  "title": "Poppy Field",
+  "artist": "Claude Monet",
+  "year": "c. 1873",
+  "licence": "Public domain"
+ },
+ "renewal-0": {
+  "file": "De roze boomgaard - s0026V1962 - Van Gogh Museum.jpg",
+  "title": "The Pink Orchard",
+  "artist": "Vincent van Gogh",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "renewal-1": {
+  "file": "John Constable - Study of a Cloudy Sky - Google Art Project.jpg",
+  "title": "Study of a Cloudy Sky",
+  "artist": "John Constable",
+  "year": "c. 1821",
+  "licence": "Public domain"
+ },
+ "renewal-2": {
+  "file": "Ivan Ivanovich Shishkin - Oak Grove, 1887.jpg",
+  "title": "Oak Grove",
+  "artist": "Ivan Shishkin",
+  "year": "1887",
+  "licence": "Public domain"
+ },
+ "renewal-3": {
+  "file": "Caspar David Friedrich, Morgen im Riesengebirge.jpg",
+  "title": "Morning in the Riesengebirge",
+  "artist": "Caspar David Friedrich",
+  "year": "1810-1811",
+  "licence": "Public domain"
+ },
+ "renewal-4": {
+  "file": "Vincent van Gogh - De oogst - Google Art Project.jpg",
+  "title": "Harvest at La Crau",
+  "artist": "Vincent van Gogh",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "joy-0": {
+  "file": "Garden at Sainte-Adresse MET DT48.jpg",
+  "title": "Garden at Sainte-Adresse",
+  "artist": "Claude Monet",
+  "year": "1867",
+  "licence": "Public domain"
+ },
+ "joy-1": {
+  "file": "Pierre-Auguste Renoir - Luncheon of the Boating Party - Google Art Project.jpg",
+  "title": "Luncheon of the Boating Party",
+  "artist": "Pierre-Auguste Renoir",
+  "year": "1880-1881",
+  "licence": "Public domain"
+ },
+ "joy-2": {
+  "file": "John Constable - The Hay Wain (1821).jpg",
+  "title": "The Hay Wain",
+  "artist": "John Constable",
+  "year": "1821",
+  "licence": "Public domain"
+ },
+ "joy-3": {
+  "file": "Vincent van Gogh - The Olive Trees - Google Art Project.jpg",
+  "title": "The Olive Trees",
+  "artist": "Vincent van Gogh",
+  "year": "1889",
+  "licence": "Public domain"
+ },
+ "joy-4": {
+  "file": "Good Morning From the International Space Station.jpg",
+  "title": "Good Morning from the International Space Station",
+  "artist": "NASA",
+  "year": "",
+  "licence": "Public domain"
+ },
+ "calling-0": {
+  "file": "Hans Gude - Norwegian Highlands in Sunrise - NG.M.04186 - National Museum of Art, Architecture and Design.jpg",
+  "title": "Norwegian Highlands in Sunrise",
+  "artist": "Hans Gude",
+  "year": "",
+  "licence": "Public domain"
+ },
+ "calling-1": {
+  "file": "Camille Pissarro - Apple Harvest - 1955.17.M - Dallas Museum of Art.jpg",
+  "title": "Apple Harvest",
+  "artist": "Camille Pissarro",
+  "year": "1888",
+  "licence": "Public domain"
+ },
+ "calling-2": {
+  "file": "Claude Monet - Stacks of Wheat (End of Summer) - 1985.1103 - Art Institute of Chicago.jpg",
+  "title": "Stacks of Wheat (End of Summer)",
+  "artist": "Claude Monet",
+  "year": "1890-1891",
+  "licence": "Public domain"
+ },
+ "calling-3": {
+  "file": "Johannes Vermeer - View of Delft - 92 - Mauritshuis.jpg",
+  "title": "View of Delft",
+  "artist": "Johannes Vermeer",
+  "year": "c. 1660-1661",
+  "licence": "Public domain"
+ },
+ "calling-4": {
+  "file": "Jacob Isaacksz. van Ruisdael - Wheat Fields - WGA20512.jpg",
+  "title": "Wheat Fields",
+  "artist": "Jacob van Ruisdael",
+  "year": "c. 1670",
+  "licence": "Public domain"
+ },
+ "waiting-0": {
+  "file": "Caspar David Friedrich - Mondaufgang am Meer - Google Art Project.jpg",
+  "title": "Moonrise over the Sea",
+  "artist": "Caspar David Friedrich",
+  "year": "1822",
+  "licence": "Public domain"
+ },
+ "waiting-1": {
+  "file": "Kuindzhi Moonlit night on the Dnieper 1880 grm x2.jpg",
+  "title": "Moonlit Night on the Dnieper",
+  "artist": "Arkhip Kuindzhi",
+  "year": "1880",
+  "licence": "Public domain"
+ },
+ "waiting-2": {
+  "file": "Caspar David Friedrich - Der Mönch am Meer - Google Art Project.jpg",
+  "title": "The Monk by the Sea",
+  "artist": "Caspar David Friedrich",
+  "year": "1808-1810",
+  "licence": "Public domain"
+ },
+ "waiting-3": {
+  "file": "Pieter Bruegel the Elder - The Numbering at Bethlehem - Google Art Project.jpg",
+  "title": "The Census at Bethlehem",
+  "artist": "Pieter Bruegel the Elder",
+  "year": "1566",
+  "licence": "Public domain"
+ },
+ "waiting-4": {
+  "file": "Frederic Edwin Church - Twilight in the Wilderness.jpg",
+  "title": "Twilight in the Wilderness",
+  "artist": "Frederic Edwin Church",
+  "year": "1860",
+  "licence": "Public domain"
+ }
+}

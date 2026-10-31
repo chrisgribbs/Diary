@@ -73,6 +73,13 @@ app.whenReady().then(async () => {
   assert.equal(await count('file'), 0);
   assert.match(await js(`return document.querySelector('.readings-box').innerText`), /Choose a text file/);
 
+  // Settings has the readings too, as a full page
+  await js(`document.querySelector('#dlg').open && document.querySelector('#dlg').close(); openSettings('readings');`); await wait(600);
+  assert.ok(await js(`return !!document.querySelector('#dlg .readings-box #pickReadings')`), 'readings file in Settings');
+  assert.ok(await js(`return document.querySelector('#dlg').getBoundingClientRect().width > 1100`), 'Settings fills the window');
+  await shot('r5-settings-readings');
+  await js(`document.querySelector('#dlg').close();`);
+
   assert.deepEqual(errors, [], 'no console errors');
   console.log('readings e2e passed; shots in', OUT);
   fs.rmSync(process.env.WELLWRITE_DATA_DIR, { recursive: true, force: true });
