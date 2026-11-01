@@ -777,3 +777,4 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .ae-list .item { width: 100%; }
 .ae-none { padding: 30px 0; }
 @media (max-width: 760px) { .ae-filters { grid-template-columns: 1fr 1fr; } .ae-filters input { grid-column: 1 / -1; } }
+.ap-top { max-width: 36em; margin: 0 auto; }

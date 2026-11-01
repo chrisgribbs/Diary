@@ -34,6 +34,23 @@ app.whenReady().then(async () => {
   assert.match(await js(`return document.querySelector('#quoteView .wk-reflection .wk-sign').innerText`), /Chris Gribble/);
   await js(`document.querySelector('#quoteView .wk-reflection').scrollIntoView()`); await shot('r1-reflection');
 
+  // a writer's name opens a short biography, Read more opens the full page, and Back returns to the journal
+  await js(`[...document.querySelectorAll('#quoteView .author-link')][0].click();`); await wait(400);
+  assert.ok(await js(`return !document.querySelector('#popover').hidden && document.querySelector('#popover').classList.contains('author-pop')`), 'biography pop-up');
+  const who = await js(`return document.querySelector('#popover .ap-name').textContent`);
+  assert.ok((await js(`return document.querySelector('#popover .ap-short').textContent`)).length > 150);
+  await shot('r1b-author-popup');
+  await js(`document.querySelector('#authorMore').click();`); await wait(500);
+  assert.ok(await js(`return document.querySelector('#dlg').open && !!document.querySelector('#dlg .ap-article')`), 'Read more page');
+  assert.equal(await js(`return document.querySelector('#dlg .ap-article h2').textContent`), who);
+  assert.ok(await js(`return document.querySelectorAll('#dlg .ap-body').length`) >= 3, 'a few paragraphs');
+  await shot('r1c-author-page');
+  await js(`document.querySelector('#dlg .back-journal').click();`); await wait(300);
+  assert.ok(!(await js(`return document.querySelector('#dlg').open`)), 'back to the journal');
+  // every quoted writer has a biography
+  const missing = await js(`return [...new Set(state.quotes.map(q => q.author))].filter(a => a && !authorBio(a))`);
+  assert.deepEqual(missing.filter(a => a !== 'Chris Gribble'), [], 'biography for every writer');
+
   // choose a readings file once
   const q = (t, a, th) => `${t}\n— ${a}\nThemes: ${th}`;
   fs.writeFileSync(FILE, '﻿' + [q('One quote.', 'Ann Writer', 'Hope & renewal'), q('Two quote.', 'Bob Poet', 'Prayer'), q('Three quote.', 'Cy Sage', 'Joy')].join('\r\n\r\n\r\n'));

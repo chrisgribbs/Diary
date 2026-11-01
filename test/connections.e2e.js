@@ -53,14 +53,14 @@ app.whenReady().then(async () => {
   assert.equal(await js(`return document.querySelector('#catPill').textContent`), 'Personal');
 
   // add a second category from the menu's text box, to the Sam entry
-  await js(`document.querySelector('.item[data-id="${sam}"]').click();`); await wait(500);
+  await js(`{ const it = document.querySelector('#list .item[data-id="${sam}"]'); if (it) it.click(); else { document.querySelector('#allEntriesBtn').click(); await new Promise(r => setTimeout(r, 300)); document.querySelector('#dlg .item[data-id="${sam}"]').click(); } }`); await wait(500);
   await js(`document.querySelector('#catPill').click();`); await wait(250);
   await js(`const i = document.querySelector('#popover .pop-search'); i.value = 'Family'; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));`);
   await wait(1200);
   assert.equal((await js(`return await window.wellwrite.getCategories()`)).length, 2);
 
   // --- [[ link from the garden entry to the seed order
-  await js(`document.querySelector('.item[data-id="${garden}"]').click();`); await wait(500);
+  await js(`{ const it = document.querySelector('#list .item[data-id="${garden}"]'); if (it) it.click(); else { document.querySelector('#allEntriesBtn').click(); await new Promise(r => setTimeout(r, 300)); document.querySelector('#dlg .item[data-id="${garden}"]').click(); } }`); await wait(500);
   win.webContents.focus();
   await js(`const b = document.querySelector('#body'); b.focus(); const r = document.createRange(); r.selectNodeContents(b); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r);`);
   await win.webContents.insertText(' See ');
@@ -110,8 +110,8 @@ app.whenReady().then(async () => {
 
   // rename the target: the link chip shows the new title
   await js(`await window.wellwrite.save({ ...(await window.wellwrite.get('${seeds}')), title: 'Seed order (Diggers, spring)' });`);
-  await js(`document.querySelector('.item[data-id="${sam}"]').click();`); await wait(400);
-  await js(`state.metas = await window.wellwrite.list(); document.querySelector('.item[data-id="${garden}"]').click();`); await wait(600);
+  await js(`{ const it = document.querySelector('#list .item[data-id="${sam}"]'); if (it) it.click(); else { document.querySelector('#allEntriesBtn').click(); await new Promise(r => setTimeout(r, 300)); document.querySelector('#dlg .item[data-id="${sam}"]').click(); } }`); await wait(400);
+  await js(`state.metas = await window.wellwrite.list(); { const it = document.querySelector('#list .item[data-id="${garden}"]'); if (it) it.click(); else { document.querySelector('#allEntriesBtn').click(); await new Promise(r => setTimeout(r, 300)); document.querySelector('#dlg .item[data-id="${garden}"]').click(); } }`); await wait(600);
   assert(await js(`return [...document.querySelectorAll('#body a.xref')].some(a => a.textContent === 'Seed order (Diggers, spring)')`), 'chip follows renames');
 
   // --- sidebar category filter
@@ -125,7 +125,7 @@ app.whenReady().then(async () => {
   await js(`document.querySelector('#lockBtn').click();`); await wait(600);
   await js(`document.querySelector('#unlockPw').value='river-stone'; document.querySelector('#unlockForm').requestSubmit();`);
   await wait(2500);
-  await js(`document.querySelector('.item[data-id="${garden}"]').click();`); await wait(500);
+  await js(`{ const it = document.querySelector('#list .item[data-id="${garden}"]'); if (it) it.click(); else { document.querySelector('#allEntriesBtn').click(); await new Promise(r => setTimeout(r, 300)); document.querySelector('#dlg .item[data-id="${garden}"]').click(); } }`); await wait(500);
   assert.equal(await js(`return document.querySelectorAll('#body a.xref').length`), 2);
 
   // --- delete the linked-to entry: chip shows as broken
@@ -149,7 +149,7 @@ app.whenReady().then(async () => {
   const family = tree.find(c => c.name === 'Family'), moving = tree.find(c => c.name === 'Moving');
   assert(moving && moving.parent === family.id, 'subcategory created under Family');
   assert.equal(moving.color, family.color, 'takes the parent colour');
-  await js(`document.querySelector('.item[data-id="${sam}"]').click();`); await wait(400);
+  await js(`{ const it = document.querySelector('#list .item[data-id="${sam}"]'); if (it) it.click(); else { document.querySelector('#allEntriesBtn').click(); await new Promise(r => setTimeout(r, 300)); document.querySelector('#dlg .item[data-id="${sam}"]').click(); } }`); await wait(400);
   await js(`document.querySelector('#catPill').click();`); await wait(250);
   await shot('c7-category-menu-tree');
   await js(`[...document.querySelectorAll('#popover .menu-item.sub')].find(b => b.textContent === 'Moving').click();`); await wait(1200);
@@ -162,7 +162,7 @@ app.whenReady().then(async () => {
   await shot('c8-categories-tab');
   await js(`document.querySelector('#viewCategories .side-row.on').click();`); await wait(200);
   // "Work / Meetings" from an entry's menu creates both levels at once
-  await js(`document.querySelector('.item[data-id="${compost}"]').click();`); await wait(400);
+  await js(`{ const it = document.querySelector('#list .item[data-id="${compost}"]'); if (it) it.click(); else { document.querySelector('#allEntriesBtn').click(); await new Promise(r => setTimeout(r, 300)); document.querySelector('#dlg .item[data-id="${compost}"]').click(); } }`); await wait(400);
   await js(`document.querySelector('#catPill').click();`); await wait(250);
   await js(`const i = document.querySelector('#popover .pop-search'); i.value = 'Work / Meetings'; i.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));`); await wait(1200);
   tree = await js(`return await window.wellwrite.getCategories()`);
