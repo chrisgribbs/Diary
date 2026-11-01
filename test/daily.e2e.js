@@ -223,6 +223,31 @@ app.whenReady().then(async () => {
   await js(`document.querySelector('.modeswitch [data-mode=bible]').click();`); await wait(700);
   assert.match(await text('#bibleView .rv-status'), /1 of 30 days read/);
 
+  // --- the sidebar keeps to the two most recent days; All entries has the rest, with filters
+  await js(`const d = n => addDays(todayISO(), -n);
+    for (const [n, title, tags] of [[3, 'Three days ago', ['walk']], [5, 'Five days ago', ['walk', 'prayer']], [9, 'Nine days ago', ['prayer']], [1, 'Yesterday', []]]) {
+      const meta = await api.save({ id: crypto.randomUUID(), date: d(n), time: '08:00', title, tags, category: '', html: '<p>' + title + ' I wrote.</p>', text: title + ' I wrote.' });
+      state.metas.push(meta);
+    }
+    document.querySelector('#dlg').open && document.querySelector('#dlg').close(); setMode('journal'); state.selectedDay = null; state.query = ''; state.tag = null; state.category = null; renderSidebar();`); await wait(600);
+  const sideDays = await js(`return [...new Set([...document.querySelectorAll('#list .item')].map(b => state.metas.find(m => m.id === b.dataset.id).date))]`);
+  assert.ok(sideDays.length <= 3, 'sidebar shows two recent days (plus the open entry): ' + sideDays);
+  assert.ok(await js(`return !!document.querySelector('#allEntriesBtn')`), 'All entries button');
+  await shot('d10-sidebar-recent');
+  await js(`document.querySelector('#allEntriesBtn').click();`); await wait(500);
+  const total = await js(`return state.metas.length`);
+  assert.equal(await js(`return document.querySelectorAll('#dlg .ae-list .item').length`), total, 'every entry listed');
+  await js(`const t = document.querySelector('#aeTag'); t.value = 'prayer'; t.dispatchEvent(new Event('change'));`); await wait(200);
+  assert.deepEqual(await js(`return [...document.querySelectorAll('#dlg .ae-list .item-title')].map(e => e.textContent)`), ['Five days ago', 'Nine days ago'], 'filtered by tag');
+  await shot('d11-all-entries');
+  await js(`document.querySelector('#dlg .ae-list .item').click();`); await wait(800);
+  assert.equal(await js(`return document.querySelector('#title').value`), 'Five days ago', 'opens the entry and returns to the journal');
+  assert.ok(!(await js(`return document.querySelector('#dlg').open`)));
+  // searching still shows every match in the sidebar
+  await js(`state.query = 'wrote'; renderSidebar();`); await wait(200);
+  assert.ok(await js(`return document.querySelectorAll('#list .item').length`) >= 4, 'search shows all matches');
+  await js(`state.query = ''; renderSidebar();`);
+
   assert.deepEqual(errors, [], 'no console errors');
   console.log('daily e2e passed; shots in', OUT);
   fs.rmSync(process.env.WELLWRITE_DATA_DIR, { recursive: true, force: true });

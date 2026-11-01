@@ -758,3 +758,22 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .ap-sec li { margin: 4px 0; }
 .ap-quote { margin: 0 0 12px; padding-left: 14px; border-left: 3px solid var(--foil); font: italic 16px/1.55 var(--serif); white-space: pre-line; color: var(--ink); }
 .ap-sources a { color: var(--pencil); }
+
+/* sidebar: two recent days, then All entries */
+.all-entries-btn { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 8px; width: calc(100% - 16px); margin: 10px 8px 14px; padding: 11px 14px; border-radius: 8px;
+  background: rgba(255,255,255,.06); color: var(--on-cloth); font-size: 14px; font-weight: 500; }
+.all-entries-btn b { margin-left: auto; color: var(--foil); font-variant-numeric: tabular-nums; }
+.all-entries-btn .chev { color: var(--on-cloth-dim); font-size: 18px; line-height: 1; }
+.all-entries-btn:hover, .all-entries-btn:focus-visible { background: rgba(255,255,255,.11); outline: none; }
+/* the All entries page uses the sidebar's list items on paper */
+.all-entries { --on-cloth: var(--ink); --on-cloth-dim: var(--pencil); --cloth: var(--paper); }
+.all-entries .item:hover { background: color-mix(in srgb, var(--pencil) 10%, transparent); }
+.ae-head { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; flex-wrap: wrap; }
+.ae-head h2 { margin: 0; }
+.ae-filters { display: grid; grid-template-columns: 2fr repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ae-filters input, .ae-filters select { min-width: 0; }
+.ae-count { margin: 12px 0 4px !important; font-size: 13px; }
+.ae-list .list-month { position: static; padding-left: 4px; }
+.ae-list .item { width: 100%; }
+.ae-none { padding: 30px 0; }
+@media (max-width: 760px) { .ae-filters { grid-template-columns: 1fr 1fr; } .ae-filters input { grid-column: 1 / -1; } }

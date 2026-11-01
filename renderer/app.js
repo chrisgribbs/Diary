@@ -366,28 +366,94 @@ function renderList() {
     return;
   }
 
+  // With no search, day, tag or category chosen, the sidebar keeps to your two most recent days;
+  // everything else is a click away on the All entries page.
+  const browsing = !state.selectedDay && !state.query && !state.tag && state.category == null;
+  let shown = items;
+  if (browsing) {
+    const days = [...new Set(items.map(m => m.date))].slice(0, 2);
+    shown = items.filter(m => days.includes(m.date));
+    if (state.current && !shown.some(m => m.id === state.current.id)) {
+      const cur = items.find(m => m.id === state.current.id);
+      if (cur) shown = [...shown, cur];
+    }
+  }
   let month = '';
-  for (const m of items) {
+  for (const m of shown) {
     const mk = m.date.slice(0, 7);
     if (mk !== month) { month = mk; list.append(el('div', { class: 'list-month' }, fmt(m.date, { month: 'long', year: 'numeric' }))); }
-    const title = el('div', { class: 'item-title' });
-    title.innerHTML = highlight(m.title || dateTitle(m.date));
-    const cat = catById(m.category);
-    if (cat) title.prepend(el('span', { class: 'dot', style: `background:${cat.color}`, title: catPath(cat) }));
-    const ex = el('div', { class: 'item-ex' }); ex.innerHTML = excerpt(m);
-    const meta = el('div', { class: 'item-meta' });
-    if (m.time) meta.append(el('span', {}, m.time));
-    if (m.images) { const s = el('span'); s.innerHTML = ICON.photo + ' ' + m.images; meta.append(s); }
-    if (m.tags.length) meta.append(el('span', {}, m.tags.slice(0, 3).map(t => '#' + t).join(' ')));
-    const links = (m.links || []).length + state.metas.filter(x => x.links && x.links.includes(m.id)).length;
-    if (links) { const s = el('span', { title: 'Connected entries' }); s.innerHTML = ICON.xref + ' ' + links; meta.append(s); }
-    list.append(el('button', {
-      class: 'item' + (state.current && state.current.id === m.id ? ' active' : ''),
-      'data-id': m.id, onclick: () => openEntry(m.id),
-    },
-      el('div', { class: 'item-date' }, el('b', {}, String(dateOf(m.date).getDate())), el('span', {}, fmt(m.date, { weekday: 'short' }))),
-      el('div', { class: 'item-main' }, title, m.text.trim() ? ex : null, meta.childNodes.length ? meta : null)));
+    list.append(entryItem(m, () => openEntry(m.id)));
   }
+  if (browsing && items.length > shown.length) {
+    list.append(el('button', { type: 'button', class: 'all-entries-btn', id: 'allEntriesBtn', onclick: () => openAllEntries() },
+      el('span', {}, 'All entries'), el('b', {}, String(items.length)), el('span', { class: 'chev', 'aria-hidden': 'true' }, '›')));
+  }
+}
+
+/** One entry in a list: date, title (with its category's colour), opening words, time, photos, tags and links. */
+function entryItem(m, onOpen) {
+  const title = el('div', { class: 'item-title' });
+  title.innerHTML = highlight(m.title || dateTitle(m.date));
+  const cat = catById(m.category);
+  if (cat) title.prepend(el('span', { class: 'dot', style: `background:${cat.color}`, title: catPath(cat) }));
+  const ex = el('div', { class: 'item-ex' }); ex.innerHTML = excerpt(m);
+  const meta = el('div', { class: 'item-meta' });
+  if (m.time) meta.append(el('span', {}, m.time));
+  if (m.images) { const s = el('span'); s.innerHTML = ICON.photo + ' ' + m.images; meta.append(s); }
+  if (m.tags.length) meta.append(el('span', {}, m.tags.slice(0, 3).map(t => '#' + t).join(' ')));
+  const links = (m.links || []).length + state.metas.filter(x => x.links && x.links.includes(m.id)).length;
+  if (links) { const s = el('span', { title: 'Connected entries' }); s.innerHTML = ICON.xref + ' ' + links; meta.append(s); }
+  return el('button', {
+    class: 'item' + (state.current && state.current.id === m.id ? ' active' : ''),
+    'data-id': m.id, onclick: onOpen,
+  },
+    el('div', { class: 'item-date' }, el('b', {}, String(dateOf(m.date).getDate())), el('span', {}, fmt(m.date, { weekday: 'short' }))),
+    el('div', { class: 'item-main' }, title, m.text.trim() ? ex : null, meta.childNodes.length ? meta : null));
+}
+
+/** Every entry, on a page of its own: search, and filter by category, tag and month. */
+function openAllEntries() {
+  return openDialog((f, done) => {
+    f.classList.add('page', 'all-entries');
+    const find = el('input', { type: 'search', id: 'aeFind', placeholder: 'Search your entries', 'aria-label': 'Search your entries' });
+    const catSel = el('select', { id: 'aeCat', 'aria-label': 'Category' }, el('option', { value: '*' }, 'All categories'), el('option', { value: '' }, 'No category'),
+      ...state.categories.filter(c => !c.parent).flatMap(c => [el('option', { value: c.id }, c.name),
+        ...state.categories.filter(x => x.parent === c.id).map(x => el('option', { value: x.id }, '\u00a0\u00a0' + x.name))]));
+    const tags = [...tagCounts().entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    const tagSel = el('select', { id: 'aeTag', 'aria-label': 'Tag' }, el('option', { value: '' }, 'All tags'), ...tags.map(([t, n]) => el('option', { value: t }, `#${t} (${n})`)));
+    const months = [...new Set(state.metas.map(m => m.date.slice(0, 7)))].sort().reverse();
+    const monthSel = el('select', { id: 'aeMonth', 'aria-label': 'Month' }, el('option', { value: '' }, 'All months'), ...months.map(mk => el('option', { value: mk }, fmt(mk + '-01', { month: 'long', year: 'numeric' }))));
+    const order = el('select', { id: 'aeOrder', 'aria-label': 'Order' }, el('option', { value: 'new' }, 'Newest first'), el('option', { value: 'old' }, 'Oldest first'));
+    const count = el('p', { class: 'ae-count' });
+    const list = el('div', { class: 'ae-list' });
+    const draw = () => {
+      const q = find.value.trim().toLowerCase();
+      let items = sorted(state.metas).filter(m =>
+        (catSel.value === '*' || inCategory(m, catSel.value)) &&
+        (!tagSel.value || m.tags.includes(tagSel.value)) &&
+        (!monthSel.value || m.date.startsWith(monthSel.value)) &&
+        (!q || [m.title, m.text, m.tags.map(t => '#' + t).join(' ')].join(' ').toLowerCase().includes(q)));
+      if (order.value === 'old') items = items.reverse();
+      count.textContent = items.length === state.metas.length ? `${items.length} entr${items.length === 1 ? 'y' : 'ies'}` : `${items.length} of ${state.metas.length} entries`;
+      list.replaceChildren();
+      let month = '';
+      for (const m of items) {
+        const mk = m.date.slice(0, 7);
+        if (mk !== month) { month = mk; list.append(el('div', { class: 'list-month' }, fmt(m.date, { month: 'long', year: 'numeric' }))); }
+        list.append(entryItem(m, () => { done(); openEntry(m.id); }));
+      }
+      if (!items.length) list.append(el('p', { class: 'ae-none' }, 'No entries match. Try fewer words, or clear a filter.'));
+    };
+    for (const c of [find, catSel, tagSel, monthSel, order]) c.addEventListener(c === find ? 'input' : 'change', draw);
+    f.append(
+      el('div', { class: 'ae-head' },
+        el('button', { type: 'button', class: 'btn-plain back-journal', onclick: () => done() }, '‹ Back to my journal'),
+        el('h2', {}, 'All entries')),
+      el('div', { class: 'ae-filters' }, find, catSel, tagSel, monthSel, order),
+      count, list);
+    draw();
+    setTimeout(() => find.focus());
+  });
 }
 
 function tagCounts() {
