@@ -119,14 +119,10 @@ app.whenReady().then(async () => {
   assert.match(await text('#quoteView .wk-reflection h4'), /^(A Psalm|A Poem|A Reflection|From the field)/);
   const real = !!process.env.WELLWRITE_QUOTES_FILE;   // with a real collection, other writing may be chosen
   if (!real) assert.match(await text('#quoteView .wk-reflection .wk-sign'), /Test Writer/);
-  // across two neighbouring weeks, your prayer and your blessing each appear once
-  let sawPrayer = false, sawBlessing = false;
-  for (let i = 0; i < 2; i++) {
-    if (await js(`return document.querySelector('#quoteView .wk-prayer').innerText.includes('keep me near when I want to run')`)) sawPrayer = true;
-    if (await js(`return document.querySelector('#quoteView .wk-blessing').innerText.includes('road rise gently')`)) sawBlessing = true;
-    await js(`[...document.querySelectorAll('#quoteView .wk-nav button')].at(-1).click();`); await wait(600);
-  }
-  if (!real) assert.ok(sawPrayer && sawBlessing, 'own prayer and blessing used in alternate weeks');
+  // your own prayer and blessing each come once a year, in the week that suits them best
+  const yearly = await js(`yearPlans.clear(); const w = [...yearPlan(+todayISO().slice(0, 4)).weeks.values()];
+    return { prayers: w.filter(x => x.prayer && x.prayer.text.includes('keep me near')).length, blessings: w.filter(x => x.blessing && x.blessing.text.includes('road rise gently')).length };`);
+  if (!real) assert.deepEqual(yearly, { prayers: 1, blessings: 1 }, 'own prayer and blessing once a year');
   await js(`state.weekAt = null; renderQuoteView();`); await wait(700);
   await scrollTo('#quoteView .wk-reflection'); await shot('w10-own-reflection');
   // the editor shows kind, title and the mark

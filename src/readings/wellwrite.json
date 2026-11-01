@@ -1,7 +1,7 @@
 {
 "id": "wellwrite",
 "name": "Psalms, poems and reflections by Chris Gribble",
-"version": 2,
+"version": 3,
 "items": [
 {
 "id": "1198a1858e5974ec",
@@ -37,8 +37,7 @@
 "kind": "psalm",
 "themes": [
 "Faith & doubt",
-"Love & belonging",
-"Prayer"
+"Love & belonging"
 ]
 },
 {
@@ -197,8 +196,8 @@
 ]
 },
 {
-"id": "e9aff4c5b3da28d4",
-"text": "In the distant corner of a forgetful heart,\nI glimpsed the memory of better days,\nLove always brings new life,\nEternity is the language of hope,\nAll this returned to me,\nI soak it up day after day,\nI never tire of Love’s kind words of truth,\nNothing became His greatest treasure,",
+"id": "62f8c70a70c4fa4e",
+"text": "In the distant corner of a forgetful heart,\nI glimpsed the memory of better days,\nLove always brings new life,\nEternity is the language of hope,\nAll this returned to me,\nI soak it up day after day,\nI never tire of Love’s kind words of truth,\nNothing became His greatest treasure,\nThe lies was transformed by truth.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm Forty-Two: The distant corner of a forgetful heart",
@@ -288,8 +287,8 @@
 ]
 },
 {
-"id": "9f3e3ecaeddb6a67",
-"text": "Betrayal is loyalty’s fatal wound,\nVulnerability risks love’s fullest expression,\nLost trust is the cruelest weapon,\nWhen love shared is used to condemn,\nThe friend who becomes a stranger,\nWhen shared sorrow becomes hate’s barb.\n\nLove’s hand brings healing trust,\nMy scars a testimony to his victory,\nMy pain transformed by Mercy’s forgiveness,",
+"id": "4daa1c142073797c",
+"text": "Betrayal is loyalty’s fatal wound,\nVulnerability risks love’s fullest expression,\nLost trust is the cruelest weapon,\nWhen love shared is used to condemn,\nThe friend who becomes a stranger,\nWhen shared sorrow becomes hate’s barb.\n\nLove’s hand brings healing trust,\nMy scars a testimony to his victory,\nMy pain transformed by Mercy’s forgiveness,\nEvil intentions bounce off Love’s shield,\nEach stone flung returns to haunt my dear enemy,\nI ache to hear the God’s kind words to me,\nEvery day given a new lesson in being loved,\nEach morning a celebration of life lived fully.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm Fifty-Four: My scars a testimony",
@@ -373,9 +372,8 @@
 "title": "Psalm Sixty-Five: Hope's child",
 "kind": "psalm",
 "themes": [
-"Courage & vulnerability",
 "Hope & renewal",
-"Blessing"
+"Courage & vulnerability"
 ]
 },
 {
@@ -405,8 +403,8 @@
 ]
 },
 {
-"id": "022720ab5f5c6aeb",
-"text": "The desert was where hope was born,\nHopelessness was not the conclusion,\nInstead it was the mother of possibility,\nSuckling me when my life collapsed,",
+"id": "9662a6dd7879b52c",
+"text": "The desert was where hope was born,\nHopelessness was not the conclusion,\nInstead it was the mother of possibility,\nSuckling me when my life collapsed,\nMy fearful view of what lay ahead,\nSaw only interminable despair.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm Sixty-Eight: The mother of possibility",
@@ -444,8 +442,8 @@
 ]
 },
 {
-"id": "5729d28aee19deed",
-"text": "My descent into silence,\nThe solitude of driest desert,\nWas the place where hope emerged,\nBeginning in the quietness of the early morning,\nHope was a word that belonged to me,\nA gift when human loyalty had disappeared,\nThe awakening of life was painfully slow,\nEvery day I wondered what pain would emerge,\nUntil healing completed its work in me,\nGod heart joined with mine,\nLife's source gently taking my hand.\nCourage leading me to where life begins again,",
+"id": "ac7f01d6cc4a6bdb",
+"text": "My descent into silence,\nThe solitude of driest desert,\nWas the place where hope emerged,\nBeginning in the quietness of the early morning,\nHope was a word that belonged to me,\nA gift when human loyalty had disappeared,\nThe awakening of life was painfully slow,\nEvery day I wondered what pain would emerge,\nUntil healing completed its work in me,\nGod heart joined with mine,\nLife's source gently taking my hand.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm Seventy-Four: Where hope emerged",
@@ -515,9 +513,8 @@
 "title": "Psalm Eighty-One: Eternal applause",
 "kind": "psalm",
 "themes": [
-"Hope & renewal",
 "Love & belonging",
-"Creativity & art"
+"Hope & renewal"
 ]
 },
 {
@@ -568,7 +565,7 @@
 "kind": "psalm",
 "themes": [
 "The path",
-"Community & place",
+"Faith & doubt",
 "Courage & vulnerability"
 ]
 },
@@ -599,8 +596,8 @@
 ]
 },
 {
-"id": "e22ad9a7d2f6e341",
-"text": "The baby I held yesterday is preparing to leave,\nLife grows and then is gone in an instant,\nMy children’s exploration of a bigger world,\nReminds me of how time takes the temptation to linger too long,",
+"id": "99aa536738285482",
+"text": "The baby I held yesterday is preparing to leave,\nLife grows and then is gone in an instant,\nMy children’s exploration of a bigger world,\nReminds me of how time takes the temptation to linger too long,\nToo quickly life is marked by its painful bruises,\nI count my wasted efforts every day,\nThinking of all the misspent hours lost forever,\nLying awake every night finding more mistakes,\nEach day is an empty shell of hopeless hours.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm One Hundred and Two: The baby I held yesterday",
@@ -618,9 +615,9 @@
 "title": "Psalm One Hundred and Two: A kernel of trustworthiness",
 "kind": "psalm",
 "themes": [
+"Darkness & suffering",
 "Hope & renewal",
-"Prayer",
-"Community & place"
+"Prayer"
 ]
 },
 {
@@ -650,8 +647,8 @@
 ]
 },
 {
-"id": "e3e032a66490fc37",
-"text": "The search for grace is the heart's first yearning,\nMercy is our constant quest,\nThe world is a pit of selfish cravings,\nThat seek to swallow our deepest pain,\nBut, our heart cannot be ignored,\nIts restless wanderings must find a home,",
+"id": "413c5d35d5b92fed",
+"text": "The search for grace is the heart's first yearning,\nMercy is our constant quest,\nThe world is a pit of selfish cravings,\nThat seek to swallow our deepest pain,\nBut, our heart cannot be ignored,\nIts restless wanderings must find a home,\nOr else be condemned to despair.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm One Hundred and Seven: The heart's first yearning",
@@ -663,8 +660,8 @@
 ]
 },
 {
-"id": "a3675965b63e7765",
-"text": "Healing is the sweet voice of God’s kindest words,\nThat brings us to the warmest sound,\nWords that give hope and love,\nFrom whatever place we are found,\nMy wandering heart is home again,\nMy life speaking a message of forgiveness,\nFrom where true love always begins,",
+"id": "d6d94f1e5aea4a7b",
+"text": "Healing is the sweet voice of God’s kindest words,\nThat brings us to the warmest sound,\nWords that give hope and love,\nFrom whatever place we are found,\nMy wandering heart is home again,\nMy life speaking a message of forgiveness,\nFrom where true love always begins,\nRevenge is sacrificed to a merciful justice,\nHope for all to know love true rewards,\nIs the first thought of each new day.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm One Hundred and Seven: My wandering heart is home",
@@ -676,8 +673,8 @@
 ]
 },
 {
-"id": "0f34b92b3006a926",
-"text": "I came to the end of my rope,\nDangling from a thread,\nThen I felt softest touch,\nAt first I thought I imagined it,\nThen I heard the kindest words,\nI didn’t think he was speaking to me,\nThen I saw my total destitution,\nWhen I was lowest I found unfailing love,\nMy worst shame became my beautiful coat,\nMy deepest failure my badge of victory for Grace,",
+"id": "fa0d1ce6f657a816",
+"text": "I came to the end of my rope,\nDangling from a thread,\nThen I felt softest touch,\nAt first I thought I imagined it,\nThen I heard the kindest words,\nI didn’t think he was speaking to me,\nThen I saw my total destitution,\nWhen I was lowest I found unfailing love,\nMy worst shame became my beautiful coat,\nMy deepest failure my badge of victory for Grace,\nDeserted at my worst possible moment,\nThe tables are now completely turned,\nAll the curses paid back double with blessing.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm One Hundred and Nine: My beautiful coat",
@@ -785,8 +782,7 @@
 "kind": "psalm",
 "themes": [
 "Darkness & suffering",
-"Hope & renewal",
-"Blessing"
+"Hope & renewal"
 ]
 },
 {
@@ -892,8 +888,8 @@
 ]
 },
 {
-"id": "aea20942b6696445",
-"text": "I wake this morning making prayer my preparation,\nFor a day that holds the wonder of mystery,\nThe risk of trying something completely new,\nThe adventure of launching out in obedience,\nPeople change their mind very quickly,\nShifting with the weight of the loudest voice,\nIn all the confusion I seek my Lord's guiding hand,\nWhen I don’t know how to take the next step,\nHe is with me, quickly forgiving my mistakes,",
+"id": "fc223e44e52ee094",
+"text": "I wake this morning making prayer my preparation,\nFor a day that holds the wonder of mystery,\nThe risk of trying something completely new,\nThe adventure of launching out in obedience,\nPeople change their mind very quickly,\nShifting with the weight of the loudest voice,\nIn all the confusion I seek my Lord's guiding hand,\nWhen I don’t know how to take the next step,\nHe is with me, quickly forgiving my mistakes,\n\nSad goodbyes are a constant reminder of life’s brevity,\nYet, you notice my fear covered prayer today,\nMy trembling voice that fears what could go wrong,\nAll of this is cupped softly with tender hands,\nMy life held in Grace’s grasp the centre of Holy attention.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm One Hundred and Forty-Four: The wonder of mystery",
@@ -1040,9 +1036,9 @@
 "title": "Imagination: Stopping to listen",
 "kind": "psalm",
 "themes": [
-"Soul",
+"Love & belonging",
 "True self",
-"Wonder & beauty"
+"Soul"
 ]
 },
 {
@@ -1080,8 +1076,7 @@
 "kind": "psalm",
 "themes": [
 "Slowness & presence",
-"Simplicity",
-"Earth & creation"
+"Simplicity"
 ]
 },
 {
@@ -1210,8 +1205,7 @@
 "kind": "psalm",
 "themes": [
 "Hope & renewal",
-"Darkness & suffering",
-"Earth & creation"
+"Darkness & suffering"
 ]
 },
 {
@@ -1241,8 +1235,8 @@
 ]
 },
 {
-"id": "a1163e4e34e1bc48",
-"text": "My heart longs for that place called home,\nWhere my soul and flesh are in harmony,\nThat place where rest is the final breath each day.\n\nI long for that sense of belonging fully,\nWhere all the uncertainty is completed,\nHome is where all my questions are answered,\nAsking welcomed by a heart that loves.\n\nIn the meantime I see the promise,\nAnd, home dwells within me,\nMy birthmark showing where I belong,\nMy voice speaking words owned by eternity,\nHome is returning to my life’s source,",
+"id": "73956e46cb18454f",
+"text": "My heart longs for that place called home,\nWhere my soul and flesh are in harmony,\nThat place where rest is the final breath each day.\n\nI long for that sense of belonging fully,\nWhere all the uncertainty is completed,\nHome is where all my questions are answered,\nAsking welcomed by a heart that loves.\n\nIn the meantime I see the promise,\nAnd, home dwells within me,\nMy birthmark showing where I belong,\nMy voice speaking words owned by eternity,\nHome is returning to my life’s source,\nTo know completely from where I was born.",
 "author": "Chris Gribble",
 "source": "",
 "title": "Psalm Eighty-Seven: Home dwells within me",
@@ -1300,8 +1294,8 @@
 "title": "Finding the Psalms",
 "kind": "reflection",
 "themes": [
-"Hope & renewal",
 "Prayer",
+"Hope & renewal",
 "Creativity & art"
 ]
 },
@@ -1351,8 +1345,7 @@
 "kind": "reflection",
 "themes": [
 "Slowness & presence",
-"Love & belonging",
-"Vocation & calling"
+"Love & belonging"
 ]
 },
 {
@@ -1369,19 +1362,6 @@
 ]
 },
 {
-"id": "5515e425cc0e606e",
-"text": "Possibility is not to be confused with ambition. Ambition can pervert the promise of possibility when it becomes an incessant demand for more. Ambition in its harshest form transforms creativity into a destructive force that survives through the destruction of others. It feeds off other’s productivity until they are of no further use and then are quickly discarded. Ambitious people are not able to understand the meaning of loyalty.",
-"author": "Chris Gribble",
-"source": "Psalms for love of work, 2016",
-"title": "Possibility, not ambition",
-"kind": "reflection",
-"themes": [
-"Vocation & calling",
-"Humility",
-"Hope & renewal"
-]
-},
-{
 "id": "210acf4294e586a5",
 "text": "A lament can be defined as a formal expression of deep sorrow. Once written, or brought to a community, or shared with someone else the issue is made official. It can’t be ignored. To fully understand the sorrow of disappointment creates the place where a life transformation can begin. The experience of lamenting for something or someone allows the beautiful truth of hope to be brought forward as a solution that enables a more positive future to be attained.",
 "author": "Chris Gribble",
@@ -1391,7 +1371,7 @@
 "themes": [
 "Darkness & suffering",
 "Hope & renewal",
-"Community & place"
+"Prayer"
 ]
 },
 {
@@ -1404,7 +1384,7 @@
 "themes": [
 "Hope & renewal",
 "Darkness & suffering",
-"Slowness & presence"
+"Prayer"
 ]
 },
 {
@@ -1415,22 +1395,8 @@
 "title": "Rest begins with grace",
 "kind": "reflection",
 "themes": [
-"Slowness & presence",
 "Love & belonging",
-"True self"
-]
-},
-{
-"id": "1a1e5941accc79a1",
-"text": "A couple of times in my life I have lived overseas for an extended period of time. Once in the Middle East and then more recently in China. There were many exciting experiences that were had when travelling but the sensation of returning home is one that I have always welcomed.\n\nHome for me means the unique sounds that belong to Australia with our bird calls that awaken us in the early morning. Home is the familiar accent of the Australian twang. Home is about our unique plants and trees that bring with them unique smells that are very familiar. These are all things that I feel like I belong to.\n\nHome in the Psalms is all about becoming familiar with God. It’s a place that feels like grace.",
-"author": "Chris Gribble",
-"source": "Psalms - Home and rest, 2016",
-"title": "Home",
-"kind": "reflection",
-"themes": [
-"Community & place",
-"Love & belonging",
-"Earth & creation"
+"Slowness & presence"
 ]
 },
 {
@@ -1441,9 +1407,9 @@
 "title": "I had stopped listening",
 "kind": "reflection",
 "themes": [
+"Prayer",
 "Creativity & art",
-"Soul",
-"Prayer"
+"Soul"
 ]
 },
 {
@@ -1482,19 +1448,6 @@
 "True self",
 "Humility",
 "Courage & vulnerability"
-]
-},
-{
-"id": "37f95f95b3cffbda",
-"text": "Beautiful is the loyalty found,\nIn the shared years,\nOf trusted friendship,\nKnowing that laughter\nIs waiting in every conversation,\nSeeing the small crinkle at the corner of her mouth,\nHer eyes start smiling\nI know first what’s about to happen,\nand, then hearing\nthe familiar melody of her laughter\nLighting every heart in the room\nBeautiful is the place in my heart\nthat knows this laughter is ours,\nShared and inviting others to join.\n\nBeauty has shared sadness,\nAgain and again,\nTears flowing together when disappointment,\nHas overwhelmed our hearts,\nBeauty is when it’s not just me\nthat feels this loss,\nIt’s seeing her love seek out my heart,\nSharing the ache,\nWalking together through the shadows,\nKnowing her tears are about\nmy sadness,\nAs well as hers,\nEven my darkest moment is never alone,\nThe scars of our relationship\nAre signs of healing,\nThat belong only to each other’s soft touch.\n\nBeauty is the gift that was given in my youth,\nLove’s first tentative steps taken,\nTogether in vows that promised forever,\nThe certainty of youthful enthusiasm,\nKnowing exuberant hope,\nBeauty is faithful not chasing other loves,\nShe hasn’t faded,\nBeauty is finding the awe,\nOne extraordinary life\nIn two lives joined together,\nEveryday shared a notch of trust in our belts,\nThe years adding a wrinkle here and there,\nGrey hairs gathering momentum,\nTestimonies to the awe that belongs,\nTo perseverance in what is true and right and lovely,\nBeauty is never fully captured in a few words,\nBut they give a glimpse into the possibility\nand the beauty that I live with every day.",
-"author": "Chris Gribble",
-"source": "10 Poems, 2018",
-"title": "Beautiful love",
-"kind": "poem",
-"themes": [
-"Love & belonging",
-"Gratitude",
-"Joy"
 ]
 },
 {
@@ -1545,8 +1498,7 @@
 "kind": "poem",
 "themes": [
 "True self",
-"Wonder & beauty",
-"Blessing"
+"Wonder & beauty"
 ]
 },
 {
@@ -1571,8 +1523,7 @@
 "kind": "poem",
 "themes": [
 "Hope & renewal",
-"Love & belonging",
-"The path"
+"Love & belonging"
 ]
 },
 {
@@ -1583,9 +1534,8 @@
 "title": "The Pause",
 "kind": "poem",
 "themes": [
-"Humility",
 "Slowness & presence",
-"Vocation & calling"
+"Humility"
 ]
 },
 {
@@ -1623,8 +1573,7 @@
 "kind": "poem",
 "themes": [
 "Creativity & art",
-"Love & belonging",
-"The path"
+"Love & belonging"
 ]
 },
 {
@@ -1667,8 +1616,8 @@
 ]
 },
 {
-"id": "40947a50d7cbb496",
-"text": "Life begins as a gift\nCreated out of a loving imagination,\nThat spoke first of goodness,\nQuickly followed by forgiveness.\n\nLife choosing ambition over love,\nCreating hate and enemies,\nUntil grace is revealed,\nReminding where life begins.\n\nLove is life’s centre,\nThe place where all life will return,\nSoon, sometimes too soon,\nThe day where its face is known,",
+"id": "946bf24a5f653116",
+"text": "Life begins as a gift\nCreated out of a loving imagination,\nThat spoke first of goodness,\nQuickly followed by forgiveness.\n\nLife choosing ambition over love,\nCreating hate and enemies,\nUntil grace is revealed,\nReminding where life begins.",
 "author": "Chris Gribble",
 "source": "Poems, 2017",
 "title": "Life",
@@ -1767,8 +1716,7 @@
 "kind": "poem",
 "themes": [
 "True self",
-"Love & belonging",
-"Faith & doubt"
+"Love & belonging"
 ]
 },
 {
@@ -1876,35 +1824,8 @@
 ]
 },
 {
-"id": "f1da972c5ee0b966",
-"text": "A prayer always starts for me with considering\nHow little I know\nAnd, how much God knows\nThere’s often a question, about, Why?\nWhy, Lord do I get to pray for wisdom\nWhen a child's prayer is for healing\nWhy, Lord do I get to give my time and money\nWhen a child is being sold for a few dollars\nWhy, Lord am I planning to help someone else\nAnd a child is suffering through no fault of her own\nSimply because she was born in a different situation.\n\nOur prayer is for humble spirits\nThat acknowledges God as Lord\nAnd places our plans in his hands\nWe pray for open hearts\nThat we will always find compassion\nFor the bruised reeds that need healing\nI pray that we will be grateful\nFor the privilege of helping\nThat we will treat this opportunity with\nA Holy respect\nThat we will be united in our aims\nPassionate in our invitation for others to join\nMindful of the trust given by those who give\nAnd those we are called to help\nFaithful in the light we bring to darkness\nAnd, always seeking God first\nIn everything we do.\nAmen",
-"author": "Chris Gribble",
-"source": "2022",
-"title": "Prayer for the Meeting",
-"kind": "prayer",
-"themes": [
-"Prayer",
-"Humility",
-"Vocation & calling"
-]
-},
-{
-"id": "bd2141d86d760d6c",
-"text": "I pray in the years ahead,\nYou will choose\na courageous path,\nUsing wisdom when deciding\non your next step,\nAnd, choosing to take the next turn,\nNot stopping because of fear\nBut being bold and confident\nIn a God who became more real,\nMore kind, more loving, more involved\nWith your life this year.\n\nI pray in the year ahead,\nyou will love\nwith every part of who you are,\nYou won’t hold back your\nlaughter and tears,\nBut, you will live from a big hearts\nthat are exercised daily,\nSeeking out those\nwho desire with God,\nLiving a life in the beloved’s blessing.\n\nI pray in the year ahead,\nThat you will be less afraid\nof disappointment,\nConfident that God’s plans for you\nAre good.\nWhen life falls short\nMay you be optimistic\nFinding only the beauty,\nThe beautiful essence,\nOf Eternity’s presence,\nIn the gift shared by everyone,\nGathered in the Creator’s image.\n\nI pray in the year ahead,\nThat you will make time\nto be creative,\nYou will be willing to learn\nTo be patient,\nLetting time do its work,\nCuriosity will find a home,\nIn your young, wild and precious lives.\nBlossoming into the unique plan,\nOf everything still waiting for you.",
-"author": "Chris Gribble",
-"source": "2017",
-"title": "An end of year blessing",
-"kind": "blessing",
-"themes": [
-"Blessing",
-"Courage & vulnerability",
-"Hope & renewal"
-],
-"occasion": "endofyear"
-},
-{
-"id": "4212056ab69250b9",
-"text": "I ask that this day might provide enough mercy\nSo that all that happened yesterday\nAnd its reminders today will find perspective\nAwakening to the word that “God is one”\nThat as I listen to his voice, peace will come.\n\nI pray that I will know the blessing of enough\nEnough to meet my daily needs, today\nEnough time spent with family, in laughter\nEnough shared meals, so I know I am home.\n\nI pray that I will know the blessing of peace\nPeace despite all my doubts,\nPeace when the world rushes over my soul\nPeace when I want to be alone,\n\nI pray that I will know the blessing of trust\nTrust when I can’t see what to trust in\nTrust in the uncertainty of tomorrow\nTrust that now you are with me.\n\nLord I ask for mercy today\nI pray for blessing on this day as it arrives\nYou are my God, the one that I turn to\nI ask that you bless this day with peace.\n\nAmen",
+"id": "99407b54c25153e0",
+"text": "I ask that this day might provide enough mercy\nSo that all that happened yesterday\nAnd its reminders today will find perspective\nAwakening to the word that “God is one”\nThat as I listen to his voice, peace will come.\n\nI pray that I will know the blessing of enough\nEnough to meet my daily needs, today\nEnough time spent with family, in laughter\nEnough shared meals, so I know I am home.\n\nI pray that I will know the blessing of peace\nPeace despite all my doubts,\nPeace when the world rushes over my soul\nPeace when I want to be alone,\n\nI pray that I will know the blessing of trust\nTrust when I can’t see what to trust in\nTrust in the uncertainty of tomorrow\nTrust that now you are with me.\n\nLord I ask for mercy today\nI pray for blessing on this day as it arrives\nYou are my God, the one that I turn to\nI ask that you bless this day with peace.",
 "author": "Chris Gribble",
 "source": "2018",
 "title": "A blessing for this day",
@@ -1926,32 +1847,6 @@
 "Vocation & calling",
 "Creativity & art",
 "Community & place"
-]
-},
-{
-"id": "54006b956bfffd32",
-"text": "Twenty-one years of living\nIs celebrated today\nSeeing my boy emerging into a man\nI love to look into your young eyes\nAnd see bits of myself\nI am filled with awe and wonder\nAbout what it means to call you son.\n\nBlessings Tobi,\nToday and in the years to come\nMay your kind heart\nContinue to care deeply\nNot afraid to love\nDaring to give yourself\nYour faithfulness to friends\nIt will be your legacy.\n\nBlessings Tobi,\nFor your kind eyes\nYou see what others miss,\nFor your love of family\nYour steadfast commitment\nYour gentle spirit\nThat speaks louder than words.\n\nTo my beloved Son,\nMy father’s heart breaks open\nAgain, today,\nYou fill my heart with joy.\nBe blessed.",
-"author": "Chris Gribble",
-"source": "2022",
-"title": "Tobi’s Blessing - After 21 years",
-"kind": "blessing",
-"themes": [
-"Blessing",
-"Love & belonging",
-"Joy"
-]
-},
-{
-"id": "67ce03e5df36aff1",
-"text": "Blessings Whitney for thirty years of life,\nFrom the moment you were born, I knew you.\nThe fun loving young girl with a skinned nose (From our first holiday together)\nThe teenage adventures,\nWith friends and the beach\nHistory connecting families\nThrough sharing life\nFor a child that has emerged\nTo become a beautiful young woman.\n\nYour beauty begins with your laugh,\nMy life is richer with our shared stories\nAnd the bits you know about the Gribbles\nThat no one else could ever know\nBlessing for your love, for my children\nFor your heart that has found joy in them.\n\nI pray for your eyes to be open to possibilities.\nAs seasons come and go in your life\nMay you embrace the momentary sadnesses\nAnd seek the truth in what they say\nFinding the joy in how love transforms everything.\n\nMay you be a blessing to others\nAs you bring joy to their lives\nI pray for an open heart\nThat is willing to take time to reflect\nI pray for your deepest loves\nThey will direct you to explore life in all its fullness.\n\nMay grace and peace surround your life\nBeloved Whitney",
-"author": "Chris Gribble",
-"source": "2023",
-"title": "Whitney’s Blessing",
-"kind": "blessing",
-"themes": [
-"Blessing",
-"Love & belonging",
-"Gratitude"
 ]
 },
 {
@@ -1987,9 +1882,7 @@
 "title": "Where do broken dreams take me?",
 "kind": "poem",
 "themes": [
-"Darkness & suffering",
-"Hope & renewal",
-"Paradox"
+"Darkness & suffering"
 ]
 },
 {
@@ -2052,58 +1945,7 @@
 "kind": "reflection",
 "themes": [
 "Faith & doubt",
-"Paradox",
-"Humility"
-]
-},
-{
-"id": "d0178584315f8ff4",
-"text": "Before commencing my current role as Project leader in Nepal, I had never wanted to visit India. … I thought India would be a bit like Nepal but busier. But I was wrong. India is different and more intense, with more people and more of everything. Delhi’s metropolitan area population is larger than my entire country’s population. When navigating anything, it's hard not to feel overwhelmed and inundated by the sheer mass of people. … I think about my small town country beginnings, growing up in a rural community where my relationship to the bigger cities feels like Kathmandu and its relationship to Delhi. There are things you don’t know what you don’t know when first venturing into a bigger world. My experience in Delhi mostly reflects my ignorance and the realisation of my need to be a learner.",
-"author": "Chris Gribble",
-"source": "GB Road (autoethnography), 2024",
-"title": "The need to be a learner",
-"kind": "fieldnote",
-"themes": [
-"Humility",
-"The path"
-]
-},
-{
-"id": "9f914da4f0fda41a",
-"text": "Sometimes, it’s very difficult to stand for what is right, especially when strong voices question the validity of the heart of what you do. … Despite being a minority in Australia, I believe in God and express that belief through my Christian faith. When I see the impact of injustice on someone powerless to fight back, it's important to stand up and do something about it.",
-"author": "Chris Gribble",
-"source": "GB Road (autoethnography), 2024",
-"title": "Standing for what is right",
-"kind": "reflection",
-"themes": [
-"Courage & vulnerability",
-"Faith & doubt",
-"Vocation & calling"
-]
-},
-{
-"id": "854876f93b866757",
-"text": "A seven day road trip on the roughest roads is a great place to start new relationships. We ate, talked, peed in the Nepali toilet and spent many hours in silence together. Many men form relationships through road trips, treks, or other journeys. And so, the foundations of relationships were formed in the space of a few days travelling over the dirt tracks and scattered potholed bitumen they call roads in Nepal. I, a foreigner, was quickly accepted into their world. This belonging felt like a community I wanted to be part of.",
-"author": "Chris Gribble",
-"source": "My First Twelve Days in Nepal (autoethnography), 2023",
-"title": "The roughest roads",
-"kind": "fieldnote",
-"themes": [
-"Community & place",
-"Love & belonging"
-]
-},
-{
-"id": "7df19e9b6b39d03a",
-"text": "When I returned to Australia after 12 days away, I was invited to give a presentation about my trip to our fundraising managers. There were questions about the project's integrity and how the funders understood working with partners. I was surprised at the emotion of my response. The people questioning me aren't significant in my life. I have limited interaction with them, and if they left the organisation, I would never hear from them again. Yet I found what they said very offensive. … I realise this is because this is something that I have given my heart to, and I allowed myself to be vulnerable to the group when giving my presentation.\n\nMy heart has a very tender, soft place for this role and its place in my life. I am prepared to admit that what this role asks me to do is closely tied to my identity.",
-"author": "Chris Gribble",
-"source": "My First Twelve Days in Nepal (autoethnography), 2023",
-"title": "A tender, soft place",
-"kind": "reflection",
-"themes": [
-"Courage & vulnerability",
-"Vocation & calling",
-"True self"
+"Paradox"
 ]
 },
 {
@@ -2115,8 +1957,7 @@
 "kind": "reflection",
 "themes": [
 "Faith & doubt",
-"Humility",
-"Wholeness"
+"Humility"
 ]
 },
 {
@@ -2128,8 +1969,8 @@
 "kind": "reflection",
 "themes": [
 "The path",
-"Faith & doubt",
-"Humility"
+"Humility",
+"Faith & doubt"
 ]
 },
 {
@@ -2141,7 +1982,6 @@
 "kind": "reflection",
 "themes": [
 "Love & belonging",
-"Courage & vulnerability",
 "True self"
 ]
 },
@@ -2154,8 +1994,7 @@
 "kind": "reflection",
 "themes": [
 "Vocation & calling",
-"The path",
-"Love & belonging"
+"Humility"
 ]
 },
 {
@@ -2171,19 +2010,6 @@
 ]
 },
 {
-"id": "aab16568a5309f5c",
-"text": "Some of my visits haven’t been easy. Initially, it meant significant time away from my wife, leaving her to navigate many of the functions I normally do in our home and for the family. It’s meant being alone for significant periods, with no familiar conversations I can have at home. There have also been significant challenges in the relationships with the people we work with.\n\nThis is a different phase of “calling.” It’s not the calling into a new land anymore with the tinge of excitement that comes from launching into something new. I know that spending time in Nepal will mean a lack of deep connections and being viewed as someone with money and a certain amount of power. I have choices that are not available to most Nepalis. My Nepali language, even after a year of study, is still at a very basic level.\n\nBut recently, I have considered that doing anything worthwhile will take a five-year commitment. When I listen to my inner voice telling me this, I know that this will be the reality of living a called life for me at this time.",
-"author": "Chris Gribble",
-"source": "The Cabin Bar (autoethnography), 2024",
-"title": "A different phase of calling",
-"kind": "reflection",
-"themes": [
-"Vocation & calling",
-"The path",
-"Courage & vulnerability"
-]
-},
-{
 "id": "6b0ea3231bd0d660",
 "text": "My vocation is best described as how I choose to love my neighbour. My work is to rescue children who are being exploited. My first task to be loving is to seek out those being exploited; my second is to help them be free of this exploitation. I often comment on how much I love my work, realising that my work satisfaction is partly formed because of the misfortune of others. This seems grossly unfair to those who are exploited.",
 "author": "Chris Gribble",
@@ -2192,20 +2018,7 @@
 "kind": "reflection",
 "themes": [
 "Vocation & calling",
-"Paradox",
-"Humility"
-]
-},
-{
-"id": "f5e790a976eda6b7",
-"text": "My theology is understood in the ways I open myself up to the concept of God - My belief that this world isn’t a closed frame and that there is involvement by God. This is the main filter I used to discern my understanding of reality and actions. The text by which I determine my understanding of God is primarily formed from the Bible. But my understanding of God is multifaceted, informed by my early Christian experiences in communal life, the influence of mentors and transformed by my personal experiences of brokenness. … Theology is formed in the space between what I believe and what I do. In my Christian life, I am reborn into practical theology. The core idea of being made in God’s image ensures that theology becomes a lived practice.",
-"author": "Chris Gribble",
-"source": "Experience of a Rescue (autoethnography), 2024",
-"title": "Between belief and action",
-"kind": "reflection",
-"themes": [
-"Faith & doubt",
-"Wholeness"
+"Paradox"
 ]
 },
 {
@@ -2242,8 +2055,7 @@
 "kind": "reflection",
 "themes": [
 "Faith & doubt",
-"Love & belonging",
-"Paradox"
+"Love & belonging"
 ]
 },
 {
@@ -2255,8 +2067,8 @@
 "kind": "reflection",
 "themes": [
 "Gratitude",
-"Blessing",
-"Joy"
+"Joy",
+"Blessing"
 ],
 "occasion": "birthday"
 },
@@ -2283,8 +2095,8 @@
 "kind": "reflection",
 "themes": [
 "Love & belonging",
-"True self",
-"Prayer"
+"Prayer",
+"True self"
 ]
 },
 {
@@ -2296,21 +2108,7 @@
 "kind": "reflection",
 "themes": [
 "Humility",
-"Simplicity",
-"Faith & doubt"
-]
-},
-{
-"id": "8ce6e2b69cbc72a6",
-"text": "My first job after leaving school was in a factory that made farm implements. I commenced an apprenticeship with that company and began some of the most difficult years of my life.\n\nFor the next four years I faced a situation of ongoing bullying (we didn't have that name for it back then). … What was most tiring was the hatred that was expressed constantly by my immediate boss. For some reason he found the thought of looking at me each day intolerable and he set out to make my life miserable.\n\nThis was my first experience of working in a place with no spirit. In the end it was quite a soulless existence. My weight hovered at around 8 stone. I was constantly tired due to lack of sleep. I saw no hope and no future.\n\nMy spirit was stripped away during these four years of abuse. As soon as I finished my apprenticeship I resigned and got away as far as possible from that workplace.\n\nSince that time I have worked in many workplaces and talked to many people who struggle in their workplace. My understanding of these experiences has led me to seek to find ways to encourage a positive workplace spirit.",
-"author": "Chris Gribble",
-"source": "My Fortress Story, 2013",
-"title": "A place with no spirit",
-"kind": "reflection",
-"themes": [
-"Darkness & suffering",
-"Soul",
-"Hope & renewal"
+"Simplicity"
 ]
 },
 {
@@ -2323,44 +2121,7 @@
 "themes": [
 "Courage & vulnerability",
 "The path",
-"Darkness & suffering"
-]
-},
-{
-"id": "7604ca43f6364109",
-"text": "[When a planned family day at a children's Expo fell through for lack of cash] Instead we took the kids to a park. We had a packed lunch prepared for the day at the Convention centre so it became a picnic day. After lunch we played in the playground and went for a walk. We wasted time together but it was lots of fun.\n\nEven though we felt disappointed about missing the Expo I don’t think the kids felt the slightest bit neglected. In fact they had a great time.\n\nOn our way home my wife April and I talked and reflected on our day. We are not poor, but we don’t have lots of spare cash. Like most families we need to watch how we spend our money. We try to live simply so we can spend time with our kids.",
-"author": "Chris Gribble",
-"source": "My Fortress Story, 2013",
-"title": "Wasted time together",
-"kind": "reflection",
-"themes": [
-"Simplicity",
-"Joy",
-"Love & belonging"
-]
-},
-{
-"id": "ebe5dd82ce66e7a9",
-"text": "[On watching his young son play junior football each week] This I think is the most important lesson I have learned. That going to the footy every week is one of my most valuable inputs I have into my son’s life. When he asks me, “did I run forward this week, Dad”? … He needs to know that he has done exactly what I asked and I love watching his face light up when he is told he did well.",
-"author": "Chris Gribble",
-"source": "My Fortress Story, 2013",
-"title": "Did I run forward?",
-"kind": "reflection",
-"themes": [
-"Blessing",
-"Love & belonging"
-]
-},
-{
-"id": "29ab8104513d45a4",
-"text": "I would describe my relationship with God as mixed. I continue to have no doubts about my faith. But, I continue to have lots of doubts about the church. I have little desire to engage in corporate worship, yet my heart lifts when I experience true community.\n\nI struggle with the conservative versions of Christianity. I think this largely lies in my experiences of its unreasonableness, especially when one considers the irrational perspectives that emerge from its literalisation of Scripture.",
-"author": "Chris Gribble",
-"source": "Personal Motivations (Nepal journal), 2022",
-"title": "My heart lifts",
-"kind": "reflection",
-"themes": [
-"Faith & doubt",
-"Community & place"
+"True self"
 ]
 },
 {
@@ -2371,21 +2132,7 @@
 "title": "On the brink of something new",
 "kind": "fieldnote",
 "themes": [
-"Vocation & calling",
-"Prayer",
-"Joy"
-]
-},
-{
-"id": "c5eb356561ad0a02",
-"text": "A few weeks ago, I visited the church of my childhood. This was not a happy place for my spiritual growth. I witnessed the same people doing the same things they always had done in the church’s name. There was no challenge to their thinking, and the sermon was the same tired old story of us against them. I don’t want to live life like that.",
-"author": "Chris Gribble",
-"source": "Personal Motivations (Nepal journal), 2022",
-"title": "The church of my childhood",
-"kind": "reflection",
-"themes": [
-"Faith & doubt",
-"The path"
+"Vocation & calling"
 ]
 },
 {
@@ -2408,7 +2155,6 @@
 "title": "Good Friday in Nepal",
 "kind": "reflection",
 "themes": [
-"Faith & doubt",
 "Love & belonging",
 "Gratitude"
 ],
@@ -2434,9 +2180,8 @@
 "title": "The heart of God in everyday things",
 "kind": "reflection",
 "themes": [
-"Gratitude",
-"Community & place",
-"Love & belonging"
+"Love & belonging",
+"Gratitude"
 ]
 },
 {
@@ -2448,7 +2193,6 @@
 "kind": "reflection",
 "themes": [
 "Faith & doubt",
-"Paradox",
 "Humility"
 ]
 },
@@ -2466,19 +2210,6 @@
 ]
 },
 {
-"id": "f14a88fc78f30885",
-"text": "Arriving home felt strange. Our familiar house bears the scars of four kids growing up, numerous friends visiting, countless shared meals, robust loud conversations discussing every aspect of human existence, the odd fiery argument (usually with me) and lots of laughter.\n\nBut, now our kids have left or are transitioning to a more independent life, and when returning home, the house feels much quieter. My time away accentuates this new quietness around our home.",
-"author": "Chris Gribble",
-"source": "Nepal Stay Journal, 2023",
-"title": "The quieter house",
-"kind": "reflection",
-"themes": [
-"Love & belonging",
-"Community & place",
-"The path"
-]
-},
-{
 "id": "034450927e5dbd36",
 "text": "I realise that home is a place where I can be completely myself. I don’t have to put on any pretexts and am free to arrange things my way. … But home is that place where I can take off my shoes and, even if my feet smell, know this is ok. It’s that place where I can organise my routine my way. Home is a place of rest where all pretences are irrelevant.\n\nThis also describes my hope for eternity. I am acutely aware of my flaws and how they restrict me, so I long for a place where I can be completely free. Where who I am is matched with what I desire to be.\n\nWhen those inner discrepancies are resolved, I discover the completeness of who I am and what it means for me to bear God’s image.",
 "author": "Chris Gribble",
@@ -2488,7 +2219,7 @@
 "themes": [
 "True self",
 "Hope & renewal",
-"Soul"
+"Wholeness"
 ]
 },
 {
@@ -2513,8 +2244,8 @@
 "kind": "reflection",
 "themes": [
 "Wonder & beauty",
-"Prayer",
-"Creativity & art"
+"Creativity & art",
+"Prayer"
 ]
 },
 {
@@ -2551,8 +2282,7 @@
 "kind": "reflection",
 "themes": [
 "Prayer",
-"Darkness & suffering",
-"Blessing"
+"Darkness & suffering"
 ]
 },
 {
@@ -2564,7 +2294,6 @@
 "kind": "reflection",
 "themes": [
 "Humility",
-"Soul",
 "Paradox"
 ]
 },
@@ -2577,7 +2306,6 @@
 "kind": "reflection",
 "themes": [
 "Hope & renewal",
-"Faith & doubt",
 "Darkness & suffering"
 ],
 "occasion": "goodfriday"
@@ -2585,10 +2313,12 @@
 ],
 "retired": [
 "019070effcaa154d",
+"022720ab5f5c6aeb",
 "051cc883c56faf46",
 "0a526ba30f66a063",
 "0ce55510e7644c3f",
 "0d80df6da8ef1ebf",
+"0f34b92b3006a926",
 "106b426ae68926d7",
 "10de511ae96749a1",
 "10f59b7c1633dd1a",
@@ -2600,6 +2330,7 @@
 "15945756bb7dd396",
 "19847e10c48d8eed",
 "1a079a8a61d9f87d",
+"1a1e5941accc79a1",
 "1b900a98fd944f8f",
 "1bab9e2dce560a68",
 "1c343da75e75a485",
@@ -2614,6 +2345,7 @@
 "2855e0f3fa3142d2",
 "292cfa199bb096f8",
 "29a6fcecafe4266a",
+"29ab8104513d45a4",
 "2aab2f0bd59ffd86",
 "2ac8bf6e58ddfdfa",
 "2b0180f6b69b98a1",
@@ -2632,6 +2364,7 @@
 "3617907c7a15b9a9",
 "37511c619900995f",
 "37aaf8ee49f8e0de",
+"37f95f95b3cffbda",
 "3826559b13465d90",
 "387271b2f17e5445",
 "39075dd65313a0e7",
@@ -2641,7 +2374,9 @@
 "3dc996e35df60a73",
 "3dcec9267e3505e2",
 "3dd0143c48117ab0",
+"40947a50d7cbb496",
 "40d1871a6aa47631",
+"4212056ab69250b9",
 "43a02c6bfff0e8bc",
 "4488ab526cce2a7c",
 "45842aeb0632e9c1",
@@ -2653,7 +2388,6 @@
 "4c15f8ce21728954",
 "4d6c67b1ff712e14",
 "4d8f5bb7dbfe5acc",
-"4daa1c142073797c",
 "4df1989323ca8e70",
 "4f0fe2dcdc0bc2fb",
 "4f5415b81da3e9de",
@@ -2662,10 +2396,13 @@
 "51af9ad9312ef6ec",
 "53d6b8d83d6382dc",
 "53f91fed81032eba",
+"54006b956bfffd32",
 "54ab659b484e27b0",
+"5515e425cc0e606e",
 "55628be999dafe1c",
 "567cfbda7ae9eff8",
 "570a54809b2fa22a",
+"5729d28aee19deed",
 "58ecfd238f339df9",
 "58efa5ebaf1cef7b",
 "59d10fca1bd68dd8",
@@ -2688,6 +2425,7 @@
 "650ada820c4a878f",
 "662bccd72661b2fb",
 "66508fcae318b10d",
+"67ce03e5df36aff1",
 "68d599753b62c751",
 "68f859f73bb9338b",
 "6a50d83ce1f3415a",
@@ -2703,11 +2441,11 @@
 "70edaba0ceb0c338",
 "727d0974e995a0e3",
 "7291aff4c7d55e8e",
-"73956e46cb18454f",
 "748b504ae703dc06",
 "750ad8008728a1c5",
 "7572500527a61e9b",
 "758ac331dae3cc89",
+"7604ca43f6364109",
 "7648f95b81a7a6ad",
 "764b31ead6823171",
 "776c27e79ae818a4",
@@ -2715,6 +2453,7 @@
 "7a0f131582a6740a",
 "7a54dcbb60b9d56c",
 "7a9aba69b72c8a3a",
+"7df19e9b6b39d03a",
 "7df9f6ffacd8b941",
 "7f5c2a0569b5e5a4",
 "802513fdcd13033a",
@@ -2722,6 +2461,7 @@
 "82e32a6a94f03842",
 "8479c3af5872f97c",
 "8485a676b5974e0f",
+"854876f93b866757",
 "859c23c90012489f",
 "867572907a31872e",
 "877ee9446334eb38",
@@ -2730,6 +2470,7 @@
 "8a28f204d87c7b3b",
 "8c7066ced3004dda",
 "8cc44d8e18abf5e7",
+"8ce6e2b69cbc72a6",
 "8d2ef30c09a7bcaa",
 "8daafc9f4b34bd4d",
 "8debf955e27cbd77",
@@ -2752,12 +2493,18 @@
 "9c5fbb30b7559ffa",
 "9c93606f9a7d2bb3",
 "9ce1762c53eebe2b",
+"9f3e3ecaeddb6a67",
+"9f914da4f0fda41a",
+"a1163e4e34e1bc48",
 "a24219cc857eadb3",
+"a3675965b63e7765",
 "a5326107a48328d5",
 "a64162f1cf4acaee",
 "a9e323fcfc1dc5e7",
+"aab16568a5309f5c",
 "abdcafd4c6372918",
 "ad07cd2ade8cda28",
+"aea20942b6696445",
 "af6ab1bb6b4c897c",
 "b0b58ec791b91c27",
 "b0df61554da0f70f",
@@ -2777,12 +2524,14 @@
 "bab69ae78b044f64",
 "bd0e6112df41ea20",
 "bd150cc6cdb6f6d3",
+"bd2141d86d760d6c",
 "c0ab3897510b40b2",
 "c2ceb6a4b4b6af30",
 "c3043bd66d2f04d9",
 "c34b00b532e1457e",
 "c3cc42d8729bd9dd",
 "c3dee60c18d660e4",
+"c5eb356561ad0a02",
 "c6462febb37cf31e",
 "c6524f465b483a78",
 "c6e14197b6d41d09",
@@ -2796,6 +2545,7 @@
 "ce301c546fd94e9b",
 "cf44db0c522b628c",
 "cf49c7c010c6f7b0",
+"d0178584315f8ff4",
 "d0ed16b73600da6a",
 "d203fb934d51a5c5",
 "d20c2deb6fa39820",
@@ -2819,8 +2569,10 @@
 "de8d24c318680db3",
 "df0e67cfa59eb14d",
 "e1dfe30db0c4dd83",
+"e22ad9a7d2f6e341",
 "e33c2da11786ba5a",
 "e3bbf3096edcf08b",
+"e3e032a66490fc37",
 "e4e1ff137d88397e",
 "e5a18ec45c982119",
 "e70b4d5f77537942",
@@ -2829,19 +2581,24 @@
 "e80d41858a2d5694",
 "e87aeab6bb2237ec",
 "e906529e5499440f",
+"e9aff4c5b3da28d4",
 "eabe7259d058c25d",
 "eb3b6d8642962f33",
+"ebe5dd82ce66e7a9",
 "ebf663dd6a20166c",
 "ecd477150a3c2c85",
 "ef6de017573ea272",
 "efd6f9290b9b5f01",
 "f061234ad766a1d0",
+"f14a88fc78f30885",
 "f161c005b7e6665b",
+"f1da972c5ee0b966",
 "f360ca6a364187b0",
 "f37859338c7e8469",
 "f3a3102fb8887e7c",
 "f3c743270add324e",
 "f4bf31910ea69658",
+"f5e790a976eda6b7",
 "f641aa62e2153ba4",
 "f6ba5ba9b78caf20",
 "f822c6421cc35cbc",

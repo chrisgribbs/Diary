@@ -1614,7 +1614,7 @@ const occasionsOn = iso => (window.WellWriteSeasons && window.WellWriteSeasons.o
 const fitsOccasion = (q, occ) => !q.occasion || q.occasion === 'birthday' || occ.has(q.occasion);
 const occasionBoost = (q, occ) => !q.occasion || !occ.has(q.occasion) ? 0 : window.WellWriteSeasons.DAY_OCCASIONS.has(q.occasion) ? 100000 : 5000;
 /** Picks from a pool, round by round: best fit first among those not yet used this round. */
-function roundRobin(pool, salt) {
+function roundRobin(pool, salt, { once = false } = {}) {
   const used = new Set();
   const pick = (season, occ, avoid) => {
     let best = null, bestScore = -Infinity;
@@ -1630,6 +1630,7 @@ function roundRobin(pool, salt) {
     let best = pick(season, occ, avoid);
     // When everything that fits today has had its turn, a new round begins — or early, if all that's left is
     // yesterday's writer (their remaining pieces simply come early in the next round).
+    if (once && !best) return null;   // each piece once a year, no second round
     if (!best || (avoid(best) >= 200 && !best.occasion)) { used.clear(); best = pick(season, occ, avoid) || best; }
     if (best) used.add(best.id);
     return best;
@@ -1644,8 +1645,7 @@ function yearPlan(year) {
   const isLong = q => ownish(q) && ['', 'reflection', 'fieldnote', 'psalm', 'poem'].includes(q.kind || '') && !isReading(q);
   const longs = state.quotes.filter(isLong);
   const nextReflection = roundRobin(longs.length ? longs : state.quotes.filter(q => ownish(q) && ['', 'reflection', 'fieldnote', 'psalm', 'poem'].includes(q.kind || '')), 'r' + year);
-  const nextPrayer = roundRobin(state.quotes.filter(q => ownish(q) && q.kind === 'prayer'), 'p' + year);
-  const nextBlessing = roundRobin(state.quotes.filter(q => ownish(q) && q.kind === 'blessing'), 'b' + year);
+  const weekSeasons = new Map();   // week key → { season, occasions, number }
   const recent = [];
   for (let d = `${year}-01-01`; d.startsWith(String(year)); d = addDays(d, 1)) {
     const s = seasonOn(d);
@@ -1659,7 +1659,21 @@ function yearPlan(year) {
       // a week's own occasions: everything that falls on any of its days
       const wocc = new Set();
       for (let i = wk.firstDay - s.dayIndex; i <= wk.lastDay - s.dayIndex; i++) for (const o of occasionsOn(addDays(d, i))) wocc.add(o);
-      weeks.set(wkKey, { reflection: nextReflection(s, undefined, wocc), prayer: wk.number % 2 === 0 ? nextPrayer(s, undefined, wocc) : null, blessing: wk.number % 2 === 1 ? nextBlessing(s, undefined, wocc) : null });
+      weeks.set(wkKey, { reflection: nextReflection(s, undefined, wocc), prayer: null, blessing: null });
+      weekSeasons.set(wkKey, { season: s, occ: wocc });
+    }
+  }
+  // Your own prayers and blessings: each once a year, in the week that suits it best; the book's fill the other weeks.
+  for (const [kind, slot] of [['prayer', 'prayer'], ['blessing', 'blessing']]) {
+    const taken = new Set();
+    for (const q of state.quotes.filter(x => ownish(x) && x.kind === kind)) {
+      let best = null, bestScore = -Infinity;
+      for (const [wkKey, w] of weekSeasons) {
+        if (taken.has(wkKey) || !fitsOccasion(q, w.occ)) continue;
+        const sc = occasionBoost(q, w.occ) + themeScore(q, w.season) * 10 + (strHash(q.id + wkKey + year) % 1000) / 1000;
+        if (sc > bestScore) { best = wkKey; bestScore = sc; }
+      }
+      if (best) { taken.add(best); weeks.get(best)[slot] = q; }
     }
   }
   const out = { quotes, weeks };
