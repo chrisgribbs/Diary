@@ -778,3 +778,69 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .ae-none { padding: 30px 0; }
 @media (max-width: 760px) { .ae-filters { grid-template-columns: 1fr 1fr; } .ae-filters input { grid-column: 1 / -1; } }
 .ap-top { max-width: 36em; margin: 0 auto; }
+
+/* the Bible tab: Read · Search · Plans */
+.bv-tabs { display: flex; gap: 4px; justify-content: center; padding: 14px 0 6px; position: sticky; top: 0; background: var(--paper); z-index: 3; }
+.bv-tab { all: unset; cursor: pointer; padding: 7px 16px; border-radius: 999px; font-size: 13.5px; color: var(--pencil); }
+.bv-tab:hover { color: var(--ink); }
+.bv-tab.on { background: var(--ink); color: var(--paper); font-weight: 600; }
+.bv-tab:focus-visible { outline: 2px solid var(--foil); }
+/* reader */
+.rd-bar { display: flex; align-items: center; gap: 6px; max-width: 38em; margin: 6px auto 0; padding: 8px 0; position: sticky; top: 46px; background: var(--paper); z-index: 2; border-bottom: 1px solid color-mix(in srgb, var(--pencil) 18%, transparent); }
+.rd-arrow { all: unset; cursor: pointer; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; font-size: 22px; color: var(--ink); }
+.rd-arrow:hover:not(:disabled) { background: color-mix(in srgb, var(--pencil) 12%, transparent); }
+.rd-arrow:disabled { opacity: .3; cursor: default; }
+.rd-ref { all: unset; cursor: pointer; font: 600 17px/1 var(--serif); padding: 8px 12px; border-radius: 8px; color: var(--ink); }
+.rd-ref:hover, .rd-ref:focus-visible { background: color-mix(in srgb, var(--foil) 16%, transparent); }
+.rd-ref .chev { color: var(--pencil); font-size: 12px; }
+.rd-gap { flex: 1; }
+.rd-find { padding: 6px 12px; font-size: 13px; }
+.rd-text { max-width: 34em; margin: 18px auto 0; font: calc(var(--write-size) * 1.05)/1.85 var(--serif); color: var(--ink); }
+.rd-title { font: 600 30px/1.2 var(--serif); text-align: center; margin: 4px 0 18px; }
+.rd-head { font: italic 600 15px/1.4 var(--serif); color: var(--pencil); margin: 22px 0 6px; }
+.rd-para { margin: 0 0 1em; text-indent: 1.2em; }
+.rd-poem { margin: 0 0 1em; }
+.rd-line { display: block; padding-left: 2.2em; text-indent: -1.4em; }
+.rd-v { cursor: pointer; border-radius: 3px; transition: background .15s; }
+.rd-v sup { font: 600 .62em/1 var(--sans, sans-serif); color: var(--ribbon); margin-right: 3px; vertical-align: .55em; }
+.rd-v:hover { background: color-mix(in srgb, var(--foil) 10%, transparent); }
+.rd-v.sel { background: color-mix(in srgb, var(--foil) 28%, transparent); text-decoration: underline dotted color-mix(in srgb, var(--ink) 40%, transparent); text-underline-offset: 4px; }
+.rd-v.flash { animation: rdflash 1.6s ease-out; }
+@keyframes rdflash { from { background: color-mix(in srgb, var(--foil) 55%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .rd-v.flash { animation: none; } }
+.rd-foot { max-width: 34em; margin: 26px auto 8px; display: flex; justify-content: space-between; gap: 10px; }
+.bv-read .rv-note { max-width: 34em; margin: 10px auto 70px; }
+.rd-selbar { position: sticky; bottom: 14px; margin: 0 auto; max-width: 34em; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 14px; border-radius: 12px;
+  background: var(--ink); color: var(--paper); box-shadow: 0 10px 30px rgba(0,0,0,.25); z-index: 4; }
+.rd-selbar b { margin-right: auto; font-family: var(--serif); font-size: 16px; }
+.rd-selbar .btn-ink { background: var(--foil); color: #1d1606; }
+.rd-selbar .btn-plain { background: transparent; color: var(--paper); border-color: color-mix(in srgb, var(--paper) 40%, transparent); }
+.rd-selbar .btn-link { color: color-mix(in srgb, var(--paper) 75%, transparent); }
+/* book picker */
+.bp-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+.bp-head h2 { margin: 0; }
+.bp-head input { flex: 1; min-width: 180px; }
+.bp-books { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.bp-book, .bp-ch { all: unset; cursor: pointer; padding: 8px 10px; border-radius: 7px; background: color-mix(in srgb, var(--pencil) 8%, transparent); font-size: 14px; color: var(--ink); text-align: left; }
+.bp-ch { text-align: center; font-variant-numeric: tabular-nums; }
+.bp-book:hover, .bp-ch:hover, .bp-book:focus-visible, .bp-ch:focus-visible { background: color-mix(in srgb, var(--foil) 22%, transparent); }
+.bp-book.on, .bp-ch.on { background: var(--ink); color: var(--paper); }
+.bp-chapters { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+.bp-crumb { display: flex; align-items: baseline; gap: 14px; margin: 8px 0 10px; }
+.bp-crumb h3 { margin: 0 !important; }
+.bp-body { max-height: 60vh; overflow-y: auto; padding-right: 4px; }
+/* search */
+.bs-bar { display: flex; gap: 10px; align-items: center; max-width: 38em; margin: 10px auto 0; position: sticky; top: 46px; background: var(--paper); padding: 8px 0; z-index: 2; }
+.bs-bar input { flex: 1; min-width: 0; font-size: 16px; padding: 11px 14px; border-radius: 10px; }
+.bs-results { max-width: 38em; margin: 6px auto 60px; display: grid; gap: 2px; }
+.bs-count, .bs-hint { font-size: 13px; color: var(--pencil); margin: 8px 2px; }
+.bs-ideas { display: flex; flex-wrap: wrap; gap: 6px; }
+.bs-item { all: unset; cursor: pointer; display: grid; gap: 3px; padding: 11px 12px; border-radius: 8px; font: 16px/1.55 var(--serif); color: var(--ink); }
+.bs-item b { font: 600 13px/1.2 var(--sans, sans-serif); color: var(--ribbon); }
+.bs-item mark { background: color-mix(in srgb, var(--foil) 35%, transparent); color: inherit; border-radius: 2px; }
+.bs-item:hover, .bs-item:focus-visible { background: color-mix(in srgb, var(--pencil) 9%, transparent); }
+.bs-goto { all: unset; cursor: pointer; display: flex; gap: 10px; align-items: baseline; padding: 14px 16px; border-radius: 10px; background: color-mix(in srgb, var(--foil) 16%, transparent); margin: 6px 0; }
+.bs-goto span:first-child { font-size: 13px; color: var(--pencil); }
+.bs-goto b { font: 600 18px/1.2 var(--serif); color: var(--ink); }
+.bs-goto .chev { margin-left: auto; color: var(--pencil); font-size: 20px; }
+.bs-more { justify-self: center; margin-top: 10px; }

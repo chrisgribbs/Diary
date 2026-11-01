@@ -267,6 +267,26 @@ handle('bible:verseOfDay', async (dayNumber, translation) => {
   const i = ((dayNumber % bible.VERSES.length) + bible.VERSES.length) % bible.VERSES.length;
   return verseIn(bible.VERSES[i], translation);
 });
+// The reader: books, a chapter in any version, references, search.
+handle('bible:books', () => bible.books());
+handle('bible:parseRef', text => bible.parseRef(String(text || '').slice(0, 60)));
+handle('bible:chapter', async (translation, bookIndex, chapterNumber) => {
+  const id = apiId(translation), b = +bookIndex, c = +chapterNumber;
+  const base = bible.chapter('web', b, c);
+  if (!base) return null;
+  if (!id) return bible.chapter(builtinTr(translation), b, c);
+  try {
+    const ch = await apiBible.chapter(id, b, c);
+    const v = apiBible.versions().find(x => x.id === id) || {};
+    return { ...base, translation: v.abbr || v.name || id, copyright: ch.copyright, blocks: ch.blocks };
+  } catch (e) { return { ...base, fallback: e.message }; }
+});
+handle('bible:search', async (translation, query, offset = 0) => {
+  const id = apiId(translation);
+  if (!id) return bible.search(builtinTr(translation), query, 60, +offset || 0);
+  try { return await apiBible.search(id, query, 60, +offset || 0); }
+  catch (e) { return { ...bible.search('web', query, 60, +offset || 0), fallback: e.message }; }
+});
 handle('bible:verses', (refs, translation) => Promise.all((Array.isArray(refs) ? refs.slice(0, 20) : []).map(r => verseIn(String(r), translation))));
 // ---------- WordPress ----------
 const wordpress = new WordPress({

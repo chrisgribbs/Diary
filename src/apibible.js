@@ -171,6 +171,20 @@ class ApiBible {
     this._fums(c.meta);
     return c;
   }
+
+  /** Search a version through API.Bible: { total, results: [{ bookIndex, book, chapter, verse, ref, text }] }. */
+  async search(bibleId, query, limit = 60, offset = 0) {
+    if (!ID_RE.test(bibleId)) throw new Error('Unknown Bible version');
+    const j = await this._get(`/bibles/${bibleId}/search?query=${encodeURIComponent(String(query).slice(0, 200))}&limit=${Math.min(100, limit)}&offset=${offset}&sort=relevance&fums-version=3`);
+    this._fums(j.meta);
+    const d = j.data || {};
+    const results = (d.verses || []).map(v => {
+      const [code, c, n] = String(v.id || '').split('.');
+      const b = CODES.indexOf(code);
+      return b < 0 ? null : { bookIndex: b, book: BOOKS[b].name, chapter: +c, verse: +n, ref: v.reference || `${BOOKS[b].name} ${c}:${n}`, text: String(v.text || '').replace(/<[^>]+>/g, '').trim() };
+    }).filter(Boolean);
+    return { total: d.total || results.length, results, translation: this._ver(bibleId).abbr || this._ver(bibleId).name };
+  }
 }
 const cleanCopyright = s => String(s || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 600);
 

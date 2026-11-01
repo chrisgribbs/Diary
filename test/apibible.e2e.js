@@ -78,7 +78,7 @@ server.listen(0, '127.0.0.1', () => {
     assert.match(await text('#quoteSlot .quote-card.verse .q-copy'), /Test Society/);
 
     // a reading plan in TSV
-    await js(`await saveBible({ plan: 'gospels30', translation: 'api:${ID}', start: todayISO(), done: [] }); state.bibleDay = null; setMode('bible');`);
+    await js(`await saveBible({ plan: 'gospels30', translation: 'api:${ID}', start: todayISO(), done: [] }); state.bibleDay = null; state.bibleTab = 'plan'; setMode('bible');`);
     assert.ok(await until(`document.querySelector('#bibleView .passage') && document.querySelector('#bibleView .passage').innerText.includes('in TSV')`), 'reading from API.Bible');
     assert.match(await text('#bibleView'), /Test Society/);
     await shot('a5-reading-tsv');

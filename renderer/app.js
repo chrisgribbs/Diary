@@ -1877,7 +1877,7 @@ function verseCard(v, iso, where) {
     v.copyright ? el('p', { class: 'q-copy' }, v.copyright) : null,
     el('div', { class: 'q-actions' },
       btn('Write about this', () => writeAboutQuote({ text: v.text, author: v.ref, source: v.translation }, iso), 'q-btn primary'),
-      btn(state.bible && state.bible.state.plan ? 'Today’s reading' : 'Reading plans', () => setMode('bible')),
+      btn(state.bible && state.bible.state.plan ? 'Today’s reading' : 'Reading plans', () => { state.bibleTab = 'plan'; setMode('bible'); }),
       btn('Hide today', () => { hideQuoteFor('v' + iso); refreshQuote(); }, 'q-btn subtle')));
 }
 
@@ -2438,8 +2438,193 @@ function renderPassage(ch) {
 }
 
 let bibleToken = 0;
-async function renderBibleView() {
-  const box = $('#bibleView');
+/* ---------- the Bible tab: Read · Search · Plans ---------- */
+const BIBLE_TABS = [['read', 'Read'], ['search', 'Search'], ['plan', 'Plans']];
+function renderBibleView(opts = {}) {
+  const view = $('#bibleView');
+  if (!state.bibleTab) state.bibleTab = 'read';
+  const bar = el('div', { class: 'bv-tabs', role: 'tablist', 'aria-label': 'Bible' }, ...BIBLE_TABS.map(([k, label]) =>
+    el('button', { type: 'button', role: 'tab', class: 'bv-tab' + (state.bibleTab === k ? ' on' : ''), 'aria-selected': String(state.bibleTab === k), 'data-tab': k,
+      onclick: () => { state.bibleTab = k; renderBibleView(); } }, label)));
+  const body = el('div', { id: 'bibleBody', class: 'bv-body bv-' + state.bibleTab });
+  view.replaceChildren(bar, body);
+  if (state.bibleTab === 'read') return renderReader(body, opts);
+  if (state.bibleTab === 'search') return renderBibleSearch(body);
+  return renderPlanView(body);
+}
+
+// --- Read: any book and chapter, verse by verse
+let bibleBooksList = null;
+const readerStart = () => { try { const r = JSON.parse(localStorage.getItem('bibleRef') || 'null'); if (r && Number.isInteger(r.b) && Number.isInteger(r.c)) return r; } catch {} return { b: 18, c: 23 }; };
+function setReaderPos(b, c) { state.readerPos = { b, c }; try { localStorage.setItem('bibleRef', JSON.stringify(state.readerPos)); } catch {} }
+const bookShort = name => name.replace(/^Psalms$/, 'Psalm');
+
+async function renderReader(body, { verse = 0, to = 0 } = {}) {
+  const token = ++bibleToken;
+  const pos = state.readerPos || (state.readerPos = readerStart());
+  try { if (!bibleBooksList) bibleBooksList = await api.bibleBooks(); } catch { body.replaceChildren(el('p', { class: 'rv-note' }, 'The Bible could not be loaded.')); return; }
+  const ch = await api.bibleChapter(bibleTr(), pos.b, pos.c).catch(() => null);
+  if (token !== bibleToken) return;
+  if (!ch) { setReaderPos(18, 23); return renderReader(body); }
+  const books = bibleBooksList;
+  const prev = pos.c > 1 ? { b: pos.b, c: pos.c - 1 } : pos.b > 0 ? { b: pos.b - 1, c: books[pos.b - 1].chapters } : null;
+  const next = pos.c < books[pos.b].chapters ? { b: pos.b, c: pos.c + 1 } : pos.b < books.length - 1 ? { b: pos.b + 1, c: 1 } : null;
+  const go = p => { setReaderPos(p.b, p.c); renderBibleView(); $('#bibleView').scrollTop = 0; };
+  const label = p => `${bookShort(books[p.b].name)} ${p.c}`;
+
+  // verses, each tappable
+  const selected = new Set();
+  const text = el('article', { class: 'rd-text' });
+  text.append(el('h2', { class: 'rd-title' }, label(pos)));
+  const verseText = new Map();
+  for (const block of ch.blocks) {
+    if (block[0] === 'h') { text.append(el('p', { class: 'rd-head' }, block[1])); continue; }
+    if (block[0] === 'p') {
+      const para = el('p', { class: 'rd-para' });
+      for (const [v, t] of block[1]) { para.append(el('span', { class: 'rd-v', 'data-v': v }, el('sup', {}, String(v)), t + ' ')); verseText.set(v, (verseText.has(v) ? verseText.get(v) + ' ' : '') + t); }
+      text.append(para);
+    } else {
+      const poem = el('div', { class: 'rd-poem' });
+      let last = null;
+      for (const [v, t] of block[1]) {
+        poem.append(el('span', { class: 'rd-line rd-v', 'data-v': v }, v !== last ? el('sup', {}, String(v)) : null, t));
+        verseText.set(v, (verseText.has(v) ? verseText.get(v) + '\n' : '') + t); last = v;
+      }
+      text.append(poem);
+    }
+  }
+  const selBar = el('div', { class: 'rd-selbar', hidden: true });
+  const refOf = vs => {
+    const runs = [];
+    for (const v of vs) { const r = runs[runs.length - 1]; if (r && v === r[1] + 1) r[1] = v; else runs.push([v, v]); }
+    return `${label(pos)}:${runs.map(([a, b]) => (a === b ? a : `${a}–${b}`)).join(', ')}`;
+  };
+  const drawSel = () => {
+    for (const n of text.querySelectorAll('.rd-v')) n.classList.toggle('sel', selected.has(+n.dataset.v));
+    const vs = [...selected].sort((a, b) => a - b);
+    selBar.hidden = !vs.length;
+    if (!vs.length) return;
+    const ref = refOf(vs), words = vs.map(v => verseText.get(v)).join(' ');
+    selBar.replaceChildren(el('b', {}, ref),
+      el('button', { type: 'button', class: 'btn-ink', onclick: () => writeAboutQuote({ text: words, author: ref, source: ch.translation }, todayISO()) }, 'Write about this'),
+      el('button', { type: 'button', class: 'btn-plain', onclick: async () => {
+        try { await navigator.clipboard.writeText(`${words}\n— ${ref} (${ch.translation})`); toast('Copied'); } catch { toast('Couldn’t copy'); }
+      } }, 'Copy'),
+      el('button', { type: 'button', class: 'btn-link', onclick: () => { selected.clear(); drawSel(); } }, 'Clear'));
+  };
+  text.addEventListener('click', e => {
+    const n = e.target.closest('.rd-v'); if (!n) return;
+    const v = +n.dataset.v; selected.has(v) ? selected.delete(v) : selected.add(v); drawSel();
+  });
+
+  body.replaceChildren(...[
+    el('div', { class: 'rd-bar' },
+      el('button', { type: 'button', class: 'rd-arrow', title: prev ? label(prev) : '', disabled: !prev, onclick: () => prev && go(prev) }, '‹'),
+      el('button', { type: 'button', class: 'rd-ref', id: 'rdRef', onclick: () => bookPicker(pos, go) }, label(pos), el('span', { class: 'chev' }, ' ▾')),
+      el('button', { type: 'button', class: 'rd-arrow', title: next ? label(next) : '', disabled: !next, onclick: () => next && go(next) }, '›'),
+      el('span', { class: 'rd-gap' }),
+      versionButton(ch.translation),
+      el('button', { type: 'button', class: 'btn-plain rd-find', onclick: () => { state.bibleTab = 'search'; renderBibleView(); } }, 'Search')),
+    ch.fallback ? el('p', { class: 'rv-note warn' }, `Couldn’t reach API.Bible (${ch.fallback}), so this is the World English Bible.`) : null,
+    text,
+    el('div', { class: 'rd-foot' },
+      prev ? el('button', { type: 'button', class: 'btn-plain', onclick: () => go(prev) }, '‹ ' + label(prev)) : el('span'),
+      next ? el('button', { type: 'button', class: 'btn-plain', onclick: () => go(next) }, label(next) + ' ›') : el('span')),
+    el('p', { class: 'rv-note' }, ch.copyright || `${ch.translation}, public domain. Tap a verse to copy it or write about it.`),
+    selBar,
+  ].filter(Boolean));
+  if (verse) {
+    for (let v = verse; v <= (to || verse); v++) selected.add(v);
+    drawSel();
+    const n = text.querySelector(`.rd-v[data-v="${verse}"]`);
+    if (n) requestAnimationFrame(() => { n.scrollIntoView({ block: 'center' }); n.classList.add('flash'); });
+  }
+}
+
+/** Choose a book, then a chapter. */
+function bookPicker(pos, go) {
+  const books = bibleBooksList || [];
+  return openDialog((f, done) => {
+    f.classList.add('wide', 'book-picker');
+    const find = el('input', { type: 'search', id: 'bpFind', placeholder: 'Find a book', 'aria-label': 'Find a book' });
+    const grid = el('div', { class: 'bp-body' });
+    const showBooks = () => {
+      const q = find.value.trim().toLowerCase();
+      const sec = (t, title) => {
+        const list = books.map((b, i) => ({ ...b, i })).filter(b => b.testament === t && (!q || b.name.toLowerCase().includes(q)));
+        return list.length ? [el('h3', {}, title), el('div', { class: 'bp-books' }, ...list.map(b =>
+          el('button', { type: 'button', class: 'bp-book' + (b.i === pos.b ? ' on' : ''), onclick: () => showChapters(b.i) }, b.name)))] : [];
+      };
+      grid.replaceChildren(...sec('ot', 'Old Testament'), ...sec('nt', 'New Testament'));
+    };
+    const showChapters = bi => {
+      const b = books[bi];
+      if (b.chapters === 1) { done(); go({ b: bi, c: 1 }); return; }
+      grid.replaceChildren(
+        el('div', { class: 'bp-crumb' }, el('button', { type: 'button', class: 'btn-link', onclick: showBooks }, '‹ All books'), el('h3', {}, b.name)),
+        el('div', { class: 'bp-chapters' }, ...Array.from({ length: b.chapters }, (_, k) =>
+          el('button', { type: 'button', class: 'bp-ch' + (bi === pos.b && k + 1 === pos.c ? ' on' : ''), onclick: () => { done(); go({ b: bi, c: k + 1 }); } }, String(k + 1)))));
+    };
+    find.addEventListener('input', showBooks);
+    find.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const first = grid.querySelector('.bp-book'); if (first) first.click(); } });
+    f.append(el('div', { class: 'bp-head' }, el('h2', {}, 'Choose a passage'), find), grid,
+      el('div', { class: 'btns' }, el('button', { type: 'button', class: 'btn-plain', onclick: () => done() }, 'Close')));
+    showBooks();
+    setTimeout(() => find.focus());
+  });
+}
+
+// --- Search: words, phrases in quotes, or a reference
+const SEARCH_IDEAS = ['be still', 'peace', 'do not be afraid', '"love one another"', 'rest', 'Psalm 23', 'John 15', 'Romans 8:28'];
+function renderBibleSearch(body) {
+  const input = el('input', { type: 'search', id: 'bsFind', placeholder: 'Search words, “a phrase”, or a reference like Jn 3:16', 'aria-label': 'Search the Bible', value: state.bibleQuery || '' });
+  const out = el('div', { class: 'bs-results' });
+  let offset = 0, timer = 0, seq = 0;
+  const open = (b, c, v, to) => { setReaderPos(b, c); state.bibleTab = 'read'; renderBibleView({ verse: v, to }); };
+  const mark = (text, q) => {
+    const words = q.replace(/"/g, ' ').split(/\s+/).filter(w => w.length > 1).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const span = el('span');
+    if (!words.length) { span.textContent = text; return span; }
+    const re = new RegExp(`(\\b(?:${words.map(w => (w.length < 4 ? `${w}\\b` : `${w}[a-z’']*`)).join('|')}))`, 'gi');
+    let last = 0;
+    for (const m of text.matchAll(re)) { span.append(text.slice(last, m.index), el('mark', {}, m[0])); last = m.index + m[0].length; }
+    span.append(text.slice(last));
+    return span;
+  };
+  const run = async (more = false) => {
+    const q = input.value.trim();
+    state.bibleQuery = q;
+    const mine = ++seq;
+    if (!more) offset = 0;
+    if (q.length < 2) {
+      out.replaceChildren(el('p', { class: 'bs-hint' }, 'Try:'), el('div', { class: 'bs-ideas' }, ...SEARCH_IDEAS.map(t =>
+        el('button', { type: 'button', class: 'theme-chip', onclick: () => { input.value = t; run(); } }, t))));
+      return;
+    }
+    const [ref, r] = await Promise.all([api.bibleParseRef(q).catch(() => null), api.bibleSearch(bibleTr(), q, offset).catch(e => ({ total: 0, results: [], error: e.message }))]);
+    if (mine !== seq) return;
+    const books = bibleBooksList || (bibleBooksList = await api.bibleBooks());
+    const items = r.results.map(x => el('button', { type: 'button', class: 'bs-item', onclick: () => open(x.bookIndex, x.chapter, x.verse) },
+      el('b', {}, x.ref), mark(x.text, q)));
+    if (more) { out.querySelector('.bs-more')?.remove(); out.append(...items); }
+    else out.replaceChildren(...[
+      ref ? el('button', { type: 'button', class: 'bs-goto', onclick: () => open(ref.book, ref.chapter, ref.verse, ref.to) },
+        el('span', {}, 'Go to'), el('b', {}, `${bookShort(books[ref.book].name)} ${ref.chapter}${ref.verse ? ':' + ref.verse + (ref.to ? '–' + ref.to : '') : ''}`), el('span', { class: 'chev' }, '›')) : null,
+      r.fallback ? el('p', { class: 'rv-note warn' }, `Couldn’t search API.Bible (${r.fallback}); these results are from the World English Bible.`) : null,
+      el('p', { class: 'bs-count' }, r.total ? `${r.total.toLocaleString()} verse${r.total === 1 ? '' : 's'}${r.translation ? ' in the ' + r.translation : ''}` : (ref ? '' : `No verses found for “${q}”. Try fewer words.`)),
+      ...items,
+    ].filter(Boolean));
+    offset += r.results.length;
+    if (offset < r.total) out.append(el('button', { type: 'button', class: 'btn-plain bs-more', onclick: () => run(true) }, `Show more (${(r.total - offset).toLocaleString()} left)`));
+  };
+  input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => run(), 250); });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); run(); } });
+  body.replaceChildren(el('div', { class: 'bs-bar' }, input, versionButton(((state.bible && state.bible.translations[bibleTr()]) || 'WEB').replace(/^.*\((.+)\)$/, '$1').replace(/^World English Bible$/, 'WEB').replace(/^King James Version$/, 'KJV'))), out);
+  run();
+  setTimeout(() => input.focus());
+}
+
+async function renderPlanView(box) {
   const b = state.bible;
   const token = ++bibleToken;
   if (!b) { box.replaceChildren(el('p', { class: 'rv-note' }, 'The Bible could not be loaded.')); return; }
@@ -2976,7 +3161,7 @@ function openSettings(section) {
 
       panel('bible', 'Bible', 'The version used for the verse of the day, the weekly pages and reading plans. You can also switch version from the ▾ under any verse.',
         bibleVersionControls(() => openSettings('bible')),
-        row('Reading plans', 'Read through the Bible, the New Testament, the Gospels or the Psalms.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); setMode('bible'); } }, 'Open reading plans'))),
+        row('Reading plans', 'Read through the Bible, the New Testament, the Gospels or the Psalms.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); state.bibleTab = 'plan'; setMode('bible'); } }, 'Open reading plans'))),
 
       panel('privacy', 'Privacy & lock', 'Your journal is encrypted with your password. When it locks, your writing is hidden.',
         row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),

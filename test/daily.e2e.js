@@ -35,7 +35,7 @@ app.whenReady().then(async () => {
   await shot('d1-empty-with-quote');
 
   // --- Bible: choose a plan
-  await js(`document.querySelector('.modeswitch [data-mode=bible]').click();`); await wait(600);
+  await js(`state.bibleTab = 'plan'; document.querySelector('.modeswitch [data-mode=bible]').click();`); await wait(600);
   assert.match(await text('#bibleView'), /Read through the Bible/);
   assert(await js(`return !!document.querySelector('#bibleView .quote-card.verse')`), 'verse of the day on the plan chooser');
   await shot('d2-bible-choose');
@@ -220,7 +220,7 @@ app.whenReady().then(async () => {
   assert.equal(await js(`return document.querySelector('#bibleView').innerText + document.querySelector('#quoteView').innerText`), '', 'views cleared on lock');
   await js(`document.querySelector('#unlockPw').value='river-stone'; document.querySelector('#unlockForm').requestSubmit();`); await wait(2500);
   assert.equal(await js(`return state.mode`), 'quote', 'view remembered');
-  await js(`document.querySelector('.modeswitch [data-mode=bible]').click();`); await wait(700);
+  await js(`state.bibleTab = 'plan'; document.querySelector('.modeswitch [data-mode=bible]').click();`); await wait(700);
   assert.match(await text('#bibleView .rv-status'), /1 of 30 days read/);
 
   // --- the sidebar keeps to the two most recent days; All entries has the rest, with filters
