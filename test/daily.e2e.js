@@ -26,7 +26,7 @@ app.whenReady().then(async () => {
   await wait(2500);
 
   // these checks count and match quotes, so the built-in writing is switched off (readings.e2e.js covers it)
-  await js(`await updateSetting({ builtinReadings: false }); await syncReadings(); refreshQuote();`);
+  await js(`await updateSetting({ builtinReadings: false, classicsReadings: false }); await syncReadings(); refreshQuote();`);
 
   // --- starter quotes and the card on the opening screen
   const quotes = await js(`return state.quotes.length`);

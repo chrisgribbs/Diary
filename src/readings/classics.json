@@ -1,0 +1,1569 @@
+{
+"id": "classics",
+"name": "Classics of Christian formation",
+"about": "Julian of Norwich, Teresa of Ávila, John of the Cross, Brother Lawrence, Thomas à Kempis, Thérèse of Lisieux, de Caussade, Francis de Sales, The Cloud of Unknowing, Evelyn Underhill and others, in public-domain translations.",
+"version": 1,
+"items": [
+{
+"text": "Narrow is the mansion of my soul; enlarge Thou it, that Thou mayest enter in. It is ruinous; repair Thou it. It has that within which must offend Thine eyes; I confess and know it. But who shall cleanse it? or to whom should I cry, save Thee?",
+"author": "Augustine of Hippo",
+"source": "Confessions (trans. E. B. Pusey, 1838)",
+"themes": [
+"Prayer",
+"Humility",
+"Soul"
+],
+"id": "b9089381a864dce7"
+},
+{
+"text": "But what do I love, when I love Thee? not beauty of bodies, nor the fair harmony of time, nor the brightness of the light, so gladsome to our eyes, … None of these I love, when I love my God; and yet I love a kind of light, and melody, and fragrance, and meat, and embracement when I love my God, the light, melody, fragrance, meat, embracement of my inner man: where there shineth unto my soul what space cannot contain, and there soundeth what time beareth not away, … This is it which I love when I love my God.",
+"author": "Augustine of Hippo",
+"source": "Confessions (trans. E. B. Pusey, 1838)",
+"themes": [
+"Love & belonging",
+"Soul",
+"Wonder & beauty"
+],
+"id": "bb739d7152541e54"
+},
+{
+"text": "Which when he had said, and she would not be satisfied, but urged him more, with entreaties and many tears, that he would see me and discourse with me; he, a little displeased at her importunity, saith, \"Go thy ways and God bless thee, for it is not possible that the son of these tears should perish.\" Which answer she took (as she often mentioned in her conversations with me) as if it had sounded from heaven.",
+"author": "Augustine of Hippo",
+"source": "Confessions (trans. E. B. Pusey, 1838)",
+"themes": [
+"Hope & renewal",
+"Prayer",
+"Love & belonging"
+],
+"id": "de5cb2935cd0a386"
+},
+{
+"text": "For I wondered that others, subject to death, did live, since he whom I loved, as if he should never die, was dead; and I wondered yet more that myself, who was to him a second self, could live, he being dead. Well said one of his friend, \"Thou half of my soul\"; for I felt that my soul and his soul were \"one soul in two bodies\": and therefore was my life a horror to me, because I would not live halved.",
+"author": "Augustine of Hippo",
+"source": "Confessions (trans. E. B. Pusey, 1838)",
+"themes": [
+"Darkness & suffering",
+"Love & belonging"
+],
+"id": "1e75a8f93522065a"
+},
+{
+"text": "So was I speaking and weeping in the most bitter contrition of my heart, when, lo! I heard from a neighbouring house a voice, as of boy or girl, I know not, chanting, and oft repeating, \"Take up and read; Take up and read.\" … I seized, opened, and in silence read that section on which my eyes first fell: … No further would I read; nor needed I: for instantly at the end of this sentence, by a light as it were of serenity infused into my heart, all the darkness of doubt vanished away.",
+"author": "Augustine of Hippo",
+"source": "Confessions (trans. E. B. Pusey, 1838)",
+"themes": [
+"Faith & doubt",
+"Hope & renewal",
+"Vocation & calling"
+],
+"id": "58e3aed7353d8dde"
+},
+{
+"text": "For too little doth he love Thee, who loves any thing with Thee, which he loveth not for Thee. O love, who ever burnest and never consumest! O charity, my God, kindle me.",
+"author": "Augustine of Hippo",
+"source": "Confessions (trans. E. B. Pusey, 1838)",
+"themes": [
+"Love & belonging",
+"Prayer"
+],
+"id": "f5f88202869a6f96"
+},
+{
+"text": "Exteriorly, nothing more than was happening to the rest of mankind; interiorly, faith discovers and develops nothing less than God working great things. O bread of angels! Heavenly manna! Pearl of the Gospel! Sacrament of the present moment! Thou givest God under appearances as poor and mean as the manger, the hay, and the straw! … God reveals Himself to the humble in little things; and the proud, regarding only the exterior, find Him not even in great things.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Slowness & presence",
+"Humility",
+"Simplicity"
+],
+"id": "d7a96053d9438829"
+},
+{
+"text": "The present moment is always filled with infinite treasures: it contains more than you are capable of receiving. Faith is the measure of these blessings: in proportion to your faith will you receive. By love also are they measured: the more your heart loves the more it desires, and the more it desires the more it receives. The will of God is constantly before you as an unfathomable sea, which the heart cannot exhaust: only in proportion as the heart is expanded by faith, confidence, and love can it receive of its fulness. All created things could not fill your heart, for its capacity is greater than anything which is not God.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Slowness & presence",
+"Faith & doubt",
+"Soul"
+],
+"id": "f37ab19d975725c1"
+},
+{
+"text": "O all ye who thirst! know that you have not far to seek for the fountain of living waters; it springs close to you in the present moment. Hasten then to approach it. Why with the source so near do you weary yourselves running after shallow streams, which only excite your thirst and give you to drink in small measure? The source alone can satisfy you; it is inexhaustible.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Slowness & presence",
+"Soul"
+],
+"id": "ad81f67bbf553b05"
+},
+{
+"text": "We only know perfectly that which we have learned by experience through suffering and action. This is the school of the Holy Spirit, who utters the words of life to the heart; and all that we say to others should come from this source. Whatsoever we read, whatsoever we see, becomes divine science only through the fecundity, the virtue, the light, which the possession of this experience gives. Without this science all our learning is like unleavened dough, lacking the salt and seasoning of experience; the mind is filled with crude, unfledged ideas; and we are like the dreamer who, knowing all the highways of the world, misses the path to his own home.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Teaching",
+"The path",
+"Darkness & suffering"
+],
+"id": "89998b8612ffd901"
+},
+{
+"text": "Everything is the hand of God. Everything is earth, air, and water to the soul. God’s action is more universally present than the elements.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Earth & creation",
+"Wonder & beauty",
+"Slowness & presence"
+],
+"id": "c7f722d4b3736fe9"
+},
+{
+"text": "Pardon, divine Love, for I am writing my own defects, and I have not yet learned what it is to abandon myself to Thy hand. I have not yet yielded myself to the mould. I have walked through Thy divine studios, I have admired all Thy works, but I have not yet learned the needful self-abandonment to receive the marks of Thy pencil. At last I have found Thee, my dear Master, my Teacher, my Father, my dear Love! I will be Thy disciple; I will learn in no other school but Thine. I return like the prodigal hungering for Thy bread.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Humility",
+"Creativity & art",
+"Prayer"
+],
+"id": "76bd74bd591bb4d5"
+},
+{
+"text": "Lord, can it not be said that Thy children sleep in Thy bosom during all the night of faith, while at Thy pleasure Thou fillest their souls with an infinite number and infinite variety of experiences which are in reality but holy and mysterious reveries? In this obscure night of the soul they are filled with veritable and awful terrors, with anguish and weariness which on the glorious day Thou wilt change into true and solid joys.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Darkness & suffering",
+"Hope & renewal",
+"Faith & doubt"
+],
+"id": "d1161ca104262a54"
+},
+{
+"text": "The more we seem to lose with God, the more we really gain; the more He deprives us of natural aid, the more He gives us of supernatural. We loved Him a little for His gifts, but these being no longer visible we come to love Him for Himself. It is by the apparent withdrawal of these sensible gifts and favors that He prepares us for Himself, the greatest of all gifts.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Paradox",
+"Darkness & suffering",
+"Love & belonging"
+],
+"id": "550462fe3f81bd9a"
+},
+{
+"text": "The fulfilment of the duty of each moment is but the addition of an imperceptible point, and yet it is by means of these apparent trifles that God effects His wonders. We are given a presentment of these wonders at times here below, but we shall only understand them in the light of eternity. How full of wisdom and goodness are the ways of God! He has made all that is great, elevating and ennobling so completely the work of His grace and action, leaving to the soul what is easy and simple to be accomplished with the aid of grace, that there is no one who cannot attain eminent sanctity by the loving fulfilment of obscure and humble duties.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Vocation & calling",
+"Simplicity",
+"Humility"
+],
+"id": "919a41900f48098b"
+},
+{
+"text": "The divine action frees the soul from the petty anxious schemes so necessary to human prudence. Such precautions are suitable for Herod and the Pharisees: but the Magi have but to follow their star in peace; the Babe has but to rest in His Mother’s arms; His enemies advance His cause more than they injure it; the more they seek to thwart and overwhelm it, the more peacefully and freely He advances.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Simplicity",
+"Slowness & presence",
+"Faith & doubt"
+],
+"id": "7769c7224b7fe45f"
+},
+{
+"text": "The broad, solid, firm rock upon which the faithful soul stands sheltered from tides and storms is the order of the divine will, which is ever present with us, veiled under crosses or the most ordinary duties. Behind these shadows is hidden God’s Hand, which sustains and upholds those who abandon themselves to Him.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Faith & doubt",
+"Darkness & suffering"
+],
+"id": "a2582233ab883d8d"
+},
+{
+"text": "A life of self-abandonment is characterized by mystery; it is a life which receives from God extraordinary miraculous gifts through commonplace, fortuitous events, chance encounters, where nothing is visible to human eyes but the ordinary workings of men’s minds and the natural course of the elements. Thus the simplest sermons, the most commonplace conversations, the least elevating books, become to these souls by virtue of the will of God sources of intelligence and wisdom. Therefore they carefully gather the crumbs of wisdom which the worldly-wise trample under foot.",
+"author": "Jean-Pierre de Caussade",
+"source": "Abandonment (trans. Ella McMahon, 1887)",
+"themes": [
+"Simplicity",
+"Wonder & beauty",
+"Gratitude"
+],
+"id": "97e68e03aae3588d"
+},
+{
+"text": "Daughter, if thou wear the habergeon or the hair, fasting bread and water, and if thou saidest every day a thousand Pater Nosters, thou shalt not please Me so well as thou dost when thou art in silence, and suffrest Me to speak in thy soul.",
+"author": "Margery Kempe",
+"source": "A Short Treatise of Contemplation, from the Book of Margery Kempe, in The Cell of Self-Knowledge (1521; ed. Edmund G. Gardner, 1910)",
+"themes": [
+"Prayer",
+"Slowness & presence",
+"Simplicity"
+],
+"id": "ccf5abafecbb2e35"
+},
+{
+"text": "In nothing that thou dost or sayest, daughter, thou mayst no better please God than believe that He loveth thee. For, if it were possible that I might weep with thee, I would weep with thee for the compassion that I have of thee.",
+"author": "Margery Kempe",
+"source": "A Short Treatise of Contemplation, from the Book of Margery Kempe, in The Cell of Self-Knowledge (1521; ed. Edmund G. Gardner, 1910)",
+"themes": [
+"Love & belonging",
+"Faith & doubt"
+],
+"id": "2950c6de631760af"
+},
+{
+"text": "For when a soul offereth him to Jesu truly and meekly, putting all his trust and his desire in Him, and busily keepeth Him in his mind, our Lord Jesu, when He will, pureth the affection of the soul, and filleth it, and feedeth it with sweetness of Himself, and maketh His name in the feeling of the soul as honey, and as song, and as any thing that is delectable; so that it liketh the soul evermore for to cry Jesu, Jesu.",
+"author": "Walter Hilton",
+"source": "Of the Song of Angels, in The Cell of Self-Knowledge (1521; ed. Edmund G. Gardner, 1910)",
+"themes": [
+"Prayer",
+"Love & belonging",
+"Joy"
+],
+"id": "bb1cb8567def69b9"
+},
+{
+"text": "Chaste love is that when thou askest of God neither releasing of pain, nor increasing of meed, nor yet sweetness in His love in this life; … but thou askest of God nought but Himself, and neither thou reckest nor lookest after whether thou shalt be in pain or in bliss, so that thou have Him that thou lovest--this is chaste love, this is perfect love.",
+"author": "The Cloud of Unknowing",
+"source": "The Epistle of Prayer, in The Cell of Self-Knowledge (1521; ed. Edmund G. Gardner, 1910)",
+"themes": [
+"Love & belonging",
+"Prayer"
+],
+"id": "e5716253c3f5714d"
+},
+{
+"text": "For silence is not God, nor speaking is not God; fasting is not God, nor eating is not God; onliness is not God, nor company is not God; nor yet any of all the other such two contraries. He is hid between them, and may not be found by any work of thy soul, but all only by love of thine heart. He may not be known by reason, He may not be gotten by thought, nor concluded by understanding; but He may be loved and chosen with the true lovely will of thine heart.",
+"author": "The Cloud of Unknowing",
+"source": "The Epistle of Discretion in Stirrings of the Soul, in The Cell of Self-Knowledge (1521; ed. Edmund G. Gardner, 1910)",
+"themes": [
+"Paradox",
+"Love & belonging",
+"Prayer"
+],
+"id": "2a1f6f89e0b2bc51"
+},
+{
+"text": "Meditation on the four last things will be useful to you provided that you always end with an act of confidence in God. Never represent to yourself Death or Hell on the one side unless the Cross is on the other; so that when your fears have been excited by the one you may with confidence turn for help to the other.",
+"author": "Francis de Sales",
+"source": "The Spirit of St. Francis de Sales, recorded by Jean-Pierre Camus (trans. J. S., 1910)",
+"themes": [
+"Hope & renewal",
+"Faith & doubt"
+],
+"id": "0f2ea93ec44544f9"
+},
+{
+"text": "In the royal galley of divine love there is no galley-slave; all the oarsmen are volunteers.",
+"author": "Francis de Sales",
+"source": "The Spirit of St. Francis de Sales, recorded by Jean-Pierre Camus (trans. J. S., 1910)",
+"themes": [
+"Love & belonging",
+"Vocation & calling"
+],
+"id": "59cfd74a43c436ef"
+},
+{
+"text": "Always be as gentle as you can, and remember that more flies are caught with a spoonful of honey than with a hundred barrels of vinegar. If we must err in one direction or the other, let it be in that of gentleness. No sauce was ever spoilt by too much sugar. … To tell our neighbour wholesome truths tenderly is to throw red roses rather than red-hot coals in his face.",
+"author": "Francis de Sales",
+"source": "The Spirit of St. Francis de Sales, recorded by Jean-Pierre Camus (trans. J. S., 1910)",
+"themes": [
+"Community & place",
+"Love & belonging"
+],
+"id": "f239bf4287f78450"
+},
+{
+"text": "Do not sow wishes in other people's gardens; do not desire to be what you are not, but rather try most earnestly to be the best of what you are. Try with all your might to perfect yourself in the state in which God has placed you, and bear manfully whatever crosses, heavy or light, may be laid upon your shoulders.",
+"author": "Francis de Sales",
+"source": "The Spirit of St. Francis de Sales, recorded by Jean-Pierre Camus (trans. J. S., 1910)",
+"themes": [
+"True self",
+"Vocation & calling",
+"Simplicity"
+],
+"id": "00f9f7889e9137c2"
+},
+{
+"text": "Our remaining unmoved at prayer and meditation proceeds, not from any fault of ours, but from the providence of God, who wishes us to travel by land, and often by desert land, rather than by water, and who wills to accustom us to labour and hardship in our spiritual life.",
+"author": "Francis de Sales",
+"source": "The Spirit of St. Francis de Sales, recorded by Jean-Pierre Camus (trans. J. S., 1910)",
+"themes": [
+"Prayer",
+"Darkness & suffering",
+"The path"
+],
+"id": "c8bd5fb4d37541a6"
+},
+{
+"text": "Be just, neither accuse nor excuse your poor soul, except after much consideration, for fear lest if you excuse yourself when you should not, you become careless, and if you accuse yourself without cause, you discourage yourself and become cowardly. Walk simply and you will walk securely.",
+"author": "Francis de Sales",
+"source": "The Spirit of St. Francis de Sales, recorded by Jean-Pierre Camus (trans. J. S., 1910)",
+"themes": [
+"Simplicity",
+"Humility",
+"True self"
+],
+"id": "ce3f401fa5cef98b"
+},
+{
+"text": "The Sovereign Spirit of our God is everywhere, and without His Will or permission no other spirit dare stir. Those who fear this Divine Spirit ought not to fear any other. You are beneath His wings, like a little chicken under those of its mother; what do you fear? … Now I am grown so strong in this confidence that darkness and the solitude of the night are delightful to me, since in solitude I realise better the all-embracing Presence of God.",
+"author": "Francis de Sales",
+"source": "The Spirit of St. Francis de Sales, recorded by Jean-Pierre Camus (trans. J. S., 1910)",
+"themes": [
+"Courage & vulnerability",
+"Slowness & presence",
+"Faith & doubt"
+],
+"id": "55c85354acfef436"
+},
+{
+"text": "Who has told us that we are blameless? Possibly these people see our faults better than we see them ourselves, and better than those who love us do. When truths displease us, we often call them slanders.",
+"author": "Francis de Sales",
+"source": "The Spirit of St. Francis de Sales, recorded by Jean-Pierre Camus (trans. J. S., 1910)",
+"themes": [
+"Humility",
+"True self"
+],
+"id": "10422695340e38af"
+},
+{
+"text": "I saw that He is to us everything that is good and comfortable for us: He is our clothing that for love wrappeth us, claspeth us, and all encloseth us for tender love, that He may never leave us; being to us all-thing that is good, as to mine understanding.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Love & belonging"
+],
+"id": "622614374e9af376"
+},
+{
+"text": "Also in this He shewed me a little thing, the quantity of an hazel-nut, in the palm of my hand; and it was as round as a ball. I looked thereupon with eye of my understanding, and thought: What may this be? And it was answered generally thus: it is all that is made. I marvelled how it might last, for methought it might suddenly have fallen to naught for little[ness]. And I was answered in my understanding: It lasteth, and ever shall [last] for that God loveth it. And so All-thing hath the Being by the love of God.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Earth & creation",
+"Wonder & beauty",
+"Love & belonging"
+],
+"id": "c69d64ec8b8abb17"
+},
+{
+"text": "Also our Lord God shewed that it is full great pleasance to Him that a helpless soul come to Him simply and plainly and homely. For this is the natural yearnings of the soul, by the touching of the Holy Ghost (as by the understanding that I have in this Shewing): God, of Thy Goodness, give me Thyself: for Thou art enough to me, and I may nothing ask that is less that may be full worship to Thee; and if I ask anything that is less, ever me wanteth,--but only in Thee I have all.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Prayer",
+"Simplicity",
+"Soul"
+],
+"id": "d878b5ddc2c95f4f"
+},
+{
+"text": "For our soul is so specially loved of Him that is highest, that it overpasseth the knowing of all creatures: that is to say, there is no creature that is made that may [fully] know how much and how sweetly and how tenderly our Maker loveth us. And therefore we may with grace and His help stand in spiritual beholding, with everlasting marvel of this high, overpassing, inestimable Love that Almighty God hath to us of His Goodness.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Love & belonging",
+"Soul",
+"Wonder & beauty"
+],
+"id": "73f0ae51ec2dc188"
+},
+{
+"text": "For our natural Will is to have God, and the Good Will of God is to have us; and we may never cease from willing nor from longing till we have Him in fullness of joy: and then may we no more desire.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Soul",
+"Love & belonging"
+],
+"id": "2433e0414a1dd0f7"
+},
+{
+"text": "For verily it is the most joy that may be, as to my sight, that He that is highest and mightiest, noblest and worthiest, is lowest and meekest, homeliest and most courteous: and truly and verily this marvellous joy shall be shewn us all when we see Him.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Paradox",
+"Humility",
+"Joy"
+],
+"id": "c8d24942e00ff5fd"
+},
+{
+"text": "But Jesus, who in this Vision informed me of all that is needful to me, answered by this word and said: It behoved that there should be sin; but all shall be well, and all shall be well, and all manner of thing shall be well.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Hope & renewal",
+"Darkness & suffering"
+],
+"id": "24071d24aafb839b"
+},
+{
+"text": "And then I saw that each kind compassion that man hath on his even-Christians with charity, it is Christ in him.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Community & place",
+"Love & belonging"
+],
+"id": "ed01e40e12e56261"
+},
+{
+"text": "I understood that we be now, in our Lord's meaning, in His Cross with Him in His pains and His Passion, dying; and we, willingly abiding in the same Cross with His help and His grace unto the last point, suddenly He shall change His Cheer to us, and we shall be with Him in Heaven. Betwixt that one and that other shall be no time, and then shall all be brought to joy.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Darkness & suffering",
+"Hope & renewal"
+],
+"occasion": "holyweek",
+"id": "4111aedf2f6339ff"
+},
+{
+"text": "Then said our good Lord Jesus Christ: Art thou well pleased that I suffered for thee? I said: Yea, good Lord, I thank Thee; Yea, good Lord, blessed mayst Thou be. Then said Jesus, our kind Lord: If thou art pleased, I am pleased: it is a joy, a bliss, an endless satisfying to me that ever suffered I Passion for thee; and if I might suffer more, I would suffer more.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Love & belonging",
+"Gratitude"
+],
+"occasion": "goodfriday",
+"id": "9962da09f8070d54"
+},
+{
+"text": "A glad giver taketh but little heed of the thing that he giveth, but all his desire and all his intent is to please him and solace him to whom he giveth it. And if the receiver take the gift highly and thankfully, then the courteous giver setteth at nought all his cost and all his travail, for joy and delight that he hath pleased and solaced him that he loveth.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Gratitude",
+"Love & belonging"
+],
+"id": "30bb4d151b108b22"
+},
+{
+"text": "Then hope we that God hath forgiven us our sins: and it is truth. And then sheweth our courteous Lord Himself to the soul--well-merrily and with glad cheer--with friendly welcoming as if it had been in pain and in prison, saying sweetly thus: My darling I am glad thou art come to me: in all thy wo I have ever been with thee; and now seest thou my loving and we be oned in bliss.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Hope & renewal",
+"Love & belonging"
+],
+"id": "d5a2cc70e8a3cc9b"
+},
+{
+"text": "Therefore He saith thus: Pray inwardly, though thee thinketh it savour thee not: for it is profitable, though thou feel not, though thou see nought; yea, though thou think thou canst not. For in dryness and in barrenness, in sickness and in feebleness, then is thy prayer well-pleasant to me, though thee thinketh it savour thee nought but little. And so is all thy believing prayer in my sight.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Prayer",
+"Darkness & suffering",
+"Faith & doubt"
+],
+"id": "300b4714aabad4f2"
+},
+{
+"text": "And also to prayer belongeth thanking. Thanking is a true inward knowing, with great reverence and lovely dread turning ourselves with all our mights unto the working that our good Lord stirreth us to, enjoying and thanking inwardly. And sometimes, for plenteousness it breaketh out with voice, and saith: Good Lord, I thank Thee! Blessed mayst Thou be!",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Gratitude",
+"Prayer"
+],
+"id": "22b050e16c0f7329"
+},
+{
+"text": "But sometimes it cometh to our mind that we have prayed long time, and yet we think to ourselves that we have not our asking. But herefor should we not be in heaviness. For I am sure, by our Lord's signifying, that either we abide a better time, or more grace, or a better gift.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Faith & doubt",
+"Prayer",
+"Slowness & presence"
+],
+"id": "59db5de297943a2b"
+},
+{
+"text": "But oftentimes when our falling and our wretchedness is shewed us, we are so sore adread, and so greatly ashamed of our self, that scarcely we find where we may hold us. But then willeth not our courteous Mother that we flee away, for Him were nothing lother. But He willeth then that we use the condition of a child: for when it is hurt, or adread, it runneth hastily to the mother for help, with all its might.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Courage & vulnerability",
+"Love & belonging"
+],
+"id": "49e6691cdf595b7b"
+},
+{
+"text": "For it needeth us to fall, and it needeth us to see it. For if we never fell, we should not know how feeble and how wretched we are of our self, and also we should not fully know that marvellous love of our Maker. For we shall see verily in heaven, without end, that we have grievously sinned in this life, and notwithstanding this, we shall see that we were never hurt in His love, we were never the less of price in His sight.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Paradox",
+"Humility",
+"Love & belonging"
+],
+"id": "e0f90f4a71f06cb0"
+},
+{
+"text": "And this word: Thou shalt not be overcome, was said full clearly and full mightily, for assuredness and comfort against all tribulations that may come. He said not: Thou shalt not be tempested, … but He said: Thou shalt not be overcome. God willeth that we take heed to these words, and that we be ever strong in sure trust, in weal and woe.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Courage & vulnerability",
+"Darkness & suffering",
+"Hope & renewal"
+],
+"id": "2264d663bac946d3"
+},
+{
+"text": "And from that time that it was shewed I desired oftentimes to learn what was our Lord's meaning. And fifteen years after, and more, I was answered in ghostly understanding, saying thus: Wouldst thou learn thy Lord's meaning in this thing? Learn it well: Love was His meaning. Who shewed it thee? Love. What shewed He thee? Love. Wherefore shewed it He? For Love.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Love & belonging",
+"Slowness & presence"
+],
+"id": "213d2de494e02128"
+},
+{
+"text": "And I saw full surely that ere God made us He loved us; which love was never slacked, nor ever shall be. And in this love He hath done all His works; and in this love He hath made all things profitable to us; and in this love our life is everlasting. In our making we had beginning; but the love wherein He made us was in Him from without beginning: in which love we have our beginning.",
+"author": "Julian of Norwich",
+"source": "Revelations of Divine Love (trans. Grace Warrack, 1901)",
+"themes": [
+"Love & belonging",
+"True self"
+],
+"id": "65056949bc93eddc"
+},
+{
+"text": "For verily it is not deep words that make a man holy and upright; it is a good life which maketh a man dear to God. I had rather feel contrition than be skilful in the definition thereof.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Humility",
+"Simplicity"
+],
+"id": "d32c0ebcc9ed5dd8"
+},
+{
+"text": "The man to whom all things are one, who bringeth all things to one, who seeth all things in one, he is able to remain steadfast of spirit, and at rest in God. O God, who art the Truth, make me one with Thee in everlasting love. It wearieth me oftentimes to read and listen to many things; in Thee is all that I wish for and desire. Let all the doctors hold their peace; let all creation keep silence before Thee: speak Thou alone to me.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Wholeness",
+"Prayer",
+"Simplicity"
+],
+"id": "1481d37ea5c19d3a"
+},
+{
+"text": "Of a surety, at the Day of Judgment it will be demanded of us, not what we have read, but what we have done; not how well we have spoken, but how holily we have lived.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"The path",
+"Humility"
+],
+"id": "0283460e64c8d794"
+},
+{
+"text": "As fire testeth iron, so doth temptation the upright man. Oftentimes we know not what strength we have; but temptation revealeth to us what we are.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"True self",
+"Courage & vulnerability"
+],
+"id": "cc55497ef21913e4"
+},
+{
+"text": "But now hath God thus ordained, that we may learn to bear one another's burdens, because none is without defect, none without a burden, none sufficient of himself, none wise enough of himself; but it behoveth us to bear with one another, to comfort one another, to help, instruct, admonish one another.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Community & place",
+"Humility"
+],
+"id": "f02d3c8d38ef9296"
+},
+{
+"text": "Shut thy door upon thee, and call unto thyself Jesus thy beloved. Remain with Him in thy chamber, for thou shalt not elsewhere find so great peace.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Prayer",
+"Slowness & presence"
+],
+"id": "d29714682b324245"
+},
+{
+"text": "Very quickly will there be an end of thee here; take heed therefore how it will be with thee in another world. To-day man is, and to-morrow he will be seen no more. … If to-day thou art not ready, how shalt thou be ready to-morrow? To-morrow is an uncertain day; and how knowest thou that thou shalt have a to-morrow?",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"The path",
+"Slowness & presence"
+],
+"id": "84f913128642cea2"
+},
+{
+"text": "A certain man being in anxiety of mind, continually tossed about between hope and fear, and being on a certain day overwhelmed with grief, cast himself down in prayer before the altar in a church, and meditated within himself, saying, \"Oh! if I but knew that I should still persevere,\" and presently heard within him a voice from God, \"And if thou didst know it, what wouldst thou do? Do now what thou wouldst do then, and thou shalt be very secure.\"",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Faith & doubt",
+"Slowness & presence"
+],
+"id": "67faffba8071b800"
+},
+{
+"text": "He who knoweth how to walk from within, and to set little value upon outward things, requireth not places nor waiteth for seasons, for holding his intercourse with God. The inward man quickly recollecteth himself, because he is never entirely given up to outward things. No outward labour and no necessary occupations stand in his way, but as events fall out, so doth he fit himself to them.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Slowness & presence",
+"Soul"
+],
+"id": "54e3fbc765911fdc"
+},
+{
+"text": "First keep thyself in peace, and then shalt thou be able to be a peacemaker towards others. A peaceable man doth more good than a well-learned. A passionate man turneth even good into evil and easily believeth evil; a good, peaceable man converteth all things into good.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Community & place",
+"Wholeness"
+],
+"id": "2d052f5e787844fa"
+},
+{
+"text": "When Jesus is present all is well and nothing seemeth hard, but when Jesus is not present everything is hard. When Jesus speaketh not within, our comfort is nothing worth, but if Jesus speaketh but a single word great is the comfort we experience.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Love & belonging",
+"Prayer"
+],
+"id": "660a863f05a54d32"
+},
+{
+"text": "In these thou art not to be cast down nor to despair, but to rest with calm mind on the will of God, and to bear all things which come upon thee unto the praise of Jesus Christ; for after winter cometh summer, after night returneth day, after the tempest a great calm.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Hope & renewal",
+"Darkness & suffering"
+],
+"id": "f8ab74dcff2d35d2"
+},
+{
+"text": "No man understandeth the Passion of Christ in his heart so well as he who hath had somewhat of the like suffering himself. The Cross therefore is always ready, and every where waiteth for thee. Thou canst not flee from it whithersoever thou hurriest, for whithersoever thou comest, thou bearest thyself with thee, and shalt ever find thyself.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Darkness & suffering",
+"True self"
+],
+"occasion": "holyweek",
+"id": "cf264b8af9df1b96"
+},
+{
+"text": "Blessed is the soul which heareth the Lord speaking within it, and receiveth the word of consolation from His mouth. Blessed are the ears which receive the echoes of the soft whisper of God, and turn not aside to the whisperings of this world. … Blessed are they who long to have leisure for God, and free themselves from every hindrance of the world.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Prayer",
+"Slowness & presence",
+"Blessing"
+],
+"id": "a716f5517fff328c"
+},
+{
+"text": "Love is a great thing, a good above all others, which alone maketh every heavy burden light, and equaliseth every inequality. For it beareth the burden and maketh it no burden, it maketh every bitter thing to be sweet and of good taste. … Nothing is sweeter than love, nothing stronger, nothing loftier, nothing broader, nothing pleasanter, nothing fuller or better in heaven nor on earth, for love was born of God and cannot rest save in God above all created things.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Love & belonging"
+],
+"id": "f4997b7b5677e8af"
+},
+{
+"text": "Strive, My Son, to do another's will rather than thine own. Choose always to have less rather than more. Seek always after the lowest place, and to be subject to all. Wish always and pray that the will of God be fulfilled in thee. Behold, such a man as this entereth into the inheritance of peace and quietness.",
+"author": "Thomas à Kempis",
+"source": "The Imitation of Christ (trans. William Benham, 1909)",
+"themes": [
+"Humility",
+"Simplicity"
+],
+"id": "7b3501fac95bc72e"
+},
+{
+"text": "That in the winter, seeing a tree stripped of its leaves, and considering that within a little time the leaves would be renewed and after that the flowers and fruit appear, he received a high view of the Providence and Power of GOD, which has never since been effaced from his soul.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Earth & creation",
+"Hope & renewal",
+"Wonder & beauty"
+],
+"id": "08ac582b19563067"
+},
+{
+"text": "That he had always been governed by love, without selfish views; and that having resolved to make the love of GOD the end of all his actions, he had found reasons to be well satisfied with his method. That he was pleased when he could take up a straw from the ground for the love of GOD, seeking Him only, and nothing else, not even His gifts.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Simplicity",
+"Love & belonging"
+],
+"id": "daeea29064cc5c68"
+},
+{
+"text": "That he had been long troubled in mind from a certain belief that he should be damned; that all the men in the world could not have persuaded him to the contrary; but that he had thus reasoned with himself about it: I engaged in a religious life only for the love of GOD, and I have endeavored to act only for Him; whatever becomes of me, whether I be lost or saved, I will always continue to act purely for the love of GOD.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Faith & doubt",
+"Darkness & suffering",
+"Love & belonging"
+],
+"id": "e8785e286f0d6d55"
+},
+{
+"text": "That we ought to act with GOD in the greatest simplicity, speaking to Him frankly and plainly, and imploring His assistance in our affairs, just as they happen. That GOD never failed to grant it, as he had often experienced.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Prayer",
+"Simplicity"
+],
+"id": "3e3dd91c7a203bd0"
+},
+{
+"text": "That there needed neither art nor science for going to GOD, but only a heart resolutely determined to apply itself to nothing but Him, or for His sake, and to love him only.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Simplicity",
+"The path",
+"Love & belonging"
+],
+"id": "0604e20d1bc44ecc"
+},
+{
+"text": "That we ought not to be weary of doing little things for the love of GOD, who regards not the greatness of the work, but the love with which it is performed. That we should not wonder if, in the beginning, we often failed in our endeavors, but that at last we should gain a habit, which will naturally produce its acts in us, without our care, and to our exceeding great delight.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Vocation & calling",
+"Simplicity",
+"The path"
+],
+"id": "cf66ca3f84b099cf"
+},
+{
+"text": "He was never hasty nor loitering, but did each thing in its season, with an even, uninterrupted composure and tranquility of spirit. \"The time of business,\" said he, \"does not with me differ from the time of prayer; and in the noise and clatter of my kitchen, while several persons are at the same time calling for different things, I possess GOD in as great tranquility as if I were upon my knees at the blessed sacrament.\"",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Slowness & presence",
+"Prayer",
+"Vocation & calling"
+],
+"id": "9fe496c702cf7592"
+},
+{
+"text": "When I thought of nothing but to end my days in these troubles (which did not at all diminish the trust I had in GOD, and which served only to increase my faith), I found myself changed all at once; and my soul, which, till that time, was in trouble, felt a profound inward peace, as if she were in her centre and place of rest.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Darkness & suffering",
+"Hope & renewal",
+"Faith & doubt"
+],
+"id": "cb1571ee7d8a1d00"
+},
+{
+"text": "As for my set hours of prayer, they are only a continuation of the same exercise. Sometimes I consider myself there as a stone before a carver, whereof he is to make a statue; presenting myself thus before GOD, I desire Him to form His perfect image in my soul, and make me entirely like Himself.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Prayer",
+"Creativity & art",
+"True self"
+],
+"id": "b75b56bd090481d4"
+},
+{
+"text": "A little lifting up of the heart suffices. A little remembrance of GOD, one act of inward worship, though upon a march, and a sword in hand, are prayers, which, however short, are nevertheless very acceptable to GOD; and far from lessening a soldier's courage in occasions of danger, they best serve to fortify it.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Prayer",
+"Courage & vulnerability",
+"Simplicity"
+],
+"id": "d8d45a50a5588d01"
+},
+{
+"text": "Lift up your heart to Him, sometimes even at your meals, and when you are in company: the least little remembrance will always be acceptable to Him. You need not cry very loud; He is nearer to us than we are aware of. … It is not necessary for being with GOD to be always at church: we may make an oratory of our heart wherein to retire from time to time to converse with Him in meekness, humility and love.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Slowness & presence",
+"Prayer",
+"Humility"
+],
+"id": "9a329804df08e388"
+},
+{
+"text": "I do not advise you to use multiplicity of words in prayer: many words and long discourses being often the occasions of wandering. Hold yourself in prayer before GOD, like a dumb or paralytic beggar at a rich man's gate. Let it be your business to keep your mind in the presence of the LORD.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Prayer",
+"Humility",
+"Simplicity"
+],
+"id": "4de4b48f46de6e7e"
+},
+{
+"text": "She seems to me full of good will, but she would go faster than grace. One does not become holy all at once. I recommend her to you: we ought to help one another by our advice, and yet more by our good examples.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Slowness & presence",
+"Community & place",
+"The path"
+],
+"id": "81958e29958e34d4"
+},
+{
+"text": "He is always near you and with you: leave Him not alone. You would think it rude to leave a friend alone who came to visit you: why then must GOD be neglected?",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Slowness & presence",
+"Love & belonging"
+],
+"id": "3501190fa68bccf9"
+},
+{
+"text": "I must, in a little time, go to GOD. What comforts me in this life is, that I now see Him by faith; and I see Him in such a manner as might make me say sometimes, I believe no more, but I see. I feel what faith teaches us, and in that assurance and that practice of faith, I will live and die with Him.",
+"author": "Brother Lawrence",
+"source": "The Practice of the Presence of God (Fleming H. Revell, c. 1895)",
+"themes": [
+"Faith & doubt",
+"Hope & renewal"
+],
+"id": "1247fe6043f05f18"
+},
+{
+"text": "And if he perseveres, I hope in the mercy of God for him, seeing that no one ever took Him for his friend that was not amply rewarded; for mental prayer is nothing else, in my opinion, but being on terms of friendship with God, frequently conversing in secret with Him Who, we know, loves us.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Prayer",
+"Love & belonging"
+],
+"id": "f387c55a4257fe69"
+},
+{
+"text": "Oh, how good a friend art Thou, O my Lord! how Thou comfortest and endurest, and also waitest for them to make themselves like unto Thee, and yet, in the meanwhile, art Thyself so patient of the state they are in! Thou takest into account the occasions during which they seek Thee, and for a moment of penitence forgettest their offences against Thyself.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Love & belonging",
+"Hope & renewal"
+],
+"id": "37dab83d86ca9878"
+},
+{
+"text": "I may speak of that which I know by experience; and so I say, let him never cease from prayer who has once begun it, be his life ever so wicked; for prayer is the way to amend it, and without prayer such amendment will be much more difficult.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Prayer",
+"The path",
+"Hope & renewal"
+],
+"id": "a0076f93f03a5af3"
+},
+{
+"text": "This was my method of prayer: as I could not make reflections with my understanding, I contrived to picture Christ as within me; and I used to find myself the better for thinking of those mysteries of His life during which He was most lonely. It seemed to me that the being alone and afflicted, like a person in trouble, must needs permit me to come near unto Him.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Prayer",
+"Darkness & suffering",
+"Courage & vulnerability"
+],
+"id": "32dbf5bbdbd47e1f"
+},
+{
+"text": "It was a help to me also to look on fields, water, and flowers. In them I saw traces of the Creator--I mean, that the sight of these things was as a book unto me; it roused me, made me recollected, and reminded me of my ingratitude and of my sins.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Earth & creation",
+"Wonder & beauty",
+"Prayer"
+],
+"id": "9d134c5e70c29e30"
+},
+{
+"text": "He must rejoice and take comfort, and consider it as the greatest favour to labour in the garden of so great an Emperor; … let him help Him to carry the Cross, and let him think how He carried it all His life long; let him not seek his kingdom here, nor ever intermit his prayer; and so let him resolve, if this aridity should last even his whole life long, never to let Christ fall down beneath the Cross.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Darkness & suffering",
+"Prayer",
+"Faith & doubt"
+],
+"id": "530b15dddc41583f"
+},
+{
+"text": "This illustration pleases me; for very often, when I was beginning--and our Lord grant that I have really begun to serve His Majesty--I mean, begun in relation to what I have to say of my life,--it was to me a great joy to consider my soul as a garden, and our Lord as walking in it. I used to beseech Him to increase the fragrance of the little flowers of virtues--which were beginning, as it seemed to bud--and preserve them, that they might be to His glory; for I desired nothing for myself. I prayed Him to cut those He liked, because I already knew that they would grow the better.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Soul",
+"Earth & creation",
+"Humility"
+],
+"id": "ae9307b86b68d3b8"
+},
+{
+"text": "The soul may also place itself in the presence of Christ, and accustom itself to many acts of love directed to His sacred Humanity, and remain in His presence continually, and speak to Him, pray to Him in its necessities, and complain to Him of its troubles; be merry with Him in its joys, and yet not forget Him because of its joys. All this it may do without set prayers, but rather with words befitting its desires and its needs.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Prayer",
+"Slowness & presence",
+"Simplicity"
+],
+"id": "fd1a866f4ff177b9"
+},
+{
+"text": "His Majesty seeks and loves courageous souls; but they must be humble in their ways, and have no confidence in themselves. I never saw one of those lag behind on the road; and never a cowardly soul, though aided by humility, make that progress in many years which the former makes in a few. I am astonished at the great things done on this road by encouraging oneself to undertake great things, though we may not have the strength for them at once; the soul takes a flight upwards and ascends high, though, like a little bird whose wings are weak, it grows weary and rests.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Courage & vulnerability",
+"The path",
+"Humility"
+],
+"id": "bd2fcb6ff18aa69b"
+},
+{
+"text": "What the soul has to do at those seasons wherein it is raised to the prayer of quiet is nothing more than to be gentle and without noise. By noise, I mean going about with the understanding in search of words and reflections whereby to give God thanks for this grace, and heaping up its sins and imperfections together to show that it does not deserve it.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Slowness & presence",
+"Prayer",
+"Simplicity"
+],
+"id": "87ebb0efb88ae018"
+},
+{
+"text": "With so good a Friend and Captain ever present, Himself the first to suffer, everything can be borne. He helps, He strengthens, He never fails, He is the true Friend.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Love & belonging",
+"Courage & vulnerability"
+],
+"id": "ddfc2d88eab3d049"
+},
+{
+"text": "The pain was so great, that it made me moan; and yet so surpassing was the sweetness of this excessive pain, that I could not wish to be rid of it. The soul is satisfied now with nothing less than God. The pain is not bodily, but spiritual; though the body has its share in it, even a large one. It is a caressing of love so sweet which now takes place between the soul and God, that I pray God of His goodness to make him experience it who may think that I am lying.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Paradox",
+"Love & belonging",
+"Soul"
+],
+"id": "81d400eac8f58d17"
+},
+{
+"text": "I was in prayer, and saw myself on a wide plain all alone. Round about me stood a great multitude of all kinds of people, who hemmed me in on every side; all of them seemed to have weapons of war in their hands, to hurt me … In this my distress of mind, not knowing what to do, I lifted up my eyes to heaven, and saw Christ, not in heaven, but high above me in the air, holding out His hand to me, and there protecting me in such a way that I was no longer afraid of all that multitude, neither could they, though they wished it, do me any harm.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Courage & vulnerability",
+"Darkness & suffering",
+"Faith & doubt"
+],
+"id": "df4acc9faa29e869"
+},
+{
+"text": "The vision left me in great tenderness, joy, and humility. It seemed to me, though I knew not how, that our Lord now gave me great things; and I had no suspicion whatever of any illusion. I saw nothing; but I understood how great a blessing it is to make no account of anything which does not lead us nearer unto God. I also understood what it is for a soul to be walking in the truth, in the presence of the Truth itself.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"True self",
+"Simplicity",
+"Humility"
+],
+"id": "50d91a3db030ecba"
+},
+{
+"text": "Once, when I was with the whole community reciting the Office, my soul became suddenly recollected, and seemed to me all bright as a mirror, clear behind, sideways, upwards, and downwards; and in the centre of it I saw Christ our Lord, as I usually see Him. It seemed to me that I saw Him distinctly in every part of my soul, as in a mirror, and at the same time the mirror was all sculptured--I cannot explain it--in our Lord Himself by a most loving communication which I can never describe.",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Soul",
+"Wonder & beauty",
+"Prayer"
+],
+"id": "34ba5449feb79733"
+},
+{
+"text": "It seemed to me as if this were shown to me thus: as water penetrates and is drunk in by the sponge, so, it seemed to me, did the Divinity fill my soul, which in a certain sense had the fruition and possession of the Three Persons. And I heard Him say also: \"Labour thou not to hold Me within thyself enclosed, but enclose thou thyself within Me.\"",
+"author": "Teresa of Ávila",
+"source": "The Life of St. Teresa of Jesus (trans. David Lewis, 1904)",
+"themes": [
+"Soul",
+"Love & belonging",
+"Wonder & beauty"
+],
+"id": "5d0736ef22665641"
+},
+{
+"text": "He showed me the book of nature, and I understood that every flower created by Him is beautiful, that the brilliance of the rose and the whiteness of the lily do not lessen the perfume of the violet or the sweet simplicity of the daisy. I understood that if all the lowly flowers wished to be roses, nature would lose its springtide beauty, and the fields would no longer be enamelled with lovely hues. And so it is in the world of souls, Our Lord's living garden.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"True self",
+"Earth & creation",
+"Wonder & beauty"
+],
+"id": "25b3a9df017a2453"
+},
+{
+"text": "On that blessed night the sweet Infant Jesus, scarce an hour old, filled the darkness of my soul with floods of light. By becoming weak and little, for love of me, He made me strong and brave; He put His own weapons into my hands, so that I went from victory to victory, beginning, if I may say so, \"to run as a giant.\" The fountain of my tears was dried up, and from that time they flowed neither easily nor often.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Hope & renewal",
+"Paradox",
+"Courage & vulnerability"
+],
+"occasion": "christmasday",
+"id": "d04bd2201e2c8921"
+},
+{
+"text": "Great good was wrought in my soul by these beauties of nature so abundantly scattered abroad. They lifted it to Him Who had been pleased to lavish such masterpieces upon this transient earth.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Earth & creation",
+"Wonder & beauty"
+],
+"id": "47bd0b92b11d90c8"
+},
+{
+"text": "Sometime before this took place I had offered myself to the Child Jesus to be His little plaything. I told Him not to treat me like one of those precious toys which children only look at and dare not touch, but to treat me like a little ball of no value, that could be thrown on the ground, kicked about, pierced, left in a corner, or pressed to His Heart just as it might please Him.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Humility",
+"Simplicity",
+"Love & belonging"
+],
+"id": "47df479192cdccd1"
+},
+{
+"text": "One evening after Compline I searched in vain for our lamp on the shelves where they are kept, and, as it was the time of the \"Great Silence,\" I could not recover it. … Without the interior light of grace I should undoubtedly have pitied myself, but, with that light, I felt happy instead of aggrieved, and reflected that poverty consists in being deprived not only of what is convenient, but of what is necessary. And, in this exterior darkness, I found my soul illumined by a brightness that was divine.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Simplicity",
+"Darkness & suffering",
+"Joy"
+],
+"id": "26c71407179e02ee"
+},
+{
+"text": "Full sweet is the way of Love. It is true one may fall and be unfaithful to grace; but Love, knowing how to profit by everything, quickly consumes whatever is displeasing to Jesus, leaving in the heart only a deep and humble peace.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Love & belonging",
+"Hope & renewal"
+],
+"id": "19448427096d1581"
+},
+{
+"text": "Our Lord has no need of books or teachers to instruct our souls. He, the Teacher of Teachers, instructs us without any noise of words. I have never heard Him speak, yet I know He is within me. He is there, always guiding and inspiring me; and just when I need them, lights, hitherto unseen, break in.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Prayer",
+"Teaching",
+"Slowness & presence"
+],
+"id": "9af37d17cde77240"
+},
+{
+"text": "For me to become great is impossible. I must bear with myself and my many imperfections; but I will seek out a means of getting to Heaven by a little way--very short and very straight, a little way that is wholly new. We live in an age of inventions; nowadays the rich need not trouble to climb the stairs, they have lifts instead. Well, I mean to try and find a lift by which I may be raised unto God, for I am too tiny to climb the steep stairway of perfection.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"The path",
+"Humility",
+"Simplicity"
+],
+"id": "e14e7f267b78cd67"
+},
+{
+"text": "He allowed my soul to be overwhelmed with darkness, and the thought of Heaven, which had consoled me from my earliest childhood, now became a subject of conflict and torture. This trial did not last merely for days or weeks; I have been suffering for months, and I still await deliverance. I wish I could express what I feel, but it is beyond me. One must have passed through this dark tunnel to understand its blackness.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Faith & doubt",
+"Darkness & suffering"
+],
+"id": "283d05bccc01c3de"
+},
+{
+"text": "As I meditated on these Divine words, I saw how imperfect was the love I bore my Sisters in religion. I understood that I did not love them as Our Lord loves them. I know now that true charity consists in bearing all our neighbours' defects--not being surprised at their weakness, but edified at their smallest virtues.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Community & place",
+"Love & belonging",
+"Humility"
+],
+"id": "03a407392fd3b2c5"
+},
+{
+"text": "With me prayer is an uplifting of the heart; a glance towards heaven; a cry of gratitude and love, uttered equally in sorrow and in joy. In a word, it is something noble, supernatural, which expands my soul and unites it to God. Sometimes when I am in such a state of spiritual dryness that not a single good thought occurs to me, I say very slowly the \"Our Father\" or the \"Hail Mary,\" and these prayers suffice to take me out of myself, and wonderfully refresh me.",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Prayer",
+"Gratitude",
+"Simplicity"
+],
+"id": "6ec0f2ad2367efa6"
+},
+{
+"text": "I understood that love embraces all vocations, that it is all things, and that it reaches out through all the ages, and to the uttermost limits of the earth, because it is eternal. … O Jesus, my Love, at last I have found my vocation. My vocation is love! Yes, I have found my place in the bosom of the Church, and this place, O my God, Thou hast Thyself given to me: in the heart of the Church, my Mother, I will be LOVE!",
+"author": "Thérèse of Lisieux",
+"source": "The Story of a Soul (trans. Thomas Taylor, 1912)",
+"themes": [
+"Vocation & calling",
+"Love & belonging",
+"Joy"
+],
+"id": "c3fca720d0098107"
+},
+{
+"text": "Pour yourself out towards it, do not draw its image towards you. … As to the object of contemplation, it matters little. From Alp to insect, anything will do, provided that your attitude be right: for all things in this world towards which you are stretching out are linked together, and one truly apprehended will be the gateway to the rest.",
+"author": "Evelyn Underhill",
+"source": "Practical Mysticism (1914)",
+"themes": [
+"Earth & creation",
+"Slowness & presence",
+"Wonder & beauty"
+],
+"id": "af6db9eae2b49a9d"
+},
+{
+"text": "Because of your new sensitiveness, anthems will be heard of you from every gutter; poems of intolerable loveliness will bud for you on every weed. Best and greatest, your fellowmen will shine for you with new significance and light. Humility and awe will be evoked in you by the beautiful and patient figures of the poor, their long dumb heroisms, their willing acceptance of the burden of life.",
+"author": "Evelyn Underhill",
+"source": "Practical Mysticism (1914)",
+"themes": [
+"Wonder & beauty",
+"Community & place",
+"Humility"
+],
+"id": "0507d842cc36adc0"
+},
+{
+"text": "Moreover, as your meditation becomes deeper it will defend you from the perpetual assaults of the outer world. You will hear the busy hum of that world as a distant exterior melody, and know yourself to be in some sort withdrawn from it. You have set a ring of silence between you and it; and behold! within that silence you are free.",
+"author": "Evelyn Underhill",
+"source": "Practical Mysticism (1914)",
+"themes": [
+"Slowness & presence",
+"Prayer"
+],
+"id": "fb2ec4d1e4aebe4f"
+},
+{
+"text": "Now turn this new purified and universalised gaze back upon yourself. Observe your own being in a fresh relation with things, and surrender yourself willingly to the moods of astonishment, humility, joy--perhaps of deep shame or sudden love--which invade your heart as you look. So doing patiently, day after day, constantly recapturing the vagrant attention, ever renewing the struggle for simplicity of sight, you will at last discover that there is something within you--something behind the fractious, conflicting life of desire--which you can recollect, gather up, make effective for new life.",
+"author": "Evelyn Underhill",
+"source": "Practical Mysticism (1914)",
+"themes": [
+"True self",
+"Soul",
+"Slowness & presence"
+],
+"id": "817e881ef29b4272"
+},
+{
+"text": "True contemplation can only thrive when defended from two opposite exaggerations: quietism on the one hand, and spiritual fuss upon the other. Neither from passivity nor from anxiety has it anything to gain. Though the way may be long, the material of your mind intractable, to the eager lover of Reality ultimate success is assured.",
+"author": "Evelyn Underhill",
+"source": "Practical Mysticism (1914)",
+"themes": [
+"The path",
+"Prayer",
+"Hope & renewal"
+],
+"id": "5b8741efea40b32a"
+},
+{
+"text": "So here is your vocation set out: a vocation so various in its opportunities, that you can hardly fail to find something to do. … You shall work for mercy, order, beauty, significance: shall mend where you find things broken, make where you find the need.",
+"author": "Evelyn Underhill",
+"source": "Practical Mysticism (1914)",
+"themes": [
+"Vocation & calling",
+"Creativity & art"
+],
+"id": "3c0b191e68e2c529"
+},
+{
+"text": "And note, that this spiritual life which we have here considered is not an aristocratic life. It is a life of which the fundamentals are given by the simplest kinds of traditional piety, and have been exhibited over and over again by the simplest souls. … A little silence and leisure. A great deal of faithfulness, kindness, and courage. All this is within the reach of anyone who cares enough for it to pay the price.",
+"author": "Evelyn Underhill",
+"source": "The Life of the Spirit and the Life of To-day (1922)",
+"themes": [
+"Simplicity",
+"The path",
+"Slowness & presence"
+],
+"id": "8010fc5538c586fe"
+},
+{
+"text": "Until we realize that it is better, more useful, more productive of strength, to spend, let us say, the odd ten minutes in the morning in feeling and finding the Eternal than in flicking the newspaper--that this will send us off to the day's work properly orientated, gathered together, recollected, and really endowed with new power of dealing with circumstance--we have not begun to live the life of the Spirit, or grasped the practical connection between such a daily discipline and the power of doing our best work, whatever it may be.",
+"author": "Evelyn Underhill",
+"source": "The Life of the Spirit and the Life of To-day (1922)",
+"themes": [
+"Slowness & presence",
+"Prayer",
+"Vocation & calling"
+],
+"id": "246e08aeff21c8a0"
+},
+{
+"text": "Since perfect proof of the supersensual is beyond the span of human consciousness, the element of risk can never be eliminated: we are obliged in the end to trust the universe and live by faith. Therefore the awakened soul must often suffer perplexity, share to the utmost the stress and anguish of the physical order; and, chained as it is to a consciousness accustomed to respond to that order, must still be content with flashes of understanding and willing to bear long periods of destitution when the light is veiled.",
+"author": "Evelyn Underhill",
+"source": "The Life of the Spirit and the Life of To-day (1922)",
+"themes": [
+"Faith & doubt",
+"Darkness & suffering"
+],
+"id": "9a25fefa04be005a"
+},
+{
+"text": "As our life comes to maturity we discover to our confusion that human ears can pick up from the Infinite many incompatible tunes, but cannot hear the whole symphony. And the melody confided to our care, the one which we alone perhaps can contribute and which taxes our powers to the full, has in it not only the notes of triumph but the notes of pain. The distinctive mark therefore is not happiness but vocation: work demanded and power given, but given only on condition that we spend it and ourselves on others without stint.",
+"author": "Evelyn Underhill",
+"source": "The Life of the Spirit and the Life of To-day (1922)",
+"themes": [
+"Vocation & calling",
+"Darkness & suffering",
+"Paradox"
+],
+"id": "65c2ffd5db7b9165"
+},
+{
+"text": "This realization of ourselves as we truly are--emerging with difficulty from our animal origin, tinctured through and through with the self-regarding tendencies and habits it has imprinted on us--this realization or self-knowledge, is Humility; the only soil in which the spiritual life can germinate.",
+"author": "Evelyn Underhill",
+"source": "The Life of the Spirit and the Life of To-day (1922)",
+"themes": [
+"Humility",
+"True self"
+],
+"id": "ca99cdfb7651df5b"
+},
+{
+"text": "If the seeking of the Eternal is actuated by love, the finding of it is achieved through prayer. Prayer, in fact--understood as a life or state, not an act or an asking--is the beginning, middle and end of all that we are now considering. … In this world the soul may sometimes wander as if in pastures, sometimes is poised breathless and intent. Sometimes it is fed by beauty, sometimes by most difficult truth, and experiences the extremes of riches and destitution, darkness and light.",
+"author": "Evelyn Underhill",
+"source": "The Life of the Spirit and the Life of To-day (1922)",
+"themes": [
+"Prayer",
+"Soul",
+"Paradox"
+],
+"id": "66f0ec4bbea01e2b"
+},
+{
+"text": "Love unites the soul with God, and the greater its love the deeper does it enter into God, and the more is it centered in Him. According to this way of speaking we may say, that as the degrees of love, so are the centres which the soul finds in God.",
+"author": "John of the Cross",
+"source": "The Living Flame of Love (trans. David Lewis, rev. Benedict Zimmerman, 1912)",
+"themes": [
+"Love & belonging",
+"Soul",
+"The path"
+],
+"id": "6290500858c0c447"
+},
+{
+"text": "This flame of love is the Spirit of the Bridegroom, the Holy Ghost, of whose presence within itself the soul is conscious, not only as fire which consumes it, and transforms it in sweet love, but as a fire burning within it, sending forth a flame which bathes it in glory and recreates it with the refreshment of everlasting life.",
+"author": "John of the Cross",
+"source": "The Living Flame of Love (trans. David Lewis, rev. Benedict Zimmerman, 1912)",
+"themes": [
+"Love & belonging",
+"Soul",
+"Hope & renewal"
+],
+"occasion": "pentecost",
+"id": "39a065d1b2b94bd3"
+},
+{
+"text": "For when this flame of divine life wounds the soul with the gentle languishing for the life of God, it wounds it with so much endearing tenderness, and softens it so that it melts away in love.",
+"author": "John of the Cross",
+"source": "The Living Flame of Love (trans. David Lewis, rev. Benedict Zimmerman, 1912)",
+"themes": [
+"Love & belonging",
+"Soul"
+],
+"id": "24e624e9a9c6504c"
+},
+{
+"text": "And inasmuch as the soul cannot work naturally here, nor make any efforts of its own otherwise than through the bodily senses and by their help — of which it is in this case completely free, and from which it is most detached — the work of the soul is solely to receive what God communicates, Who alone in the depths of the soul, without the help of the senses, can influence and direct it, and operate within it.",
+"author": "John of the Cross",
+"source": "The Living Flame of Love (trans. David Lewis, rev. Benedict Zimmerman, 1912)",
+"themes": [
+"Prayer",
+"Slowness & presence",
+"Soul"
+],
+"id": "b76adc79ff668533"
+},
+{
+"text": "Oh, would that spiritual persons knew how they are losing the good things of the Spirit, abundantly furnished, because they will not raise up their desires above trifles, and how they might have the sweetness of all things in the pure food of the Spirit if they would only forego them.",
+"author": "John of the Cross",
+"source": "The Ascent of Mount Carmel (trans. David Lewis, 1864)",
+"themes": [
+"Simplicity",
+"Soul",
+"The path"
+],
+"id": "16eef71df4e230ba"
+},
+{
+"text": "It is a hard and miserable thing for souls when they cannot comprehend their own state, nor meet with any one who can.",
+"author": "John of the Cross",
+"source": "The Ascent of Mount Carmel (trans. David Lewis, 1864)",
+"themes": [
+"Darkness & suffering",
+"The path"
+],
+"id": "ee05783a47864571"
+},
+{
+"text": "We are to keep in mind that a soul, when seriously converted to the service of God, is, in general, spiritually nursed and caressed, as an infant by its loving mother, who warms it in her bosom, nourishes it with her own sweet milk, feeds it with tender and delicate food, carries it in her arms, and fondles it. But as the child grows up the mother withholds her caresses, hides her breasts, and anoints them with the juice of bitter aloes; she carries the infant in her arms no longer, but makes it walk on the ground, so that, losing the habits of an infant, it may apply itself to greater and more substantial pursuits.",
+"author": "John of the Cross",
+"source": "The Dark Night of the Soul (trans. David Lewis, rev. Benedict Zimmerman, 1916)",
+"themes": [
+"Darkness & suffering",
+"The path",
+"Love & belonging"
+],
+"id": "97999865005e5dae"
+},
+{
+"text": "I thought of the soul as resembling a castle, formed of a single diamond or a very transparent crystal, and containing many rooms, just as in heaven there are many mansions.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Soul",
+"Wonder & beauty"
+],
+"id": "b46d43adae03456c"
+},
+{
+"text": "If we reflect, sisters, we shall see that the soul of the just man is but a paradise, in which, God tells us, He takes His delight. What, do you imagine, must that dwelling be in which a King so mighty, so wise, and so pure, containing in Himself all good, can delight to rest?",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Soul",
+"Wonder & beauty",
+"True self"
+],
+"id": "78cc664554ea0674"
+},
+{
+"text": "As far as I can understand, the gate by which to enter this castle is prayer and meditation. I do not allude more to mental than to vocal prayer, for if it is prayer at all, the mind must take part in it.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Prayer",
+"The path"
+],
+"id": "61523b7025eadc8f"
+},
+{
+"text": "I believe we shall never learn to know ourselves except by endeavouring to know God, for, beholding His greatness we are struck by our own baseness, His purity shows our foulness, and by meditating on His humility we find how very far we are from being humble.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Humility",
+"True self"
+],
+"id": "a3ebd8ede92ddb4d"
+},
+{
+"text": "Remember, it is of the greatest importance — the sole aim of one beginning to practise prayer should be to endure trials, and to resolve and strive to the utmost of her power to conform her own will to the will of God.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Prayer",
+"The path",
+"Courage & vulnerability"
+],
+"id": "c1c1e14ee2ad245d"
+},
+{
+"text": "I only wish to warn you that to make rapid progress and to reach the mansions we wish to enter, it is not so essential to think much as to love much: therefore you must practise whatever most excites you to this. Perhaps we do not know what love is, nor does this greatly surprise me. Love does not consist in great sweetness of devotion, but in a fervent determination to strive to please God in all things, in avoiding, as far as possible, all that would offend Him, and in praying for the increase of the glory and honour of His Son and for the growth of the Catholic Church.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Love & belonging",
+"Prayer"
+],
+"id": "4efadd4e6fd6b7a1"
+},
+{
+"text": "I think the most certain sign that we keep these two commandments is that we have a genuine love for others. We cannot know whether we love God although there may be strong reasons for thinking so, but there can be no doubt about whether we love our neighbour or no.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Love & belonging",
+"Community & place"
+],
+"id": "e53de520a86e3d36"
+},
+{
+"text": "If you see a sick sister whom you can relieve, never fear losing your devotion; compassionate her; if she is in pain, feel for it as if it were your own and, when there is need, fast so that she may eat, not so much for her sake as because you know your Lord asks it of you. This is the true union of our will with the will of God.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Love & belonging",
+"Community & place",
+"Courage & vulnerability"
+],
+"id": "7f8ad89e6b5808cb"
+},
+{
+"text": "Life is long and full of crosses and we have need to look on Christ our pattern, to see how He bore His trials, and even to take example by His Apostles and saints if we would bear our own trials perfectly. Our good Jesus and His most blessed Mother are too good company to be left and He is well pleased if we grieve at His pains, even though sometimes at the cost of our own consolations and joys.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Darkness & suffering",
+"The path",
+"Prayer"
+],
+"id": "69c5b25e3aeb0f5f"
+},
+{
+"text": "It would be a strange thing to fancy we should gain these graces by any other road than that by which Jesus and all His saints have gone before. Let us not dream of such a thing: believe me, both Martha and Mary must entertain our Lord and keep Him as their Guest, nor must they be so inhospitable as to offer Him no food. How can Mary do this while she sits at His feet, if her sister does not help her?",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Wholeness",
+"Prayer",
+"Vocation & calling"
+],
+"id": "1c636ad0cb7d0253"
+},
+{
+"text": "In short, my sisters, I will conclude with this advice; do not build towers without a foundation, for our Lord does not care so much for the importance of our works as for the love with which they are done. When we do all we can, His Majesty will enable us to do more every day.",
+"author": "Teresa of Ávila",
+"source": "The Interior Castle (trans. the Benedictines of Stanbrook, rev. Benedict Zimmerman, 3rd ed. 1921)",
+"themes": [
+"Love & belonging",
+"Humility",
+"Simplicity"
+],
+"id": "fef6182251520c4c"
+},
+{
+"text": "Lift up thine heart unto God with a meek stirring of love; and mean Himself, and none of His goods.",
+"author": "The Cloud of Unknowing",
+"source": "The Cloud of Unknowing (ed. Evelyn Underhill, 2nd ed. 1922)",
+"themes": [
+"Prayer",
+"Love & belonging",
+"Simplicity"
+],
+"id": "c9c8a534eddb729c"
+},
+{
+"text": "This darkness and this cloud is, howsoever thou dost, betwixt thee and thy God, and letteth thee that thou mayest neither see Him clearly by light of understanding in thy reason, nor feel Him in sweetness of love in thine affection. And therefore shape thee to bide in this darkness as long as thou mayest, evermore crying after Him that thou lovest.",
+"author": "The Cloud of Unknowing",
+"source": "The Cloud of Unknowing (ed. Evelyn Underhill, 2nd ed. 1922)",
+"themes": [
+"Darkness & suffering",
+"Faith & doubt",
+"Prayer"
+],
+"id": "6363f4cc6bdc3a82"
+},
+{
+"text": "Look now forwards and let be backwards; and see what thee faileth, and not what thou hast, for that is the readiest getting and keeping of meekness.",
+"author": "The Cloud of Unknowing",
+"source": "The Cloud of Unknowing (ed. Evelyn Underhill, 2nd ed. 1922)",
+"themes": [
+"Humility",
+"The path"
+],
+"id": "3f5e6b982504a117"
+},
+{
+"text": "For why; He may well be loved, but not thought. By love may He be gotten and holden; but by thought never.",
+"author": "The Cloud of Unknowing",
+"source": "The Cloud of Unknowing (ed. Evelyn Underhill, 2nd ed. 1922)",
+"themes": [
+"Love & belonging",
+"Paradox",
+"Prayer"
+],
+"id": "4a102d4f7b9ad780"
+},
+{
+"text": "And smite upon that thick cloud of unknowing with a sharp dart of longing love; and go not thence for thing that befalleth.",
+"author": "The Cloud of Unknowing",
+"source": "The Cloud of Unknowing (ed. Evelyn Underhill, 2nd ed. 1922)",
+"themes": [
+"Prayer",
+"Love & belonging",
+"Courage & vulnerability"
+],
+"id": "2ca41ea299417e1e"
+},
+{
+"text": "And if thee list have this intent lapped and folden in one word, for thou shouldest have better hold thereupon, take thee but a little word of one syllable: for so it is better than of two, for ever the shorter it is the better it accordeth with the work of the Spirit. And such a word is this word GOD or this word LOVE. Choose thee whether thou wilt, or another; as thee list, which that thee liketh best of one syllable. And fasten this word to thine heart, so that it never go thence for thing that befalleth.",
+"author": "The Cloud of Unknowing",
+"source": "The Cloud of Unknowing (ed. Evelyn Underhill, 2nd ed. 1922)",
+"themes": [
+"Prayer",
+"Simplicity"
+],
+"id": "8e0b25f2eb3ba347"
+},
+{
+"text": "For virtue is nought else but an ordained and a measured affection, plainly directed unto God for Himself.",
+"author": "The Cloud of Unknowing",
+"source": "The Cloud of Unknowing (ed. Evelyn Underhill, 2nd ed. 1922)",
+"themes": [
+"Love & belonging",
+"Simplicity"
+],
+"id": "4f632d3826a6e127"
+}
+],
+"retired": []
+}

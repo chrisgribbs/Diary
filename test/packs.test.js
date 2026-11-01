@@ -71,3 +71,23 @@ assert.equal(r.added, built.items.length);
 assert.equal(v2.getQuotes().filter(q => q.pack === 'wellwrite').length, built.items.length, 'every built-in piece kept (no clean-up losses)');
 fs.rmSync(tmp, { recursive: true, force: true });
 console.log('reading pack tests passed');
+
+// the classics collection is well formed, public-domain sources named, and every piece loads
+{
+  const fs2 = require('fs'), os2 = require('os'), path2 = require('path');
+  const { Vault: V } = require('../src/vault');
+  const cl = JSON.parse(fs2.readFileSync(path2.join(__dirname, '../src/readings/classics.json'), 'utf8'));
+  assert.equal(cl.id, 'classics');
+  assert.ok(cl.items.length >= 100);
+  for (const it of cl.items) {
+    assert.ok(it.text && it.author && it.source && it.themes.length, it.text.slice(0, 40));
+    assert.ok(!/_\w|\[\d+\]/.test(it.text), 'no italics marks or footnote numbers: ' + it.text.slice(0, 40));
+    assert.ok(!it.mine && !it.kind, 'classics are quotes, not your own writing');
+  }
+  const dir = fs2.mkdtempSync(path2.join(os2.tmpdir(), 'wellwrite-cl-'));
+  const v3 = new V(path2.join(dir, 'j')); v3.create('river-stone');
+  const r3 = v3.syncPack('classics', cl.items, cl.retired);
+  assert.equal(v3.getQuotes().filter(q => q.pack === 'classics').length, cl.items.length - (cl.items.length - r3.added), 'all classics added');
+  fs2.rmSync(dir, { recursive: true, force: true });
+  console.log('classics pack tests passed:', cl.items.length);
+}
