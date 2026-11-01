@@ -910,6 +910,7 @@ let popClose = null;
 function showPopover(rect, build, onClose) {
   closePopover();
   const pop = $('#popover');
+  pop.className = 'popover';
   pop.replaceChildren(); pop.hidden = false;
   build(pop);
   const w = pop.offsetWidth, h = pop.offsetHeight;
@@ -929,6 +930,62 @@ function showPopover(rect, build, onClose) {
   };
 }
 function closePopover() { if (popClose) { const f = popClose; popClose = null; f(); } }
+
+// --- The writers: a short life, with their journey with God (renderer/authors.js)
+const nameKey = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  .replace(/\b(saint|st)\b\.?/g, '').replace(/[^a-z]+/g, ' ').trim();
+let authorIndex = null;
+function authorBio(name) {
+  const list = window.WellWriteAuthors || [];
+  if (!authorIndex) {
+    authorIndex = new Map();
+    for (const b of list) for (const n of [b.name, ...(b.aliases || [])]) authorIndex.set(nameKey(n), b);
+  }
+  return authorIndex.get(nameKey(name)) || null;
+}
+/** A writer's name; where there's a biography, a link that opens it. */
+function authorLink(name) {
+  const b = authorBio(name);
+  if (!b) return name || 'Unknown';
+  return el('button', { type: 'button', class: 'author-link', title: `About ${b.name}`, onclick: e => { e.stopPropagation(); authorPopover(e.currentTarget, b); } }, name);
+}
+function authorPopover(anchor, b) {
+  showPopover(anchor.getBoundingClientRect(), pop => {
+    pop.classList.add('author-pop');
+    pop.append(
+      el('p', { class: 'ap-name' }, b.name),
+      el('p', { class: 'ap-meta' }, [b.dates, b.tagline].filter(Boolean).join(' · ')),
+      el('p', { class: 'ap-short' }, b.short),
+      el('div', { class: 'ap-btns' },
+        el('button', { type: 'button', class: 'btn-ink', id: 'authorMore', onclick: () => { closePopover(); openAuthorPage(b); } }, 'Read more'),
+        el('button', { type: 'button', class: 'btn-link', onclick: () => closePopover() }, 'Close')));
+    setTimeout(() => { const m = pop.querySelector('#authorMore'); if (m) m.focus(); });
+  });
+}
+/** The fuller page about a writer, with an easy way back to the journal. */
+function openAuthorPage(b) {
+  const theirs = state.quotes.filter(q => authorBio(q.author) === b);
+  return openDialog((f, done) => {
+    f.classList.add('page', 'author-page');
+    const back = label => el('button', { type: 'button', class: 'btn-plain back-journal', onclick: () => done() }, label);
+    f.append(...[
+      el('div', { class: 'ap-top' }, back('‹ Back to my journal')),
+      el('article', { class: 'ap-article' }, ...[
+        b.tagline ? el('p', { class: 'ap-eyebrow' }, b.tagline) : null,
+        el('h2', {}, b.name),
+        b.dates ? el('p', { class: 'ap-dates' }, b.dates) : null,
+        ...String(b.long || b.short).split(/\n\s*\n/).map(par => el('p', { class: 'ap-body' }, par)),
+        (b.read || []).length ? el('section', { class: 'ap-sec' }, el('h3', {}, 'To read next'), el('ul', {}, ...b.read.map(t => el('li', {}, el('i', {}, t))))) : null,
+        theirs.length ? el('section', { class: 'ap-sec' }, el('h3', {}, `In your collection (${theirs.length})`),
+          ...theirs.slice(0, 3).map(q => el('blockquote', { class: 'ap-quote' }, q.text))) : null,
+        (b.sources || []).length ? el('section', { class: 'ap-sec ap-sources' }, el('h3', {}, 'Sources'),
+          el('ul', {}, ...b.sources.map(src => el('li', {}, el('a', { href: src.url, target: '_blank', rel: 'noopener' }, src.title))))) : null,
+        el('div', { class: 'btns' }, back('Back to my journal')),
+      ].filter(Boolean)),
+    ].filter(Boolean));
+    setTimeout(() => { const t = f.querySelector('.back-journal'); if (t) t.focus(); });
+  });
+}
 
 // --- Bible version, changed from wherever a verse is shown
 /** The version name under a verse ("WEB"), as a button that opens the list of versions. */
@@ -1724,7 +1781,7 @@ function quoteCard(iso, where) {
   return el('figure', { class: 'quote-card ' + where },
     season ? el('p', { class: 'q-season' }, `${season.name}, day ${season.dayIndex + 1}`) : null,
     el('blockquote', {}, q.text),
-    el('figcaption', {}, '— ' + (q.author || 'Unknown') + (q.source ? ', ' : ''), q.source ? el('cite', {}, q.source) : null),
+    el('figcaption', {}, '— ', authorLink(q.author), q.source ? ', ' : '', q.source ? el('cite', {}, q.source) : null),
     el('div', { class: 'q-actions' },
       btn('Write about this', () => writeAboutQuote(q, iso), 'q-btn primary'),
       state.quotes.length > 1 ? btn('Another', () => { state.quoteSkip[iso] = (state.quoteSkip[iso] || 0) + 1; refreshQuote(); }) : null,
@@ -2157,7 +2214,7 @@ function manageQuotes() {
             x.title || x.kind || x.mine || x.occasion ? el('p', { class: 'q-kind' }, [x.kind ? KIND_NAMES[x.kind] : '', x.title, x.mine ? 'my own writing' : '',
               x.occasion && window.WellWriteSeasons ? 'only ' + window.WellWriteSeasons.OCCASIONS[x.occasion] : ''].filter(Boolean).join(' · ')) : null,
             el('p', { class: 'q-text' }, x.text),
-            el('small', {}, (x.author || 'Unknown') + (x.source ? `, ${x.source}` : '')),
+            el('small', {}, authorLink(x.author), x.source ? `, ${x.source}` : ''),
             (x.themes || []).length ? el('div', { class: 'q-themes' }, ...x.themes.map(t => el('button', { type: 'button', class: 'theme-chip mini', onclick: () => { quoteThemeFilter = t; draw(); } }, t))) : null),
           el('div', { class: 'q-row-btns' },
             el('button', { type: 'button', class: 'btn-link', onclick: edit }, 'Edit'),
@@ -2520,7 +2577,7 @@ async function renderWeekView(today, season) {
   const btn = (label, fn, cls = 'btn-plain', title) => el('button', { type: 'button', class: cls, onclick: fn, title }, label);
   const short = d => fmt(d, { day: 'numeric', month: 'short' });
   const goWeek = n => { state.weekAt = n < 0 ? addDays(days[0], -1) : addDays(days.at(-1), 1); renderQuoteView(); $('#quoteView').scrollTop = 0; };
-  const sign = x => el('p', { class: 'wk-sign' }, x.author || 'Unknown', x.source ? ', ' : '', x.source ? el('cite', {}, x.source) : null);
+  const sign = x => el('p', { class: 'wk-sign' }, authorLink(x.author), x.source ? ', ' : '', x.source ? el('cite', {}, x.source) : null);
   const shown = verses.filter(Boolean);
   // Your own writing: a reflection each week, and your prayers and blessings taking turns with the book's.
   const year = +days[0].slice(0, 4);
@@ -2618,7 +2675,7 @@ function renderQuoteView() {
     el('p', { class: 'rv-kicker' }, fmt(iso, { weekday: 'long', day: 'numeric', month: 'long' })),
     el('figure', { class: 'big-quote' },
       el('blockquote', {}, q.text),
-      el('figcaption', {}, '— ' + (q.author || 'Unknown') + (q.source ? ', ' : ''), q.source ? el('cite', {}, q.source) : null),
+      el('figcaption', {}, '— ', authorLink(q.author), q.source ? ', ' : '', q.source ? el('cite', {}, q.source) : null),
       (q.themes || []).length ? el('div', { class: 'q-themes' }, ...q.themes.map(t => el('button', { type: 'button', class: 'theme-chip mini', title: `Show quotes about ${t}`,
         onclick: () => { quoteThemeFilter = t; manageQuotes(); } }, t))) : null),
     prompt ? el('div', { class: 'big-prompt' }, el('p', {}, prompt),

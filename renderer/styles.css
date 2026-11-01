@@ -736,3 +736,25 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 
 /* the title is a wrapping box: long titles go onto a second line */
 textarea.title { resize: none; overflow: hidden; display: block; width: 100%; box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word; padding-bottom: 2px; }
+
+/* writers: a link on the name, a short pop-up, and a page to read more */
+.author-link { all: unset; cursor: pointer; color: inherit; border-bottom: 1px dotted color-mix(in srgb, currentColor 60%, transparent); }
+.author-link:hover, .author-link:focus-visible { color: var(--ribbon); border-bottom-color: var(--ribbon); }
+.popover.author-pop { width: min(360px, 92vw); padding: 16px 18px 14px; }
+.ap-name { font: 600 19px/1.2 var(--serif); margin: 0; color: var(--ink); }
+.ap-meta { font-size: 12px; color: var(--pencil); margin: 3px 0 10px; }
+.ap-short { font: 15px/1.55 var(--serif); margin: 0 0 12px; color: var(--ink); }
+.ap-btns { display: flex; gap: 12px; align-items: center; }
+.dlg.page form.author-page { padding-top: 22px; }
+.ap-top { position: sticky; top: -22px; padding: 8px 0; background: var(--paper); z-index: 2; }
+.ap-article { max-width: 36em; margin: 6px auto 0; font-family: var(--serif); }
+.ap-eyebrow { font: 600 11.5px/1.3 var(--sans, inherit); letter-spacing: .12em; text-transform: uppercase; color: var(--ribbon) !important; margin: 0 0 6px !important; }
+.ap-article h2 { font: 600 36px/1.1 var(--serif); margin: 0; text-wrap: balance; }
+.ap-dates { color: var(--pencil); margin: 4px 0 22px !important; font-style: italic; }
+.ap-body { font: calc(var(--write-size) * 1.0)/1.7 var(--serif); color: var(--ink) !important; margin: 0 0 1em !important; }
+.ap-sec { margin-top: 26px; }
+.ap-sec h3 { margin: 0 0 8px !important; }
+.ap-sec ul { margin: 0; padding-left: 1.2em; color: var(--ink); }
+.ap-sec li { margin: 4px 0; }
+.ap-quote { margin: 0 0 12px; padding-left: 14px; border-left: 3px solid var(--foil); font: italic 16px/1.55 var(--serif); white-space: pre-line; color: var(--ink); }
+.ap-sources a { color: var(--pencil); }
