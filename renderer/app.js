@@ -1457,14 +1457,18 @@ async function chooseBibleVersions(back) {
 function readingsControls(redraw = () => manageQuotes()) {
   const box = el('div', { class: 'readings-box' });
   const draw = () => {
-    const b = el('input', { type: 'checkbox', id: 'builtinReadings' }); b.checked = state.settings.builtinReadings !== false;
-    b.addEventListener('change', async () => { await updateSetting({ builtinReadings: b.checked }); await syncReadings(); redraw(); refreshQuote(); });
+    const packRows = (readings.packs || []).map(p => {
+      const key = PACK_SETTING[p.id];
+      const b = el('input', { type: 'checkbox', id: key || 'pack-' + p.id }); b.checked = packOn(p.id);
+      if (key) b.addEventListener('change', async () => { await updateSetting({ [key]: b.checked }); await syncReadings(); redraw(); refreshQuote(); });
+      else b.disabled = true;
+      return el('div', { class: 'row' }, el('div', {}, p.name, el('small', {}, `${p.count} pieces that come with WellWrite. ${p.about || ''}`.trim())), b);
+    });
     const pics = el('input', { type: 'checkbox', id: 'weekPictures' }); pics.checked = state.settings.weekPictures !== false;
     pics.addEventListener('change', async () => { await updateSetting({ weekPictures: pics.checked }); state.pictures = {}; pictureTried.clear(); refreshQuote(); });
     const f = readings.file;
     box.replaceChildren(
-      el('div', { class: 'row' }, el('div', {}, readings.builtin ? readings.builtin.name : 'Built-in readings',
-        el('small', {}, `${readings.builtin ? readings.builtin.count : ''} pieces that come with WellWrite. They become each week’s Reflection, and updates arrive with the app.`)), b),
+      ...packRows,
       el('div', { class: 'row' }, el('div', {}, 'A picture for each week',
         el('small', {}, 'Public-domain paintings and photographs, fetched once and kept in your journal. Change any week’s picture on its page.')), pics),
       el('div', { class: 'row' },
@@ -1530,16 +1534,21 @@ function quotePool() {
 }
 
 /* --- reading packs: built-in writing, and your readings file, kept up to date --- */
-const readings = { file: null, builtin: null };
+const readings = { file: null, packs: [] };
 /** Built-in psalms and reflections count as "your" writing for the weekly Reflection, prayers and blessings. */
 const ownish = q => q.mine || q.pack === 'wellwrite';
+/** Each built-in collection has its own switch in Settings. */
+const PACK_SETTING = { wellwrite: 'builtinReadings', classics: 'classicsReadings' };
+const packOn = id => state.settings[PACK_SETTING[id]] !== false;
 async function syncReadings({ quiet = true } = {}) {
   let changed = 0;
   try {
-    const b = await api.builtinReadings();
-    readings.builtin = { name: b.name, count: b.items.length };
-    const r = await api.syncReadings('wellwrite', state.settings.builtinReadings === false ? [] : b.items, b.retired);
-    state.quotes = r.quotes; changed += r.added + r.updated + r.removed;
+    const packs = await api.builtinReadings();
+    readings.packs = packs.map(p => ({ id: p.id, name: p.name, about: p.about, count: p.items.length }));
+    for (const p of packs) {
+      const r = await api.syncReadings(p.id, packOn(p.id) ? p.items : [], p.retired);
+      state.quotes = r.quotes; changed += r.added + r.updated + r.removed;
+    }
   } catch (e) { console.warn('Built-in readings:', e.message); }
   try {
     const f = await api.readReadingsFile();
@@ -2111,7 +2120,7 @@ function manageQuotes() {
         el('button', { type: 'button', class: 'theme-chip' + (!quoteThemeFilter ? ' on' : ''), onclick: () => { quoteThemeFilter = ''; draw(); } }, 'All'),
         ...themes.map(([t, n]) => el('button', { type: 'button', class: 'theme-chip' + (quoteThemeFilter === t ? ' on' : ''),
           onclick: () => { quoteThemeFilter = quoteThemeFilter === t ? '' : t; draw(); } }, t, el('small', {}, String(n)))),
-        ...[['wellwrite', 'Built-in writing'], ['file', 'From your readings file']].map(([id, label]) => state.quotes.some(q => q.pack === id)
+        ...[['wellwrite', 'Chris Gribble’s writing'], ['classics', 'Classics of formation'], ['file', 'From your readings file']].map(([id, label]) => state.quotes.some(q => q.pack === id)
           ? el('button', { type: 'button', class: 'theme-chip mine' + (quoteThemeFilter === '\u0000pack:' + id ? ' on' : ''), onclick: () => { quoteThemeFilter = quoteThemeFilter === '\u0000pack:' + id ? '' : '\u0000pack:' + id; draw(); } },
             label, el('small', {}, String(state.quotes.filter(q => q.pack === id).length))) : null),
         state.quotes.some(q => q.mine)

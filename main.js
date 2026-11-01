@@ -28,7 +28,7 @@ let win = null;
 let quitting = false;
 
 const DEFAULT_SETTINGS = {
-  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, readingsFile: '', weekPictures: true, shownBoth: true,
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, classicsReadings: true, readingsFile: '', weekPictures: true, shownBoth: true,
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
 };
 const CHOICES = {
@@ -366,9 +366,13 @@ handle('quotes:pickFile', async () => {
 });
 // ---------- reading packs ----------
 // Built in: psalms, poems and reflections that ship with WellWrite.
+// Every built-in collection in src/readings: Chris Gribble's writing, and the classics of Christian formation.
 handle('readings:builtin', () => {
-  const p = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'readings', 'wellwrite.json'), 'utf8'));
-  return { name: p.name, version: p.version, items: p.items, retired: p.retired };
+  const dir = path.join(__dirname, 'src', 'readings');
+  return fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort().map(f => {
+    const p = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    return { id: p.id, name: p.name, about: p.about || '', version: p.version, items: p.items, retired: p.retired || [] };
+  }).filter(p => /^[a-z0-9]{1,20}$/.test(p.id || ''));
 });
 // Your readings file: chosen once, read again whenever it changes.
 let readingsWatch = null;
