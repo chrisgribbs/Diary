@@ -48,7 +48,10 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
   await shot('4-journal');
 
   await page.click('#menuBtn'); await page.waitForTimeout(800); await shot('5-drawer');
-  await page.mouse.click(380, 400); await page.waitForTimeout(500);
+  check(await page.evaluate(() => document.body.classList.contains('drawer-open')), 'the menu button opens the sidebar');
+  await device.shell('input keyevent 4');   // the Back button
+  await page.waitForTimeout(800);
+  check(!(await page.evaluate(() => document.body.classList.contains('drawer-open'))), 'Back closes the sidebar');
 
   await page.click('.modeswitch [data-mode="quote"]'); await page.waitForTimeout(4000); await shot('6-week');
   await page.click('.modeswitch [data-mode="bible"]'); await page.waitForTimeout(2500); await shot('7-bible');
