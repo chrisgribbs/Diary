@@ -77,6 +77,36 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
   await page.click('#menuBtn'); await page.waitForTimeout(500);
   await page.click('#settingsBtn'); await page.waitForTimeout(1200); await shot('8-settings');
 
+  // The camera: the button opens the phone's camera app, and the photo comes back into today's entry.
+  await page.click('#menuBtn').catch(() => {}); await device.shell('input keyevent 4'); await page.waitForTimeout(500);
+  await page.evaluate(() => document.querySelector('.modeswitch [data-mode="journal"]').click());
+  const before = await page.evaluate(() => window.wellwrite.list().then(l => l.reduce((a, m) => a + m.images, 0)));
+  await page.click('#cameraBtn');
+  await page.waitForTimeout(6000);
+  const focus = String(await device.shell('dumpsys window | grep -E "mCurrentFocus|mFocusedApp" | head -2'));
+  log('focus:', focus.replace(/\s+/g, ' ').slice(0, 300));
+  check(!/com\.chrisgribble\.wellwrite\/.MainActivity/.test(focus.split('\n')[0]), 'the camera button opens the camera');
+  await shot('10-camera');
+  // Take the picture and accept it (the emulator's camera app): shutter, then the tick.
+  const tapId = async re => {
+    const xml = String(await device.shell('uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; cat /sdcard/ui.xml'));
+    const nodes = [...xml.matchAll(/<node [^>]*>/g)].map(m => m[0]);
+    const n = nodes.find(x => re.test(x));
+    if (!n) { log('no button matching', re, '; ids:', [...new Set(nodes.map(x => (x.match(/resource-id="([^"]+)"/) || [])[1]).filter(Boolean))].join(' ').slice(0, 600)); return false; }
+    const [, x1, y1, x2, y2] = n.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/).map(Number);
+    await device.shell(`input tap ${(x1 + x2) >> 1} ${(y1 + y2) >> 1}`);
+    return true;
+  };
+  for (let i = 0; i < 3 && await tapId(/(Next|Got it|Allow|While using|Only this time|NEXT|ALLOW)/i); i++) await page.waitForTimeout(1500);
+  if (!(await tapId(/shutter_button|resource-id="[^"]*shutter[^"]*"|content-desc="Shutter"/i))) await device.shell('input keyevent 27');
+  await page.waitForTimeout(4000); await shot('11-taken');
+  await tapId(/done_button|content-desc="Done"|resource-id="[^"]*(done|ok|confirm)[^"]*"/i);
+  await page.waitForTimeout(6000); await shot('12-back');
+  const after = await page.evaluate(() => window.wellwrite.list().then(l => l.reduce((a, m) => a + m.images, 0))).catch(() => -1);
+  const inEntry = await page.evaluate(() => document.querySelectorAll('#body img').length).catch(() => -1);
+  log('photos before', before, 'after', after, 'in open entry', inEntry);
+  check(inEntry > 0, 'a photo from the camera lands in today’s entry');
+
   log(failures ? `${failures} FAILED` : 'ALL PASSED');
   await device.close();
   process.exit(failures ? 1 : 0);
