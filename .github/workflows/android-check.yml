@@ -4,6 +4,9 @@ name: Android check
 # and keeps screenshots and the log. Run by hand, or on pushes to the android branch.
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write
   push:
     branches: [android]
 
@@ -36,8 +39,17 @@ jobs:
           target: google_apis
           disable-animations: true
           script: bash android/scripts/smoke.sh
-      - uses: actions/upload-artifact@v4
+      - name: Results
         if: always()
-        with:
-          name: android-check
-          path: smoke/
+        run: |
+          cat smoke/drive.log || true
+          echo "----- log -----"; cat smoke/logcat-short.txt || true
+      # Screenshots go to the android-check-results branch, so they can be looked at without downloading artifacts.
+      - name: Keep screenshots
+        if: always()
+        run: |
+          cd smoke
+          git init -q -b android-check-results
+          git -c user.name=wellwrite-ci -c user.email=ci@users.noreply.github.com add -A
+          git -c user.name=wellwrite-ci -c user.email=ci@users.noreply.github.com commit -qm "Android check ${{ github.sha }}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" android-check-results
