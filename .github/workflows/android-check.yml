@@ -4,11 +4,11 @@ name: Android check
 # and keeps screenshots and the log. Run by hand, or on pushes to the android branch.
 on:
   workflow_dispatch:
+  push:
+    branches: [android]
 
 permissions:
   contents: write
-  push:
-    branches: [android]
 
 jobs:
   emulator:
