@@ -1,12 +1,16 @@
 # WellWrite
 
-A private desktop journal for Windows. Every entry is encrypted with your password and stays on your computer.
+A private journal for Windows and Android. Every entry is encrypted with your password and stays on your device.
 
 ## Install
 
 Run **WellWrite-Setup.exe**. Because the app isn't code-signed, Windows SmartScreen may say "Windows protected your PC" — click **More info → Run anyway**.
 
 Prefer no installer? **WellWrite-Portable.exe** runs on its own (your journal is still saved in your user folder, not next to the exe).
+
+### Android
+
+Download **WellWrite-<version>.apk** from the [releases page](https://github.com/chrisgribbs/Diary/releases/latest) on your phone and open it. Android asks once to allow installs from your browser; allow it, then **Install**. New versions show in WellWrite's sidebar; tap **Download update** and install it the same way. Your journal stays as it is.
 
 ## What it does
 
@@ -64,6 +68,18 @@ npm run dist         # build the Windows installer into dist/
 
 Building the Windows installer on Linux/macOS needs Wine (64- and 32-bit).
 
+### Android
+
+The Android app is the same page (`renderer/`) and the same engine (`src/backend.js`, run by [nodejs-mobile](https://github.com/nodejs-mobile)'s Node.js inside the app) in a small Java shell (`android/`). `renderer/android.js` gives the page the same `window.wellwrite` as `preload.js` does on Windows.
+
+```
+node android/dev/server.js            # try the Android version in a desktop browser at phone size
+node android/scripts/prepare.js       # copy the page and engine into the Android project, fetch libnode
+gradle -p android assembleDebug       # needs the Android SDK and NDK
+```
+
+Releases are signed with WellWrite's own key, kept in the `ANDROID_SIGNING` repository secret (the key's password on the first line, then the `.keystore` file in base64). Every release must use the same key or phones can't update; keep a copy of it somewhere safe. The **Android check** workflow runs the app on an emulator and drives it through `android/scripts/drive.js`.
+
 ## Google Drive setup (for builds)
 
 Google Drive backups need an OAuth client from Google Cloud (type: Desktop app, scope `drive.file`, publishing status: In production). Add its values as repository secrets `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`; the release workflow writes them into `src/google-config.json` (not committed). For local runs, set `WELLWRITE_GOOGLE_CLIENT_ID` and `WELLWRITE_GOOGLE_CLIENT_SECRET`. Without them, WellWrite still works and offers folder backups only.
@@ -74,6 +90,6 @@ Google Drive backups need an OAuth client from Google Cloud (type: Desktop app, 
 
 ## Releasing an update
 
-Bump `version` in `package.json`, commit and push to `main`. GitHub Actions (`.github/workflows/release.yml`) runs the tests, builds the installer on Windows and publishes it as release `v<version>`.
+Bump `version` in `package.json`, commit and push to `main`. GitHub Actions (`.github/workflows/release.yml`) runs the tests, builds the installer on Windows and publishes it as release `v<version>`, then builds the Android app and adds it to the same release.
 
 Installed copies check for updates a few seconds after launch and every 6 hours, download in the background, and offer "Restart to update".
