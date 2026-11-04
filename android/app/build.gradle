@@ -1,0 +1,58 @@
+import groovy.json.JsonSlurper
+
+plugins { id 'com.android.application' }
+
+// The version comes from the same package.json as the Windows app: 1.18.0 → versionCode 11800.
+def pkg = new JsonSlurper().parse(file('../../package.json'))
+def (maj, min, pat) = pkg.version.tokenize('.').collect { it.toInteger() }
+// Phones are arm64; add x86_64 (-Pabis=arm64-v8a,x86_64) for the emulator.
+def abiList = (project.findProperty('abis') ?: 'arm64-v8a').split(',') as List
+
+android {
+    namespace 'com.chrisgribble.wellwrite'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.chrisgribble.wellwrite'
+        minSdk 26
+        targetSdk 35
+        versionCode maj * 10000 + min * 100 + pat
+        versionName pkg.version
+        ndk { abiFilters.addAll(abiList) }
+        externalNativeBuild { cmake { arguments '-DANDROID_STL=c++_shared' } }
+    }
+
+    // Releases are signed with WellWrite's key (kept in GitHub's secrets), so each new version installs over the last.
+    signingConfigs {
+        release {
+            def ks = System.getenv('WELLWRITE_KEYSTORE')
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv('WELLWRITE_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('WELLWRITE_KEY_ALIAS') ?: 'wellwrite'
+                keyPassword System.getenv('WELLWRITE_KEY_PASSWORD') ?: System.getenv('WELLWRITE_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig System.getenv('WELLWRITE_KEYSTORE') ? signingConfigs.release : null
+        }
+    }
+    buildFeatures { buildConfig true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    externalNativeBuild { cmake { path 'CMakeLists.txt' } }
+    packaging { jniLibs { useLegacyPackaging = true } }
+    // assets/www (the page) and assets/nodejs-project (the engine) are filled by android/scripts/prepare.js.
+    androidResources { ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~' }
+}
+
+dependencies {
+    implementation 'androidx.activity:activity:1.10.1'
+    implementation 'androidx.core:core:1.16.0'
+    implementation 'androidx.webkit:webkit:1.13.0'
+}

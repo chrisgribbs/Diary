@@ -97,3 +97,54 @@ jobs:
             msg=$(tail -n 30 publish.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
             echo "::error title=Publish failed::$msg"; exit 1
           }
+
+  android:
+    # After the Windows build, so the release already exists; adds WellWrite-<version>.apk to it.
+    needs: windows
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check release status
+        id: ver
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "v$v" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' 2>/dev/null | grep -qx "WellWrite-$v.apk"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "The Android app for v$v is already released."
+          fi
+          if [ -z "${{ secrets.ANDROID_SIGNING }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Android app not built::The ANDROID_SIGNING secret isn't set, so the Android app can't be signed."
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.ver.outputs.skip != 'true'
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        if: steps.ver.outputs.skip != 'true'
+        with: { distribution: temurin, java-version: 17 }
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.ver.outputs.skip != 'true'
+        with: { gradle-version: '8.14.3' }
+      - name: Build the Android app
+        if: steps.ver.outputs.skip != 'true'
+        env:
+          # The signing key: its password on the first line, then the key file in base64.
+          ANDROID_SIGNING: ${{ secrets.ANDROID_SIGNING }}
+        run: |
+          set -o pipefail
+          export WELLWRITE_KEYSTORE="$RUNNER_TEMP/wellwrite.keystore"
+          export WELLWRITE_KEYSTORE_PASSWORD="$(printf '%s\n' "$ANDROID_SIGNING" | head -n 1 | tr -d '\r ')"
+          printf '%s\n' "$ANDROID_SIGNING" | tail -n +2 | tr -d '\r ' | base64 -d > "$WELLWRITE_KEYSTORE"
+          node android/scripts/prepare.js
+          if ! gradle -p android assembleRelease 2>&1 | tee build.log; then
+            msg=$(tail -n 60 build.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+            echo "::error title=Android build failed::$msg"; exit 1
+          fi
+          rm -f "$WELLWRITE_KEYSTORE"
+          cp android/app/build/outputs/apk/release/app-release.apk "WellWrite-${{ steps.ver.outputs.version }}.apk"
+          ls -la *.apk
+      - name: Add to release v${{ steps.ver.outputs.version }}
+        if: steps.ver.outputs.skip != 'true'
+        run: gh release upload "v${{ steps.ver.outputs.version }}" "WellWrite-${{ steps.ver.outputs.version }}.apk" --clobber --repo "$GITHUB_REPOSITORY"

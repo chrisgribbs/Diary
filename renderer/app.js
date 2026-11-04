@@ -1,6 +1,9 @@
 'use strict';
 /* WellWrite — renderer */
 const api = window.wellwrite;
+// On Android the same page runs in the WellWrite app; a few words and options differ.
+const ANDROID = api.platform === 'android';
+const HERE = ANDROID ? 'this phone' : 'this computer';
 const $ = s => document.querySelector(s);
 const el = (tag, attrs = {}, ...kids) => {
   const n = document.createElement(tag);
@@ -178,6 +181,7 @@ function hideAllPasswords(root = document) {
 
 /* ---------- lock screen ---------- */
 async function boot() {
+  document.querySelectorAll('.here').forEach(n => { n.textContent = HERE; });
   addReveal($('#lock'));
   try { state.settings = await api.getSettings(); } catch {}
   applySettings();
@@ -204,7 +208,7 @@ function showLock(exists, trust) {
   if (remembered) {
     $('#trustText').textContent = trust.mode === 'hour'
       ? `No password needed until ${new Date(trust.until).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}.`
-      : 'This computer is trusted, so no password is needed.';
+      : (ANDROID ? 'This phone is trusted' : 'This computer is trusted') + ', so no password is needed.';
   }
   setTimeout(() => (remembered ? $('#trustOpen') : exists ? $('#unlockPw') : $('#setupPw')).focus(), 50);
 }
@@ -630,7 +634,7 @@ function showEmpty() {
     el('div', { class: 'daily-slot', id: 'emptyDaily' }),
     el('h2', {}, first ? 'Your first page is blank.' : fmt(todayISO(), { weekday: 'long', day: 'numeric', month: 'long' })),
     el('p', {}, first
-      ? 'Write about today, or anything at all. Entries are encrypted with your password and stay on this computer.'
+      ? 'Write about today, or anything at all. Entries are encrypted with your password and stay on ' + HERE + '.'
       : 'Nothing written yet today. A few lines is enough.'),
     el('button', { class: 'btn-ink', onclick: () => newEntry(todayISO()) }, 'Write today’s entry'),
   ].filter(Boolean));
@@ -1488,7 +1492,7 @@ function wordpressControls(redraw) {
       catch (e) { toast(e.message); go.disabled = false; go.textContent = 'Connect'; }
     } }, 'Connect');
     box.replaceChildren(
-      el('p', {}, 'Post entries to your own WordPress site. In WordPress, go to Users → Profile → Application Passwords, type “WellWrite”, click Add, and paste the password it shows here. It’s kept encrypted on this computer.'),
+      el('p', {}, 'Post entries to your own WordPress site. In WordPress, go to Users → Profile → Application Passwords, type “WellWrite”, click Add, and paste the password it shows here. It’s kept encrypted on ' + HERE + '.'),
       el('div', { class: 'wp-fields' }, site, user, pass, go));
   })();
   return box;
@@ -1523,7 +1527,7 @@ function bibleVersionControls(redraw) {
         catch (e) { toast(e.message); go.disabled = false; go.textContent = 'Connect'; }
       } }, 'Connect');
       rows.push(el('div', { class: 'row' }, el('div', {}, 'More versions from API.Bible',
-        el('small', {}, 'Paste your free API.Bible key to add other translations (open translations, plus up to three copyrighted ones on the free plan). The key is kept encrypted on this computer.')),
+        el('small', {}, 'Paste your free API.Bible key to add other translations (open translations, plus up to three copyrighted ones on the free plan). The key is kept encrypted on ' + HERE + '.')),
         el('div', { class: 'readings-btns' }, key, go)));
     } else {
       rows.push(el('div', { class: 'row' }, el('div', {}, 'API.Bible',
@@ -3149,9 +3153,9 @@ function openSettings(section) {
           el('div', {}, el('b', {}, String(streak())), 'day streak')),
         since ? el('p', { style: 'margin-top:6px' }, `Writing since ${fmt(since, { day: 'numeric', month: 'long', year: 'numeric' })}.`) : null,
         el('h3', {}, 'Writing'),
-        row('Theme', null, select(s.theme, [['system', 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
+        row('Theme', null, select(s.theme, [['system', ANDROID ? 'Match phone' : 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
         row('Text size', null, size),
-        row('Check spelling', 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
+        row('Check spelling', ANDROID ? 'Your keyboard’s spelling suggestions.' : 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
         row('Categories', 'Group entries into sections, like a notebook.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageCategories(); } }, 'Edit categories'))),
 
       panel('readings', 'Quotes & readings', 'The quote and question each day, your own writing for each week, and the week pictures.',
@@ -3166,11 +3170,11 @@ function openSettings(section) {
       panel('privacy', 'Privacy & lock', 'Your journal is encrypted with your password. When it locks, your writing is hidden.',
         row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),
         row('Remember my password', 'When WellWrite locks, your writing is hidden either way. With these, you open it again with one click.', trustSelect()),
-        row('Lock when minimised', 'Also locks when Windows locks or the computer sleeps.', check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
+        row(ANDROID ? 'Lock when I leave WellWrite' : 'Lock when minimised', ANDROID ? 'Locks whenever you switch to another app or the screen turns off.' : 'Also locks when Windows locks or the computer sleeps.', check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
         row('Password', null, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); changePassword(); } }, 'Change password'))),
 
       panel('backups', 'Backups', 'Backups are encrypted with your password, so they are safe to keep online or on a USB drive.',
-        el('div', { id: 'backupSection' }),
+        ANDROID ? el('p', {}, 'Save a backup file now and then. Android lets you save it straight to Google Drive, OneDrive or your phone.') : el('div', { id: 'backupSection' }),
         el('h3', {}, 'Backup files'),
         el('div', { class: 'btns' },
           el('button', { type: 'button', class: 'btn-plain', onclick: doBackup }, 'Save a backup file'),
@@ -3179,14 +3183,14 @@ function openSettings(section) {
             ? el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); restoreFromDrive('import'); } }, 'Restore from Google Drive') : null),
         el('h3', {}, 'A readable copy'),
         row('Export readable copy', 'Every entry as one web page you can open, print or keep. It isn’t encrypted.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); doExportReadable(); } }, 'Export')),
-        el('p', { class: 'path', style: 'margin-top:14px' }, 'Journal folder: ', state.dataDir, ' ',
+        ANDROID ? null : el('p', { class: 'path', style: 'margin-top:14px' }, 'Journal folder: ', state.dataDir, ' ',
           el('button', { type: 'button', class: 'btn-link', onclick: () => api.showDataFolder() }, 'Show folder'))),
 
       panel('wordpress', 'WordPress', 'Post entries to your own website. Nothing is sent unless you press “Post to WordPress” on an entry.',
         wordpressControls(() => openSettings('wordpress'))),
 
       panel('about', 'About', null,
-        el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, 'Updates install automatically when you restart.')),
+        el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, ANDROID ? 'New versions come from the WellWrite releases page; Android asks before installing them.' : 'Updates install automatically when you restart.')),
           el('button', { type: 'button', class: 'btn-plain', onclick: checkUpdates }, 'Check for updates')),
         el('p', { class: 'set-intro' }, 'Bible texts: World English Bible and King James Version (public domain); other versions from API.Bible. Week pictures: public-domain works from Wikimedia Commons.')),
     ];
@@ -3215,25 +3219,27 @@ function trustSelect() {
   const sel = el('select', { 'aria-label': 'Remember my password' },
     el('option', { value: 'ask' }, 'No, ask every time'),
     el('option', { value: 'hour' }, 'For an hour after I type it'),
-    el('option', { value: 'trust' }, 'Always, on this computer'));
+    el('option', { value: 'trust' }, 'Always, on ' + HERE));
   api.status().then(st => {
     const t = st.trust || { mode: 'ask' };
     sel.value = t.active || t.mode === 'hour' ? t.mode : 'ask';
-    if (!t.available) { sel.disabled = true; sel.title = 'Windows can’t protect a saved password on this computer'; }
+    if (!t.available) { sel.disabled = true; sel.title = ANDROID ? 'This phone can’t protect a saved password' : 'Windows can’t protect a saved password on this computer'; }
   }).catch(() => {});
   sel.addEventListener('change', async () => {
     const mode = sel.value;
     if (mode === 'trust') {
       const ok = await confirmDialog({
-        title: 'Trust this computer?',
-        text: 'WellWrite will open without your password whenever you’re signed in to Windows on this computer. Anyone who can use your Windows account could read your journal. Your password is still needed on any other computer and to restore backups.',
-        ok: 'Trust this computer',
+        title: ANDROID ? 'Trust this phone?' : 'Trust this computer?',
+        text: ANDROID
+          ? 'WellWrite will open without your password on this phone. Anyone who can unlock your phone could read your journal, so keep a screen lock on. Your password is still needed on any other device and to restore backups.'
+          : 'WellWrite will open without your password whenever you’re signed in to Windows on this computer. Anyone who can use your Windows account could read your journal. Your password is still needed on any other computer and to restore backups.',
+        ok: ANDROID ? 'Trust this phone' : 'Trust this computer',
       });
       if (!ok) { openSettings(); return; }
     }
     try {
       await api.setTrust(mode);
-      toast({ ask: 'WellWrite will ask for your password every time', hour: 'No password needed for the next hour', trust: 'This computer is trusted' }[mode]);
+      toast({ ask: 'WellWrite will ask for your password every time', hour: 'No password needed for the next hour', trust: ANDROID ? 'This phone is trusted' : 'This computer is trusted' }[mode]);
     } catch (x) { toast(x.message); }
     if (mode === 'trust') openSettings();
   });
@@ -3245,7 +3251,7 @@ async function checkUpdates() {
   const r = await api.checkUpdates().catch(() => ({ status: 'offline' }));
   out.textContent = {
     dev: 'Updates are only checked in the installed app.',
-    ready: `Version ${r.version} is ready. Restart WellWrite to install it.`,
+    ready: ANDROID ? `Version ${r.version} is available. Use “Download update” in the sidebar.` : `Version ${r.version} is ready. Restart WellWrite to install it.`,
     downloading: `Downloading version ${r.version}. You'll be asked to restart when it's ready.`,
     latest: 'You have the latest version.',
     offline: "Couldn't reach the update server. Check your connection and try again.",
@@ -3253,12 +3259,14 @@ async function checkUpdates() {
 }
 
 function showUpdate(version) {
-  $('#updateText').textContent = `WellWrite ${version} is ready to install.`;
+  $('#updateText').textContent = ANDROID ? `WellWrite ${version} is available.` : `WellWrite ${version} is ready to install.`;
+  if (ANDROID) $('#updateBtn').textContent = 'Download update';
   $('#updateBar').hidden = false;
 }
 $('#updateBtn').onclick = async () => {
-  $('#updateBtn').disabled = true; $('#updateBtn').textContent = 'Restarting…';
   await saveNow();
+  if (ANDROID) { api.installUpdate(); toast('When it has downloaded, open it to install. Your journal stays as it is.'); return; }
+  $('#updateBtn').disabled = true; $('#updateBtn').textContent = 'Restarting…';
   api.installUpdate();
 };
 
@@ -3345,6 +3353,7 @@ const enabledDests = s => ['google', 'folder'].filter(d => (d === 'google' ? s.b
 function renderBackupCard() {
   const card = $('#backupCard'), b = state.backup;
   if (!card) return;
+  if (ANDROID) { card.hidden = true; return; }
   if (!b || !state.unlocked) { card.hidden = true; return; }
   const s = b.settings, on = enabledDests(s);
   const btn = (label, cls, fn) => el('button', { class: cls, onclick: fn }, label);
@@ -3589,13 +3598,22 @@ $('#versionBtn').addEventListener('click', async () => {
   if (r.status === 'ready') showUpdate(r.version);
   toast({
     dev: `WellWrite ${state.version}. Updates are only checked in the installed app.`,
-    ready: `WellWrite ${r.version} is ready. Restart to install it.`,
+    ready: ANDROID ? `WellWrite ${r.version} is available.` : `WellWrite ${r.version} is ready. Restart to install it.`,
     downloading: `Downloading WellWrite ${r.version}. You'll be asked to restart when it's ready.`,
     latest: `You have the latest version, WellWrite ${state.version}.`,
     offline: "Couldn't check for updates. Check your internet connection.",
   }[r.status]);
 });
 api.onLock(() => lockNow());
+
+// ---------- phones: the sidebar slides out from the menu button ----------
+const closeDrawer = () => document.body.classList.remove('drawer-open');
+$('#menuBtn').addEventListener('click', () => document.body.classList.toggle('drawer-open'));
+$('#scrim').addEventListener('click', closeDrawer);
+// Opening something from the sidebar shows it.
+$('.cloth').addEventListener('click', e => {
+  if (e.target.closest('#list button, #list a, .cal-grid button, #newBtn, #onThisDay, #settingsBtn, #lockBtn, .ae-open, [data-open-all]')) setTimeout(closeDrawer, 0);
+});
 window.addEventListener('blur', () => saveNow());
 
 boot();

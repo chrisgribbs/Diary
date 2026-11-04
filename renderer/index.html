@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; base-uri 'none'; form-action 'none'">
 <title>WellWrite</title>
 <link rel="stylesheet" href="styles.css">
@@ -31,7 +32,7 @@
     </div>
 
     <form id="setupForm" class="lock-form" hidden>
-      <p class="lock-intro">Choose a password for your journal. Every entry is encrypted with it on this computer.</p>
+      <p class="lock-intro">Choose a password for your journal. Every entry is encrypted with it on <span class="here">this computer</span>.</p>
       <label for="setupPw">New password</label>
       <input id="setupPw" type="password" autocomplete="new-password" minlength="6">
       <label for="setupPw2">Type it again</label>
@@ -100,6 +101,7 @@
 
   <main class="page" id="page">
     <div class="pagebar">
+      <button type="button" class="icon-btn menu-btn" id="menuBtn" aria-label="Menu" title="Entries, calendar and settings"><svg viewBox="0 0 20 20"><path d="M3 5.5h14M3 10h14M3 14.5h14"/></svg></button>
       <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting"></div>
       <div class="modes" role="tablist" aria-label="View">
         <button type="button" class="show-above" id="showAbove" title="Choose what appears above your journal">Above journal</button>
@@ -154,6 +156,8 @@
   </main>
 </div>
 
+<div class="scrim" id="scrim" aria-hidden="true"></div>
+
 <!-- ============ DIALOGS ============ -->
 <dialog id="dlg" class="dlg"><form method="dialog" id="dlgForm"></form></dialog>
 <div class="lightbox" id="lightbox" hidden><img alt=""></div>
@@ -161,6 +165,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="imgFile" accept="image/*" multiple hidden>
 
+<script src="android.js"></script>
 <script src="purify.min.js"></script>
 <script src="seasons.js"></script>
 <script src="weeks.js"></script>

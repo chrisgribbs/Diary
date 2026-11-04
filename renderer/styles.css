@@ -844,3 +844,39 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .bs-goto b { font: 600 18px/1.2 var(--serif); color: var(--ink); }
 .bs-goto .chev { margin-left: auto; color: var(--pencil); font-size: 20px; }
 .bs-more { justify-self: center; margin-top: 10px; }
+
+/* ============ phones (and narrow windows) ============ */
+.menu-btn, .scrim { display: none; }
+@media (max-width: 720px) {
+  html, body { overscroll-behavior: none; }
+  .app { grid-template-columns: 1fr; height: 100dvh; }
+  .cloth {
+    position: fixed; inset: 0 auto 0 0; width: min(88vw, 340px); z-index: 40;
+    transform: translateX(-102%); transition: transform .22s ease; box-shadow: 0 0 40px rgba(0,0,0,.35);
+    padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+  }
+  body.drawer-open .cloth { transform: none; }
+  .scrim { display: block; position: fixed; inset: 0; z-index: 39; background: rgba(10,14,24,.45); opacity: 0; pointer-events: none; transition: opacity .22s; }
+  body.drawer-open .scrim { opacity: 1; pointer-events: auto; }
+  .menu-btn { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; color: var(--ink); }
+  .page { height: 100dvh; padding-top: env(safe-area-inset-top); }
+  .pagebar { flex-wrap: wrap; gap: 0 4px; padding: 2px 6px 0 2px; min-height: 0; }
+  .pagebar .modes { margin-left: auto; order: 1; display: flex; align-items: center; gap: 2px; }
+  .pagebar .show-above { display: none; }
+  .modeswitch button { padding: 7px 11px; }
+  .toolbar { order: 2; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 2px 4px; border-top: 1px solid var(--rule); }
+  .toolbar::-webkit-scrollbar { display: none; }
+  .page:not([data-mode="journal"]) .toolbar { display: none; }
+  .toolbar .icon-btn { flex: none; width: 40px; height: 38px; }
+  .toolbar .tb-row { display: contents; }
+  .sheet { padding: 22px 18px 90px; }
+  .stamp { gap: 12px; margin-bottom: 18px; }
+  .stamp-day { font-size: 64px; }
+  .stamp-weekday { font-size: 22px; }
+  .readview { padding: 22px 16px 90px !important; }
+  .page-foot { padding: 6px 14px calc(6px + env(safe-area-inset-bottom)); gap: 12px; flex-wrap: wrap; }
+  .toast { bottom: calc(22px + env(safe-area-inset-bottom)); max-width: calc(100vw - 32px); }
+  .dlg { max-width: calc(100vw - 20px); }
+  .lock { padding: 20px; }
+  .set-nav .set-done { display: inline-flex; margin-left: auto; }
+}
