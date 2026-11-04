@@ -55,6 +55,16 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
 
   await page.click('.modeswitch [data-mode="quote"]'); await page.waitForTimeout(4000); await shot('6-week');
   await page.click('.modeswitch [data-mode="bible"]'); await page.waitForTimeout(2500); await shot('7-bible');
+  check(await page.isVisible('#cameraBtn'), 'the camera button is showing');
+  await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 600; c.height = 400;
+    const g = c.getContext('2d'); g.fillStyle = '#4a7aa0'; g.fillRect(0, 0, 600, 400); g.fillStyle = '#f0c85a'; g.beginPath(); g.arc(300, 200, 90, 0, 7); g.fill();
+    await window.wellwrite.save({ date: '2026-10-18', title: 'Sunrise', html: `<img src="${c.toDataURL('image/jpeg', 0.8)}" alt=""><p>Sunrise.</p>` });
+  });
+  await page.evaluate(() => location.reload()); await page.waitForTimeout(4000);
+  if (await page.isVisible('#unlockForm')) { await page.fill('#unlockPw', 'correct horse 1'); await page.click('#unlockBtn'); await page.waitForSelector('#app:not([hidden])'); }
+  await page.click('.modeswitch [data-mode="photos"]'); await page.waitForTimeout(3000); await shot('7b-photos');
+  check(await page.evaluate(() => [...document.querySelectorAll('.ph-tile img')].some(i => i.src.startsWith('data:image/jpeg'))), 'the Photos view shows the photo');
   const s = await page.evaluate(() => window.wellwrite.bibleSearch('web', 'be still', 0));
   check(s.results.length > 0, 'Bible search works (' + s.total + ' results)');
 

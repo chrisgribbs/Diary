@@ -7,7 +7,9 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.ViewGroup;
@@ -26,6 +28,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -40,7 +43,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Collections;
 import java.util.List;
 
@@ -64,6 +70,8 @@ public class MainActivity extends ComponentActivity {
     private ValueCallback<Uri[]> chooserCallback;
     private ActivityResultLauncher<Intent> chooser;
     private ActivityResultLauncher<Intent> saver;
+    private ActivityResultLauncher<Intent> camera;
+    private File cameraFile;
     private JSONObject pendingSave;
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -72,6 +80,7 @@ public class MainActivity extends ComponentActivity {
         EdgeToEdge.enable(this);
         super.onCreate(saved);
         NodeBridge.start(this);
+        if (saved == null) clearCameraCache(getCacheDir());
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#1d2a47"));
@@ -124,12 +133,23 @@ public class MainActivity extends ComponentActivity {
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> cb, FileChooserParams params) {
                 if (chooserCallback != null) chooserCallback.onReceiveValue(null);
                 chooserCallback = cb;
-                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                i.addCategory(Intent.CATEGORY_OPENABLE);
                 boolean images = false;
                 for (String a : params.getAcceptTypes()) if (a != null && a.startsWith("image/")) images = true;
-                i.setType(images ? "image/*" : "*/*");
-                if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                boolean multiple = params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
+                // The camera button: straight to the camera.
+                if (images && params.isCaptureEnabled() && takePhoto()) return true;
+                Intent i;
+                if (images && Build.VERSION.SDK_INT >= 33) {
+                    // Android's photo picker: your photos, newest first, no permission needed.
+                    i = new Intent(MediaStore.ACTION_PICK_IMAGES);
+                    i.setType("image/*");
+                    if (multiple) i.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, Math.min(50, MediaStore.getPickImagesMaxLimit()));
+                } else {
+                    i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType(images ? "image/*" : "*/*");
+                    if (multiple) i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                }
                 try { chooser.launch(i); } catch (ActivityNotFoundException e) { chooserCallback = null; cb.onReceiveValue(null); }
                 return true;
             }
@@ -146,6 +166,16 @@ public class MainActivity extends ComponentActivity {
             if (clip != null) for (int k = 0; k < clip.getItemCount(); k++) uris.add(clip.getItemAt(k).getUri());
             else if (data.getData() != null) uris.add(data.getData());
             cb.onReceiveValue(uris.isEmpty() ? null : uris.toArray(new Uri[0]));
+        });
+        camera = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), r -> {
+            ValueCallback<Uri[]> cb = chooserCallback;
+            chooserCallback = null;
+            File f = cameraFile;
+            cameraFile = null;
+            if (cb == null) return;
+            if (r.getResultCode() == Activity.RESULT_OK && f != null && f.length() > 0)
+                cb.onReceiveValue(new Uri[] { FileProvider.getUriForFile(this, getPackageName() + ".files", f) });
+            else cb.onReceiveValue(null);
         });
         saver = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), r -> {
             JSONObject req = pendingSave;
@@ -254,6 +284,35 @@ public class MainActivity extends ComponentActivity {
             pendingSave = null;
             reply(req, false, null, "Couldn’t save the file");
         }
+    }
+
+    /**
+     * The phone's camera app takes the photo straight into WellWrite's private cache (not your gallery); the page
+     * then puts it, encrypted, in your entry. Left-over copies are removed next time WellWrite opens.
+     */
+    private boolean takePhoto() {
+        try {
+            File dir = new File(getCacheDir(), "camera");
+            //noinspection ResultOfMethodCallIgnored
+            dir.mkdirs();
+            cameraFile = new File(dir, "WellWrite photo " + new SimpleDateFormat("yyyy-MM-dd HHmmss", Locale.ROOT).format(new Date()) + ".jpg");
+            Uri out = FileProvider.getUriForFile(this, getPackageName() + ".files", cameraFile);
+            Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            i.putExtra(MediaStore.EXTRA_OUTPUT, out);
+            i.setClipData(ClipData.newRawUri("", out));
+            i.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            camera.launch(i);
+            return true;
+        } catch (Exception e) {
+            cameraFile = null;
+            return false;   // no camera app: fall back to choosing a photo
+        }
+    }
+
+    private static void clearCameraCache(File cache) {
+        File[] old = new File(cache, "camera").listFiles();
+        if (old != null) for (File f : old) //noinspection ResultOfMethodCallIgnored
+            f.delete();
     }
 
     private void openUrl(String url) {

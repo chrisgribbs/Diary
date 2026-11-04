@@ -48,6 +48,7 @@ const ICON = {
 
 /* ---------- state ---------- */
 const state = {
+  photoThumbs: new Map(),   // entry → small copies of its photos, for the Photos view (this session only)
   metas: [],
   current: null,        // { id, date, time, title, tags, saved }
   dirty: false,
@@ -300,7 +301,7 @@ async function lockNow() {
   state.unlocked = false;
   try { await api.lock(); } catch {}
   // Wipe everything readable from the page.
-  state.metas = []; state.current = null; state.categories = []; state.trail = []; state.quotes = []; state.bible = null; state.verseCache = {}; state.pictures = {}; state.weekAt = null;
+  state.metas = []; state.current = null; state.categories = []; state.trail = []; state.quotes = []; state.bible = null; state.verseCache = {}; state.pictures = {}; state.weekAt = null; state.photoThumbs = new Map();
   $('#bibleView').replaceChildren(); $('#quoteView').replaceChildren();
   closePopover();
   $('#body').innerHTML = ''; $('#title').value = ''; $('#tagChips').replaceChildren();
@@ -2376,7 +2377,7 @@ async function exportQuotes() {
 /* ---------- views: Journal / Bible / Quote ---------- */
 function setMode(mode) {
   if (mode === 'journal') requestAnimationFrame(() => fitTitle());
-  if (!['journal', 'bible', 'quote'].includes(mode)) mode = 'journal';
+  if (!['journal', 'bible', 'quote', 'photos'].includes(mode)) mode = 'journal';
   if (state.mode === 'journal' && mode !== 'journal') saveNow();
   state.mode = mode;
   try { localStorage.setItem('mode', mode); } catch {}
@@ -2389,6 +2390,7 @@ function setMode(mode) {
   closePopover();
   if (mode === 'bible') renderBibleView();
   else if (mode === 'quote') renderQuoteView();
+  else if (mode === 'photos') renderPhotosView();
   else if (state.current) renderQuoteSlot(); else showEmpty();
   $('#sheetScroll').scrollTop = 0;
 }
@@ -3086,6 +3088,150 @@ async function insertImages(files) {
 
 $('#imgFile').addEventListener('change', e => { insertImages(e.target.files); e.target.value = ''; });
 
+/* ---------- a photo journal: the camera, photos from the gallery, and every photo in one place ---------- */
+/** Put the cursor at the end of the entry, so a new photo goes after what's there. */
+function caretToEnd() {
+  body.focus();
+  const r = document.createRange(); r.selectNodeContents(body); r.collapse(false);
+  const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+}
+/** The camera: the photo goes into today's entry (a new one if you're looking at another day), ready for a caption. */
+$('#cameraBtn').addEventListener('click', () => $('#cameraFile').click());
+$('#cameraFile').addEventListener('change', async e => {
+  const files = [...e.target.files]; e.target.value = '';
+  if (!files.length) return;
+  closeDrawer();
+  const today = todayISO();
+  const adding = state.mode === 'journal' && state.current && state.current.date === today;
+  if (!adding) await newEntry(today);
+  caretToEnd();
+  await insertImages(files);
+  markDirty();
+  if (adding) toast('Photo added to today’s entry');
+});
+/** Photos from the gallery start a new entry, dated when the first one was taken. */
+$('#galleryFile').addEventListener('change', async e => {
+  const files = [...e.target.files].filter(f => f.type.startsWith('image/')); e.target.value = '';
+  if (!files.length) return;
+  const taken = await photoTakenAt(files[0]);
+  await newEntry(taken ? taken.date : todayISO());
+  if (taken && taken.time) { state.current.time = taken.time; renderStamp(); }
+  caretToEnd();
+  await insertImages(files);
+  markDirty();
+  if (taken && taken.date !== todayISO()) toast(`Dated ${fmt(taken.date, { day: 'numeric', month: 'long', year: 'numeric' })}, when the photo was taken`);
+});
+
+/** When a photo was taken, from its EXIF data: { date: 'YYYY-MM-DD', time: 'HH:MM' } or null. */
+async function photoTakenAt(file) {
+  try {
+    const v = new DataView(await file.slice(0, 256 * 1024).arrayBuffer());
+    if (v.getUint16(0) !== 0xFFD8) return null;
+    let o = 2;
+    while (o + 4 < v.byteLength) {
+      const marker = v.getUint16(o), len = v.getUint16(o + 2);
+      if (marker === 0xFFE1 && v.getUint32(o + 4) === 0x45786966) {   // "Exif"
+        const t = o + 10, le = v.getUint16(t) === 0x4949;
+        const u16 = p => v.getUint16(t + p, le), u32 = p => v.getUint32(t + p, le);
+        const ascii = (p, n) => { let s = ''; for (let i = 0; i < n; i++) { const c = v.getUint8(t + p + i); if (!c) break; s += String.fromCharCode(c); } return s; };
+        const tags = ifd => { const out = {}; const n = u16(ifd); for (let i = 0; i < n; i++) { const e = ifd + 2 + i * 12; out[u16(e)] = { count: u32(e + 4), at: u32(e + 8) }; } return out; };
+        const ifd0 = tags(u32(4));
+        const exif = ifd0[0x8769] ? tags(ifd0[0x8769].at) : {};
+        const d = exif[0x9003] || exif[0x9004] || ifd0[0x0132];
+        const m = d && ascii(d.at, 19).match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2})/);
+        if (!m || +m[1] < 1990) return null;
+        return { date: `${m[1]}-${m[2]}-${m[3]}`, time: `${m[4]}:${m[5]}` };
+      }
+      if ((marker & 0xFF00) !== 0xFF00 || marker === 0xFFDA) break;
+      o += 2 + len;
+    }
+  } catch {}
+  return null;
+}
+
+/** A small square-ish copy of a photo for the grid. */
+function thumbOf(src) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, 360 / Math.min(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * s)); c.height = Math.max(1, Math.round(img.naturalHeight * s));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+async function thumbsFor(m) {
+  const key = `${m.id}:${m.updated || ''}:${m.images}`;
+  if (state.photoThumbs.has(key)) return state.photoThumbs.get(key);
+  const job = (async () => {
+    const e = await api.get(m.id);
+    const srcs = [...new DOMParser().parseFromString(clean(e.html), 'text/html').querySelectorAll('img')].map(i => i.getAttribute('src')).filter(Boolean);
+    const out = [];
+    for (const src of srcs) out.push(await thumbOf(src));
+    return out;
+  })();
+  state.photoThumbs.set(key, job);
+  job.catch(() => state.photoThumbs.delete(key));
+  return job;
+}
+
+/** Every photo in the journal, newest first, by month. Tap one to open its entry at that photo. */
+async function renderPhotosView() {
+  const box = $('#photosView');
+  await saveNow();
+  const withPhotos = state.metas.filter(m => m.images > 0)
+    .sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+  const total = withPhotos.reduce((a, m) => a + m.images, 0);
+  const buttons = el('div', { class: 'btns' },
+    ANDROID ? el('button', { type: 'button', class: 'btn-ink', onclick: () => $('#cameraFile').click() }, 'Take a photo') : null,
+    el('button', { type: 'button', class: ANDROID ? 'btn-plain' : 'btn-ink', onclick: () => $('#galleryFile').click() }, ANDROID ? 'From your gallery' : 'Add photos'));
+  const head = el('div', { class: 'ph-head' }, el('h2', {}, 'Photos'), buttons,
+    total ? el('p', { class: 'ph-sub' }, `${total.toLocaleString()} photo${total === 1 ? '' : 's'} in ${withPhotos.length.toLocaleString()} entr${withPhotos.length === 1 ? 'y' : 'ies'}`) : null);
+  if (!withPhotos.length) {
+    box.replaceChildren(head, el('div', { class: 'ph-empty' },
+      el('p', {}, ANDROID
+        ? 'Take a photo with the camera button at the top and it goes straight into today’s entry, ready for a few words about it. Photos from your gallery start an entry on the day they were taken.'
+        : 'Photos you add to entries appear here. Photos you add from here start an entry on the day they were taken.')));
+    return;
+  }
+  const sections = [];
+  let month = '', grid = null;
+  const io = new IntersectionObserver(entries => {
+    for (const en of entries) {
+      if (!en.isIntersecting) continue;
+      io.unobserve(en.target);
+      const tiles = en.target._tiles, m = en.target._meta;
+      thumbsFor(m).then(th => tiles.forEach((t, i) => { if (th[i]) t.querySelector('img').src = th[i]; })).catch(() => {});
+    }
+  }, { root: $('#sheetScroll'), rootMargin: '600px 0px' });
+  for (const m of withPhotos) {
+    const mk = m.date.slice(0, 7);
+    if (mk !== month) {
+      month = mk;
+      grid = el('div', { class: 'ph-grid' });
+      sections.push(el('h3', { class: 'ph-month' }, fmt(m.date.slice(0, 7) + '-01', { month: 'long', year: 'numeric' })), grid);
+    }
+    const tiles = [];
+    for (let i = 0; i < m.images; i++) {
+      const t = el('button', { type: 'button', class: 'ph-tile', title: (m.title || dateTitle(m.date)), 'aria-label': `Photo ${i + 1} in ${m.title || dateTitle(m.date)}`,
+        onclick: async () => {
+          await openEntry(m.id);
+          const img = body.querySelectorAll('img')[i];
+          if (img) img.scrollIntoView({ block: 'center' });
+        } },
+        el('img', { alt: '' }), i === 0 ? el('span', { class: 'ph-day' }, fmt(m.date, { day: 'numeric', month: 'short' })) : null);
+      tiles.push(t); grid.append(t);
+    }
+    tiles[0]._tiles = tiles; tiles[0]._meta = m;
+    io.observe(tiles[0]);
+  }
+  box.replaceChildren(head, ...sections);
+}
+
 body.addEventListener('paste', e => {
   const cd = e.clipboardData;
   const files = [...cd.files].filter(f => f.type.startsWith('image/'));
@@ -3566,7 +3712,7 @@ document.addEventListener('keydown', e => {
     else if (k === 's') { e.preventDefault(); state.dirty = true; saveNow().then(() => toast('Saved')); }
     else if (k === 'k' && body.contains(document.activeElement)) { e.preventDefault(); insertLink(); }
     else if (k === ',') { e.preventDefault(); openSettings(); }
-    else if (k === '1' || k === '2' || k === '3') { e.preventDefault(); setMode(['journal', 'bible', 'quote'][+k - 1]); }
+    else if (k === '1' || k === '2' || k === '3' || k === '4') { e.preventDefault(); setMode(['journal', 'bible', 'quote', 'photos'][+k - 1]); }
   }
   if (e.key === 'Escape' && !$('#lightbox').hidden) $('#lightbox').click();
 }, true);
