@@ -899,3 +899,67 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .lock { padding: 20px; }
   .set-nav .set-done { display: inline-flex; margin-left: auto; }
 }
+
+/* ============ phones: nothing overlaps, nothing runs off the side ============ */
+/* (desktop too) a list item's details wrap as whole pieces */
+.item-meta { flex-wrap: wrap; row-gap: 2px; }
+.item-meta > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.toast { width: max-content; max-width: calc(100vw - 32px); text-align: center; }
+.rd-bar { top: 52px; }
+
+@media (max-width: 720px) {
+  /* dialogs: nearly the whole screen; full pages take all of it */
+  .dlg { width: calc(100vw - 16px); max-width: none; }
+  .dlg { max-height: calc(100dvh - 16px); }
+  .dlg form { padding: 20px 18px 18px; max-height: calc(100dvh - 16px); }
+  .dlg.page, .dlg.page:has(form.wide) { width: 100vw; height: 100dvh; max-width: none; max-height: none; border-radius: 0; margin: 0; }
+  .dlg.page form { padding: 16px 16px 24px; }
+  .dlg h2 { font-size: 22px; }
+  /* a setting's words keep their width; its control moves underneath when there's no room beside them */
+  .dlg .row { flex-wrap: wrap; row-gap: 8px; }
+  .dlg .row > div:first-child { flex: 1 1 13em; min-width: 0; }
+  .dlg .row > *:not(:first-child) { max-width: 100%; min-width: 0; }
+  .dlg .row > div:not(:first-child) { flex-wrap: wrap; }
+  .dlg .row input[type=text], .dlg .row input[type=password], .dlg .row input[type=url] { min-width: 0; max-width: 100%; }
+  .dlg .row > select { white-space: normal; }
+  /* pairs of boxes side by side become one per line */
+  .q-two, .wp-fields { grid-template-columns: 1fr !important; }
+  .cat-row, .cat-row.sub { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .cat-row > input { flex: 1 1 60%; min-width: 0; }
+  .cat-row.add { display: grid; }
+  .q-row { grid-template-columns: auto 1fr; }
+  .q-row > .q-row-btns { grid-column: 2; }
+  .q-row-btns .btn-link { padding: 6px 2px; }
+  /* settings: one scrolling row of sections, with Done always in reach */
+  .set-layout { position: relative; }
+  .set-nav { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; gap: 4px; padding: 10px 104px 10px 10px !important; align-items: center; height: 58px; box-sizing: border-box; }
+  .set-nav::-webkit-scrollbar { display: none; }
+  .set-tab { white-space: nowrap; padding: 9px 11px; }
+  /* Done sits over the end of the row, which fades out beneath it */
+  .set-layout::after { content: ''; position: absolute; top: 0; right: 0; width: 120px; height: 57px; pointer-events: none; z-index: 1;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--pencil) 5%, var(--paper)) 32%); }
+  .set-nav .set-done { display: inline-flex; position: absolute; top: 10px; right: 10px; margin: 0; z-index: 2; }
+  .q-kind-row, .q-occ-row { display: flex !important; flex-wrap: wrap; gap: 8px; }
+  .q-kind-row > * { flex: 1 1 10em; min-width: 0; }
+  .ap-top { background: var(--paper); margin: -16px -16px 0; padding: 10px 16px; }
+  .set-content { padding: 18px 18px 40px; }
+  /* the Christian year: the dates on their own line */
+  .season-year .season-row { grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 8px; }
+  .season-year .season-row > :first-child { grid-column: 1 / -1; }
+  /* the Bible book list fills the screen */
+  .bp-body { max-height: calc(100dvh - 200px); }
+  .bp-books { grid-template-columns: 1fr 1fr; }
+  /* the bottom of an entry: the word count gives way first */
+  .page-foot #wordCount { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .page-foot > * { flex-shrink: 0; }
+  .page-foot #wordCount { flex-shrink: 1; }
+  .toast { bottom: calc(60px + env(safe-area-inset-bottom)); }
+  /* the formatting row fades at the edge, so it's clear it scrolls */
+  .toolbar { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); }
+  /* big enough to tap */
+  .chip button:not(.chip-name) { width: 28px; height: 28px; }
+  .q-star { padding: 6px 6px; }
+  input[type=checkbox], .dlg input[type=checkbox] { width: 24px; height: 24px; }
+  .cloth-foot { gap: 8px; }
+  .foot-left { flex-wrap: wrap; row-gap: 2px; }
+}

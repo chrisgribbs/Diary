@@ -4,6 +4,11 @@ const api = window.wellwrite;
 // On Android the same page runs in the WellWrite app; a few words and options differ.
 const ANDROID = api.platform === 'android';
 const HERE = ANDROID ? 'this phone' : 'this computer';
+// Phones and tablets: putting the cursor in a box pops up the keyboard, which squeezes the screen and makes the next
+// tap miss what it was aimed at. So boxes you might not type in aren't focused on a touch screen.
+const TOUCH = ANDROID || matchMedia('(pointer: coarse)').matches;
+/** Focus a text box, unless on a touch screen (where it would open the keyboard) and typing isn't the point. */
+function focusTyping(input, typingIsThePoint = false) { if (input && (!TOUCH || typingIsThePoint)) input.focus(); }
 const $ = s => document.querySelector(s);
 const el = (tag, attrs = {}, ...kids) => {
   const n = document.createElement(tag);
@@ -123,7 +128,7 @@ function openDialog(build) {
     dlg.onclose = () => { if (!dlg.open) resolve(undefined); };
     dlg.showModal();
     const f = form.querySelector('[autofocus]');
-    if (f) f.focus();
+    if (f && (!TOUCH || f.tagName === 'BUTTON' || f.type === 'password')) f.focus();
     else { const h = form.querySelector('h2'); if (h) { h.tabIndex = -1; h.focus(); } }
   });
 }
@@ -457,7 +462,7 @@ function openAllEntries() {
       el('div', { class: 'ae-filters' }, find, catSel, tagSel, monthSel, order),
       count, list);
     draw();
-    setTimeout(() => find.focus());
+    setTimeout(() => focusTyping(find));
   });
 }
 
@@ -505,7 +510,7 @@ for (const b of document.querySelectorAll('.sidetabs [data-view]')) {
     state.sideView = b.dataset.view;
     try { localStorage.setItem('sideView', state.sideView); } catch {}
     renderSidebar();
-    if (state.sideView === 'tags') $('#tagFind').focus();
+    if (state.sideView === 'tags') focusTyping($('#tagFind'));
   });
 }
 
@@ -1164,7 +1169,7 @@ $('#catPill').addEventListener('click', () => {
       pop.append(el('p', { class: 'pop-hint' }, 'Type “Work / Meetings” to make a subcategory.'),
         el('button', { type: 'button', class: 'menu-item subtle', onclick: () => { closePopover(); manageCategories(); } }, 'Edit categories…'));
     }
-    setTimeout(() => input.focus());
+    setTimeout(() => focusTyping(input));
   });
 });
 
@@ -2576,7 +2581,7 @@ function bookPicker(pos, go) {
     f.append(el('div', { class: 'bp-head' }, el('h2', {}, 'Choose a passage'), find), grid,
       el('div', { class: 'btns' }, el('button', { type: 'button', class: 'btn-plain', onclick: () => done() }, 'Close')));
     showBooks();
-    setTimeout(() => find.focus());
+    setTimeout(() => focusTyping(find));
   });
 }
 
@@ -2627,7 +2632,7 @@ function renderBibleSearch(body) {
   input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(timer); run(); } });
   body.replaceChildren(el('div', { class: 'bs-bar' }, input, versionButton(((state.bible && state.bible.translations[bibleTr()]) || 'WEB').replace(/^.*\((.+)\)$/, '$1').replace(/^World English Bible$/, 'WEB').replace(/^King James Version$/, 'KJV'))), out);
   run();
-  setTimeout(() => input.focus());
+  setTimeout(() => { if (!TOUCH || !input.value) focusTyping(input, true); });
 }
 
 async function renderPlanView(box) {
@@ -3306,7 +3311,7 @@ function openSettings(section) {
 
       panel('readings', 'Quotes & readings', 'The quote and question each day, your own writing for each week, and the week pictures.',
         row('Your quotes', 'Add, edit and theme quotes, and choose whether they follow the Christian year or a theme each month.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Your quotes')),
-        row('Above your journal', 'Choose the quote, the verse, both or neither with “Above journal” at the top right of an entry.', null),
+        row('Above your journal', ANDROID ? 'What appears at the top of each entry.' : 'What appears at the top of each entry. You can also change it with “Above journal” at the top right.', select(dailyChoice(), [['both', 'Quote and verse'], ['quote', 'Quote of the day'], ['verse', 'Verse of the day'], ['none', 'Nothing']], async v => { await updateSetting({ dailyCard: v, showQuote: true }); refreshQuote(); })),
         readingsControls(() => openSettings('readings'))),
 
       panel('bible', 'Bible', 'The version used for the verse of the day, the weekly pages and reading plans. You can also switch version from the ▾ under any verse.',
