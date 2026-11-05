@@ -175,7 +175,14 @@
 
 <!-- ============ DIALOGS ============ -->
 <dialog id="dlg" class="dlg"><form method="dialog" id="dlgForm"></form></dialog>
-<div class="lightbox" id="lightbox" hidden><img alt=""></div>
+<div class="lightbox" id="lightbox" hidden>
+  <img alt="">
+  <div class="lb-bar">
+    <button type="button" class="lb-btn" id="lbOpen">Go to entry</button>
+    <button type="button" class="lb-btn danger" id="lbDelete">Delete photo</button>
+    <button type="button" class="lb-btn" id="lbClose">Close</button>
+  </div>
+</div>
 <div class="popover" id="popover" role="dialog" hidden></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="imgFile" accept="image/*" multiple hidden>

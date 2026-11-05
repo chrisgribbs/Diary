@@ -194,6 +194,20 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await tap('.set-done');
   check(!(await dialogOpen()), 'Done closes Settings');
 
+  // ---- one photo: a tap opens it with Delete (no keyboard)
+  await is(() => { const m = state.metas.find(x => x.images > 0); return m && openEntry(m.id); });
+  await wait(800);
+  await is(() => { const i = document.querySelector('#body img'); if (i) i.scrollIntoView({ block: 'center' }); });
+  await tap('#body img');
+  check(await is(() => !document.querySelector('#lightbox').hidden && !document.querySelector('#lbDelete').hidden), 'tapping a photo opens it, with Delete photo');
+  check(await is(() => !document.body.classList.contains('keyboard')), '…without bringing up the keyboard');
+  await shot('photo');
+  await tap('#lbDelete');
+  check(await dialogOpen(), 'Delete photo asks first');
+  await tap('#dlg .btn-plain', 'Cancel');
+  await tap('#lbClose');
+  check(await is(() => document.querySelector('#lightbox').hidden), 'Close closes the photo');
+
   // ---- the entry: category, tags, date
   await tap('#catPill');
   check(await is(() => !document.querySelector('#popover').hidden), 'the category button opens its menu');

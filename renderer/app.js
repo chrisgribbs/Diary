@@ -3087,9 +3087,62 @@ body.addEventListener('click', e => {
 body.addEventListener('mouseover', e => { const a = e.target.closest('a:not(.xref)'); if (a) a.title = 'Ctrl+click to open ' + a.getAttribute('href'); });
 body.addEventListener('dblclick', e => {
   if (e.target.tagName !== 'IMG') return;
-  const lb = $('#lightbox'); lb.querySelector('img').src = e.target.src; lb.hidden = false;
+  showPhoto({ src: e.target.src, img: e.target });
 });
-$('#lightbox').onclick = () => { $('#lightbox').hidden = true; $('#lightbox img').removeAttribute('src'); };
+// On a touch screen a tap on a photo opens it (with Delete), instead of putting the cursor there and the keyboard up.
+body.addEventListener('pointerdown', e => { if (TOUCH && e.target.tagName === 'IMG' && e.pointerType !== 'mouse') e.preventDefault(); });
+body.addEventListener('click', e => {
+  if (TOUCH && e.target.tagName === 'IMG') { e.preventDefault(); getSelection().removeAllRanges(); showPhoto({ src: e.target.src, img: e.target }); }
+});
+
+/* ---------- one photo, full size: go to its entry, or delete just that photo ---------- */
+let shownPhoto = null;   // { src, img } from the open entry, or { src, entryId, index } from the Photos view
+function showPhoto(p) {
+  shownPhoto = p;
+  const lb = $('#lightbox');
+  lb.querySelector('img').src = p.src;
+  $('#lbOpen').hidden = !p.entryId;
+  lb.hidden = false;
+}
+function hidePhoto() { $('#lightbox').hidden = true; $('#lightbox img').removeAttribute('src'); shownPhoto = null; }
+$('#lightbox').addEventListener('click', e => { if (!e.target.closest('.lb-bar')) hidePhoto(); });
+$('#lbClose').onclick = hidePhoto;
+$('#lbOpen').onclick = async () => {
+  const p = shownPhoto; hidePhoto();
+  await openEntry(p.entryId);
+  const img = body.querySelectorAll('img')[p.index];
+  if (img) img.scrollIntoView({ block: 'center' });
+};
+$('#lbDelete').onclick = async () => {
+  const p = shownPhoto;
+  if (!p) return;
+  const ok = await confirmDialog({ title: 'Delete this photo?', text: 'Only this photo is removed. The rest of the entry stays as it is.', ok: 'Delete photo', danger: true });
+  if (!ok) return;
+  hidePhoto();
+  try { await deletePhoto(p); toast('Photo deleted'); } catch (x) { toast('Couldn’t delete the photo: ' + x.message); }
+};
+/** Remove one photo from an entry: from the page if the entry is open, otherwise from the saved entry. */
+async function deletePhoto(p) {
+  const fromOpen = p.img ? p.img : (state.current && state.current.id === p.entryId && state.mode === 'journal' ? body.querySelectorAll('img')[p.index] : null);
+  if (fromOpen && body.contains(fromOpen)) {
+    const parent = fromOpen.parentElement;
+    fromOpen.remove();
+    if (parent && parent !== body && !parent.textContent.trim() && !parent.querySelector('img')) parent.remove();
+    markDirty(); updateCounts(); await saveNow();
+    return;
+  }
+  const e = await api.get(p.entryId);
+  const doc = new DOMParser().parseFromString(clean(e.html), 'text/html');
+  const img = doc.body.querySelectorAll('img')[p.index];
+  if (!img) throw new Error('it has already gone');
+  const parent = img.parentElement;
+  img.remove();
+  if (parent && parent !== doc.body && !parent.textContent.trim() && !parent.querySelector('img')) parent.remove();
+  const meta = await api.save({ ...e, html: doc.body.innerHTML });
+  state.metas = state.metas.map(m => (m.id === meta.id ? meta : m));
+  renderSidebar();
+  if (state.mode === 'photos') renderPhotosView();
+}
 
 /* ---------- photos ---------- */
 async function imageToDataUrl(file) {
@@ -3252,9 +3305,11 @@ async function renderPhotosView() {
     for (let i = 0; i < m.images; i++) {
       const t = el('button', { type: 'button', class: 'ph-tile', title: (m.title || dateTitle(m.date)), 'aria-label': `Photo ${i + 1} in ${m.title || dateTitle(m.date)}`,
         onclick: async () => {
-          await openEntry(m.id);
-          const img = body.querySelectorAll('img')[i];
-          if (img) img.scrollIntoView({ block: 'center' });
+          try {
+            const e = await api.get(m.id);
+            const src = [...new DOMParser().parseFromString(clean(e.html), 'text/html').querySelectorAll('img')][i];
+            if (src) showPhoto({ src: src.getAttribute('src'), entryId: m.id, index: i });
+          } catch (x) { toast(x.message); }
         } },
         el('img', { alt: '' }), i === 0 ? el('span', { class: 'ph-day' }, fmt(m.date, { day: 'numeric', month: 'short' })) : null);
       tiles.push(t); grid.append(t);
@@ -3769,7 +3824,7 @@ document.addEventListener('keydown', e => {
     else if (k === ',') { e.preventDefault(); openSettings(); }
     else if (k === '1' || k === '2' || k === '3' || k === '4') { e.preventDefault(); setMode(['journal', 'bible', 'quote', 'photos'][+k - 1]); }
   }
-  if (e.key === 'Escape' && !$('#lightbox').hidden) $('#lightbox').click();
+  if (e.key === 'Escape' && !$('#lightbox').hidden) hidePhoto();
 }, true);
 
 for (const ev of ['mousemove', 'keydown', 'mousedown', 'wheel']) {

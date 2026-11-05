@@ -348,8 +348,14 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .stat-line div { font-size: 12.5px; color: var(--pencil); }
 .stat-line b { display: block; font: 500 26px/1.1 var(--serif); color: var(--ink); }
 
-.lightbox { position: fixed; inset: 0; background: rgba(10, 14, 24, .9); display: grid; place-items: center; z-index: 50; cursor: zoom-out; }
-.lightbox img { max-width: 92vw; max-height: 92vh; border-radius: 4px; }
+.lightbox { position: fixed; inset: 0; background: rgba(10, 14, 24, .96); display: grid; place-items: center; z-index: 50; cursor: zoom-out; }
+.lightbox { grid-template-rows: 1fr auto; padding: 16px 12px; gap: 12px; }
+.lightbox img { max-width: 92vw; max-height: calc(100vh - 110px); border-radius: 4px; align-self: center; justify-self: center; }
+.lb-bar { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; cursor: default; padding-bottom: env(safe-area-inset-bottom); }
+.lb-btn { padding: 10px 16px; border-radius: 8px; background: rgba(255,255,255,.12); color: #fff; font-size: 14.5px; font-weight: 600; min-height: 42px; }
+.lb-btn:hover { background: rgba(255,255,255,.2); }
+.lb-btn.danger { background: rgba(214, 70, 80, .85); }
+.lb-btn.danger:hover { background: rgb(214, 70, 80); }
 
 .toast {
   position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
