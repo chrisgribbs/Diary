@@ -40,7 +40,7 @@ if (!fs.existsSync(path.join(libnode, 'bin', 'arm64-v8a', 'libnode.so'))) {
   const tgz = execFileSync('npm', ['pack', NODE_MOBILE, '--silent'], { cwd: tmp, encoding: 'utf8' }).trim().split('\n').pop();
   execFileSync('tar', ['xzf', tgz, 'package/android/libnode'], { cwd: tmp });
   fs.rmSync(libnode, { recursive: true, force: true });
-  fs.renameSync(path.join(tmp, 'package', 'android', 'libnode'), libnode);
+  fs.cpSync(path.join(tmp, 'package', 'android', 'libnode'), libnode, { recursive: true });   // not rename: /tmp may be another disk
   fs.rmSync(tmp, { recursive: true, force: true });
 }
 console.log('Android project ready: WellWrite ' + pkg.version);
