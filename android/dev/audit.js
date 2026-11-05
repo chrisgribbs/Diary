@@ -236,9 +236,9 @@ function audit() {
     await step('photos', async () => { await page.evaluate(() => setMode('photos')); await shot('photos', { wait: 2500 }); });
 
     // ---- settings, every tab
-    await step('settings', async () => { await page.evaluate(() => { openSettings('general'); }); await shot('settings-general'); });
+    await step('settings', async () => { await page.evaluate(() => { openSettings(); }); await shot('settings-list'); await page.click('.set-tab[data-tab="general"]'); await shot('settings-general'); });
     for (const t of ['readings', 'bible', 'privacy', 'backups', 'wordpress', 'about']) {
-      await step('settings-' + t, async () => { await page.click(`.set-tab[data-tab="${t}"]`); await shot('settings-' + t); await page.evaluate(() => { const c = document.querySelector('.set-content'); if (c) c.scrollTop = 1e6; }); await shot('settings-' + t + '-end'); });
+      await step('settings-' + t, async () => { await page.evaluate(() => { const b = document.querySelector('.set-back'); if (b && b.checkVisibility()) b.click(); }); await page.click(`.set-tab[data-tab="${t}"]`); await shot('settings-' + t); await page.evaluate(() => { const c = document.querySelector('.set-content'); if (c) c.scrollTop = 1e6; }); await shot('settings-' + t + '-end'); });
     }
     await step('settings-close', closeAll);
     await step('quotes', async () => { await page.evaluate(() => { manageQuotes(); }); await shot('quotes-manager', { wait: 1200 }); await page.evaluate(() => { const f = document.querySelector('#dlg'); f.scrollTop = 600; document.querySelector('#dlgForm').scrollTop = 600; }); await shot('quotes-manager-scrolled'); });
