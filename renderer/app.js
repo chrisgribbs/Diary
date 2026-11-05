@@ -204,6 +204,7 @@ function showLock(exists, trust) {
   state.unlocked = false;
   $('#app').hidden = true;
   $('#lock').hidden = false;
+  syncSystemBars();
   const remembered = exists && trust && trust.active;
   $('#trustForm').hidden = !remembered;
   $('#unlockForm').hidden = !exists || remembered;
@@ -291,6 +292,7 @@ async function enterApp() {
   const d = new Date(); state.viewMonth = new Date(d.getFullYear(), d.getMonth(), 1);
   $('#lock').hidden = true;
   $('#app').hidden = false;
+  syncSystemBars();
   const today = sorted(state.metas.filter(m => m.date === todayISO()))[0];
   const mode = state.mode;
   if (today) await openEntry(today.id, { keepMode: true }); else showEmpty();
@@ -2387,7 +2389,8 @@ function setMode(mode) {
   state.mode = mode;
   try { localStorage.setItem('mode', mode); } catch {}
   $('#page').dataset.mode = mode;
-  for (const b of document.querySelectorAll('.modeswitch [data-mode]')) {
+  $('#topTitle').textContent = { journal: 'Journal', bible: 'Bible', quote: 'This week', photos: 'Photos' }[mode];
+  for (const b of document.querySelectorAll('.modeswitch [data-mode], .tabbar [data-mode]')) {
     const on = b.dataset.mode === mode;
     b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on));
   }
@@ -2399,7 +2402,7 @@ function setMode(mode) {
   else if (state.current) renderQuoteSlot(); else showEmpty();
   $('#sheetScroll').scrollTop = 0;
 }
-for (const b of document.querySelectorAll('.modeswitch [data-mode]')) b.addEventListener('click', () => setMode(b.dataset.mode));
+for (const b of document.querySelectorAll('.modeswitch [data-mode], .tabbar [data-mode]')) b.addEventListener('click', () => { closeDrawer(); if (b.dataset.mode === state.mode && b.closest('.tabbar')) { $('#sheetScroll').scrollTo({ top: 0, behavior: 'smooth' }); return; } setMode(b.dataset.mode); });
 
 $('#showAbove').addEventListener('click', () => {
   showPopover($('#showAbove').getBoundingClientRect(), pop => {
@@ -3262,6 +3265,9 @@ window.addEventListener('drop', e => e.preventDefault());
 function applySettings() {
   const s = state.settings;
   document.documentElement.style.setProperty('--write-size', s.fontSize + 'px');
+  // On Windows the system follows this setting; on Android the page does it itself.
+  if (['light', 'dark'].includes(s.theme)) document.documentElement.dataset.theme = s.theme; else delete document.documentElement.dataset.theme;
+  if (typeof syncSystemBars === 'function') syncSystemBars();
   body.spellcheck = !!s.spellcheck;
 }
 
@@ -3758,7 +3764,68 @@ $('#versionBtn').addEventListener('click', async () => {
 api.onLock(() => lockNow());
 
 // ---------- phones: the sidebar slides out from the menu button ----------
-const closeDrawer = () => document.body.classList.remove('drawer-open');
+function closeDrawer() { document.body.classList.remove('drawer-open'); }
+
+// ---------- phones: the top bar, the ⋯ menu, the keyboard and the Back button ----------
+$('#newTopBtn').addEventListener('click', () => newEntry(todayISO()));
+$('#moreBtn').addEventListener('click', () => {
+  showPopover($('#moreBtn').getBoundingClientRect(), pop => {
+    pop.classList.add('menu');
+    const item = (label, fn, cls = '') => el('button', { type: 'button', class: 'menu-item ' + cls, onclick: () => { closePopover(); fn(); } }, label);
+    const c = state.current, writing = state.mode === 'journal' && c && !$('#sheet').hidden;
+    if (writing) {
+      pop.append(el('p', { class: 'menu-info' }, [$('#saveState').textContent, $('#wordCount').textContent].filter(Boolean).join(' · ')));
+      if (!$('#wpBtn').hidden) pop.append(item('Post to WordPress', () => $('#wpBtn').click()));
+      pop.append(item('Delete this entry', () => $('#deleteBtn').click(), 'danger'), el('hr'));
+    }
+    if (state.mode === 'journal') {
+      pop.append(el('p', { class: 'menu-info' }, 'Above your journal'));
+      for (const [v, label] of [['both', 'Quote and verse'], ['quote', 'Quote of the day'], ['verse', 'Verse of the day'], ['none', 'Nothing, just the journal']])
+        pop.append(el('button', { type: 'button', class: 'menu-item sub' + (dailyChoice() === v ? ' on' : ''),
+          onclick: async () => { closePopover(); await updateSetting({ dailyCard: v, showQuote: true }); refreshQuote(); } }, label));
+      pop.append(el('hr'));
+    }
+    pop.append(item('Settings', () => openSettings()), item('Lock journal', () => lockNow()));
+  });
+});
+// While a box has the keyboard, the bottom bar steps aside; while writing an entry, the formatting buttons sit above the keyboard.
+const typingBox = e => e && (e.isContentEditable || e.tagName === 'TEXTAREA' || (e.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit|file|color)$/.test(e.type)));
+// The keyboard is up when the screen gets noticeably shorter than it is without it (same width).
+let fullHeight = { w: innerWidth, h: innerHeight };
+let keyboardUp = false;
+function syncTyping() {
+  const a = document.activeElement;
+  document.body.classList.toggle('keyboard', TOUCH && keyboardUp);
+  document.body.classList.toggle('writing', TOUCH && keyboardUp && a === body);
+}
+window.addEventListener('resize', () => {
+  if (innerWidth !== fullHeight.w) fullHeight = { w: innerWidth, h: innerHeight };   // turned the phone
+  fullHeight.h = Math.max(fullHeight.h, innerHeight);
+  const was = keyboardUp;
+  keyboardUp = innerHeight < fullHeight.h - 120;
+  // Keyboard put away (Back, or its own button): stop typing, so the bottom bar comes back.
+  if (was && !keyboardUp && TOUCH && typingBox(document.activeElement)) document.activeElement.blur();
+  syncTyping();
+});
+document.addEventListener('focusin', syncTyping);
+document.addEventListener('focusout', () => setTimeout(syncTyping, 120));   // a tap on a formatting button keeps the cursor
+// Back: from the Bible, the week or the photos, back to the journal (after dialogs, menus and the sidebar close).
+if (api.onBack) api.onBack(() => {
+  const sel = document.querySelector('.rd-selbar:not([hidden]) .btn-link');   // chosen verses: clear them first
+  if (sel && state.mode === 'bible') { sel.click(); return true; }
+  if (state.unlocked && state.mode !== 'journal') { setMode('journal'); return true; }
+  return false;
+});
+/** The phone's status and navigation bars take the colour of what's behind them. */
+function syncSystemBars() {
+  if (!api.systemBars) return;
+  const locked = !$('#lock').hidden;
+  let color = getComputedStyle(locked ? $('#lock') : $('#page')).backgroundColor;
+  if (/rgba\(.*,\s*0\)$|transparent/.test(color)) color = getComputedStyle(document.body).backgroundColor;
+  const [r, g, b] = (color.match(/\d+/g) || [255, 255, 255]).map(Number);
+  api.systemBars({ color: '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join(''), light: (r * 299 + g * 587 + b * 114) / 1000 > 140 }).catch(() => {});
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => syncSystemBars());
 $('#menuBtn').addEventListener('click', () => document.body.classList.toggle('drawer-open'));
 $('#scrim').addEventListener('click', closeDrawer);
 // Opening something from the sidebar shows it.

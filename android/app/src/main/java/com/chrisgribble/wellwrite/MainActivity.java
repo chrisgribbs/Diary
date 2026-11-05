@@ -31,6 +31,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.webkit.JavaScriptReplyProxy;
 import androidx.webkit.WebViewAssetLoader;
@@ -64,6 +66,7 @@ public class MainActivity extends ComponentActivity {
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private WebView web;
+    private FrameLayout root;
     private JavaScriptReplyProxy page;
     private final List<String> toPage = new ArrayList<>();
 
@@ -82,7 +85,7 @@ public class MainActivity extends ComponentActivity {
         NodeBridge.start(this);
         if (saved == null) clearCameraCache(getCacheDir());
 
-        FrameLayout root = new FrameLayout(this);
+        root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#1d2a47"));
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             TextView t = new TextView(this);
@@ -264,6 +267,7 @@ public class MainActivity extends ComponentActivity {
             case "openUrl": openUrl(req.optString("url")); reply(req, true, true, null); break;
             case "background": moveTaskToBack(true); reply(req, true, true, null); break;
             case "saveFile": saveFile(req); break;
+            case "bars": systemBars(req.optString("color"), req.optBoolean("light")); reply(req, true, true, null); break;
             default: reply(req, false, null, "Unknown request");
         }
     }
@@ -313,6 +317,17 @@ public class MainActivity extends ComponentActivity {
         File[] old = new File(cache, "camera").listFiles();
         if (old != null) for (File f : old) //noinspection ResultOfMethodCallIgnored
             f.delete();
+    }
+
+    /** The status and navigation bars take the colour of the page behind them (dark icons on a light page). */
+    private void systemBars(String color, boolean light) {
+        try {
+            int c = Color.parseColor(color);
+            if (root != null) root.setBackgroundColor(c);
+            WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            bars.setAppearanceLightStatusBars(light);
+            bars.setAppearanceLightNavigationBars(light);
+        } catch (Exception ignored) {}
     }
 
     private void openUrl(String url) {

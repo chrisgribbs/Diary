@@ -18,10 +18,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
   // Where the WebView is on the screen, in device pixels.
   const webviewBox = async () => {
-    const xml = String(await device.shell('uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; cat /sdcard/ui.xml'));
-    const node = [...xml.matchAll(/<node [^>]*>/g)].map(m => m[0]).find(x => /class="android\.webkit\.WebView"/.test(x));
-    const [, x1, y1] = node.match(/bounds="\[(\d+),(\d+)\]/).map(Number);
-    return { x: x1, y: y1 };
+    for (let i = 0; i < 5; i++) {
+      await device.shell('am start -n com.chrisgribble.wellwrite/.MainActivity >/dev/null 2>&1'); await wait(1500);
+      const xml = String(await device.shell('uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; cat /sdcard/ui.xml'));
+      const node = [...xml.matchAll(/<node [^>]*>/g)].map(m => m[0]).find(x => /class="android\.webkit\.WebView"/.test(x));
+      if (node) { const [, x1, y1] = node.match(/bounds="\[(\d+),(\d+)\]/).map(Number); return { x: x1, y: y1 }; }
+      log('WebView not on screen yet; top:', String(await device.shell('dumpsys window | grep mCurrentFocus')).trim());
+      await device.shell('input keyevent 4'); await wait(1000);
+    }
+    throw new Error('WellWrite never came to the front');
   };
   const box = await webviewBox();
   const dpr = await page.evaluate(() => devicePixelRatio);
@@ -55,12 +60,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
   // ---- tabs along the top
   for (const [mode, label] of [['bible', 'Bible'], ['quote', 'Week'], ['photos', 'Photos'], ['journal', 'Journal']]) {
-    await tap(`.modeswitch [data-mode="${mode}"]`);
+    await tap(`.tabbar [data-mode="${mode}"]`);
     check(await is(() => document.querySelector('#page').dataset.mode) === mode, `tapping ${label} opens it`);
   }
 
   // ---- the Bible reader
-  await tap('.modeswitch [data-mode="bible"]');
+  await tap('.tabbar [data-mode="bible"]');
   await tap('.bv-tab', 'Read'); await wait(800);
   const ref0 = await is(() => document.querySelector('#rdRef') && document.querySelector('#rdRef').textContent.trim());
   await shot('bible');
@@ -100,6 +105,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(await is(() => !!document.querySelector('.rd-selbar')), 'tapping a verse selects it');
   await shot('verse');
   await device.shell('input keyevent 4'); await wait(800);
+  check(await is(() => document.querySelector('.rd-selbar').hidden && document.querySelector('#page').dataset.mode === 'bible'), 'Back clears the chosen verse and stays in the Bible');
   // Search and Plans.
   await tap('.bv-tab', 'Search');
   check(await is(() => !!document.querySelector('#bsFind')), 'Search opens');
@@ -112,6 +118,29 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(await is(() => !!document.querySelector('#bibleView .plan-opt, #bibleView .plan-day, #bibleView h2')), 'Plans opens');
   await tap('.bv-tab', 'Read');
   check(await is(() => !!document.querySelector('#rdRef')), 'back to Read');
+
+  // ---- Back from another tab goes to the journal; the top bar's + and ⋯
+  await tap('.tabbar [data-mode="photos"]');
+  await device.shell('input keyevent 4'); await wait(1000);
+  check(await is(() => document.querySelector('#page').dataset.mode) === 'journal', 'Back from Photos goes to the journal');
+  const before = await is(() => state.current && state.current.id);
+  await tap('#newTopBtn');
+  check(await is(() => !!state.current && !state.current.saved), '+ starts a new entry');
+  await tap('#body'); await wait(1500);
+  check(await is(() => document.body.classList.contains('writing') && getComputedStyle(document.querySelector('#toolbar')).display !== 'none'), 'while writing, the formatting buttons sit above the keyboard');
+  await shot('writing');
+  await tap('#toolbar button'); await wait(500);
+  check(await is(() => document.activeElement === document.querySelector('#body')), 'a formatting button keeps the cursor in the entry');
+  await device.shell('input keyevent 4'); await wait(1500);   // keyboard away
+  check(await is(() => !document.body.classList.contains('keyboard') && getComputedStyle(document.querySelector('#tabbar')).display !== 'none'), 'putting the keyboard away brings the bottom bar back');
+  await shot('after-writing');
+  await tap('#moreBtn');
+  check(await is(() => !document.querySelector('#popover').hidden), '⋯ opens the menu');
+  await shot('more');
+  await tap('#popover .menu-item', 'Settings');
+  check(await dialogOpen(), '⋯ → Settings opens Settings');
+  await tap('.set-done');
+  check(!(await dialogOpen()), 'and Done closes it');
 
   // ---- the sidebar
   await tap('#menuBtn');

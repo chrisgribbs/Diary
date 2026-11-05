@@ -102,7 +102,9 @@
   <main class="page" id="page">
     <div class="pagebar">
       <button type="button" class="icon-btn menu-btn" id="menuBtn" aria-label="Menu" title="Entries, calendar and settings"><svg viewBox="0 0 20 20"><path d="M3 5.5h14M3 10h14M3 14.5h14"/></svg></button>
-      <button type="button" class="icon-btn camera-btn" id="cameraBtn" aria-label="Take a photo" title="Take a photo for today’s entry"><svg viewBox="0 0 20 20"><path d="M2.5 7a1.5 1.5 0 0 1 1.5-1.5h2.2l1.3-2h5l1.3 2H16A1.5 1.5 0 0 1 17.5 7v8A1.5 1.5 0 0 1 16 16.5H4A1.5 1.5 0 0 1 2.5 15z"/><circle cx="10" cy="10.8" r="3.2"/></svg></button>
+      <h1 class="top-title" id="topTitle">Journal</h1>
+      <button type="button" class="icon-btn top-btn" id="newTopBtn" aria-label="New entry" title="New entry"><svg viewBox="0 0 20 20"><path d="M10 4v12M4 10h12"/></svg></button>
+      <button type="button" class="icon-btn top-btn" id="moreBtn" aria-label="More" title="More"><svg viewBox="0 0 20 20"><circle cx="10" cy="4.5" r="1.2"/><circle cx="10" cy="10" r="1.2"/><circle cx="10" cy="15.5" r="1.2"/></svg></button>
       <div class="toolbar" id="toolbar" role="toolbar" aria-label="Formatting"></div>
       <div class="modes" role="tablist" aria-label="View">
         <button type="button" class="show-above" id="showAbove" title="Choose what appears above your journal">Above journal</button>
@@ -149,6 +151,15 @@
       <section class="readview" id="quoteView" aria-label="Quote of the day"></section>
       <section class="readview" id="photosView" aria-label="Photos"></section>
     </div>
+
+    <!-- Phones: the main places, along the bottom, with the camera in the middle -->
+    <nav class="tabbar" id="tabbar" aria-label="Main">
+      <button type="button" data-mode="journal"><svg viewBox="0 0 20 20"><path d="M5 3h8.5L16 5.5V17H5z"/><path d="M7.5 8h6M7.5 11h6M7.5 14h4"/></svg><span>Journal</span></button>
+      <button type="button" data-mode="bible"><svg viewBox="0 0 20 20"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H16v12.5H5.5A1.5 1.5 0 0 0 4 17z"/><path d="M4 17a1.5 1.5 0 0 1 1.5-1.5H16V17"/><path d="M10 5.5v6M8 7.5h4"/></svg><span>Bible</span></button>
+      <button type="button" class="tab-camera" id="cameraBtn" aria-label="Take a photo for today’s entry"><svg viewBox="0 0 20 20"><path d="M2.5 7a1.5 1.5 0 0 1 1.5-1.5h2.2l1.3-2h5l1.3 2H16A1.5 1.5 0 0 1 17.5 7v8A1.5 1.5 0 0 1 16 16.5H4A1.5 1.5 0 0 1 2.5 15z"/><circle cx="10" cy="10.8" r="3.2"/></svg></button>
+      <button type="button" data-mode="quote"><svg viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="13" rx="1.5"/><path d="M3 8h14M7 2.5v3M13 2.5v3"/><path d="M7 11.5h2M11 11.5h2M7 14h2"/></svg><span>Week</span></button>
+      <button type="button" data-mode="photos"><svg viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="1.5"/><circle cx="7.5" cy="8.5" r="1.4"/><path d="M3.5 14.5l4-4 3 3 2-2 4 4"/></svg><span>Photos</span></button>
+    </nav>
 
     <footer class="page-foot" id="pageFoot" hidden>
       <span id="saveState"></span>

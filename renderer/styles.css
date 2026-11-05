@@ -42,8 +42,9 @@
   --brand: Calibri, Carlito, 'Segoe UI', sans-serif;
   --sans: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
 }
+/* Dark: following the system, unless Settings says Light; or always, when Settings says Dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     color-scheme: dark;
     --cloth: #121a2c;
     --cloth-deep: #0d1322;
@@ -55,6 +56,18 @@
     --mark: #6b5a22;
     --danger: #e0727a;
   }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cloth: #121a2c;
+  --cloth-deep: #0d1322;
+  --paper: #1a1e27;
+  --paper-edge: #232836;
+  --ink: #e6e3da;
+  --pencil: #9097a6;
+  --rule: #323848;
+  --mark: #6b5a22;
+  --danger: #e0727a;
 }
 
 * { box-sizing: border-box; }
@@ -962,4 +975,48 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   input[type=checkbox], .dlg input[type=checkbox] { width: 24px; height: 24px; }
   .cloth-foot { gap: 8px; }
   .foot-left { flex-wrap: wrap; row-gap: 2px; }
+}
+
+/* ============ phones: app navigation ============ */
+/* A top bar (entries · where you are · new · more), and the main places along the bottom with the camera in the
+   middle. The formatting buttons appear above the keyboard while you write. */
+.tabbar, .top-title, .top-btn { display: none; }
+@media (max-width: 720px) {
+  .pagebar { flex-wrap: nowrap; align-items: center; gap: 2px; padding: 4px 6px; min-height: 52px; }
+  .pagebar .modes { display: none; }
+  .top-title { display: block; flex: 1; min-width: 0; margin: 0 4px; font: 600 20px/1.2 var(--serif); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top-btn { display: inline-grid; place-items: center; width: 44px; height: 44px; color: var(--ink); flex: none; }
+  .top-btn svg { width: 20px; height: 20px; }
+  #moreBtn svg { fill: currentColor; stroke: none; }
+  .camera-btn { display: none !important; }
+  /* formatting: only while writing, just above the keyboard */
+  .toolbar { display: none !important; }
+  body.writing .page[data-mode="journal"] .toolbar {
+    display: flex !important; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0;
+    background: var(--paper); border-top: 1px solid var(--rule); padding: 4px 6px; box-shadow: 0 -4px 14px rgba(0,0,0,.08);
+  }
+  body.writing .sheet { padding-bottom: 70px; }
+  /* the bottom bar */
+  .tabbar {
+    display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; flex: none;
+    background: var(--paper); border-top: 1px solid var(--rule); padding: 0 4px; height: 62px; position: relative; z-index: 5;
+  }
+  .tabbar button { display: grid; justify-items: center; align-content: center; gap: 3px; height: 60px; color: var(--pencil); font-size: 11.5px; font-weight: 600; letter-spacing: .01em; -webkit-tap-highlight-color: transparent; }
+  .tabbar button svg { width: 23px; height: 23px; }
+  .tabbar button.on { color: var(--ribbon); }
+  .tabbar button.on svg { stroke-width: 2; }
+  .tabbar .tab-camera { align-self: center; justify-self: center; width: 54px; height: 54px; margin-top: -20px; border-radius: 50%; background: var(--ribbon); color: #fff; box-shadow: 0 4px 14px rgba(162,59,86,.4); place-content: center; }
+  .tabbar .tab-camera svg { width: 26px; height: 26px; stroke-width: 1.8; }
+  .tabbar .tab-camera:active { transform: scale(.95); }
+  body.keyboard .tabbar { display: none; }
+  /* the entry's own footer moves into the ⋯ menu */
+  .page-foot { display: none !important; }
+  .toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  /* a little more room for the sheet now the bars are lighter */
+  .sheet { padding-top: 16px; }
+  .menu .menu-info { padding: 6px 12px 8px; font-size: 12.5px; color: var(--pencil); margin: 0; }
+  .menu hr { border: 0; border-top: 1px solid var(--rule); margin: 4px 0; }
+  .menu .menu-item.danger { color: var(--danger); }
+  .menu .menu-item { min-height: 40px; }
+  .ph-head h2 { display: none; }
 }

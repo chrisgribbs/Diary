@@ -53,8 +53,8 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
   await page.waitForTimeout(800);
   check(!(await page.evaluate(() => document.body.classList.contains('drawer-open'))), 'Back closes the sidebar');
 
-  await page.click('.modeswitch [data-mode="quote"]'); await page.waitForTimeout(4000); await shot('6-week');
-  await page.click('.modeswitch [data-mode="bible"]'); await page.waitForTimeout(2500); await shot('7-bible');
+  await page.click('.tabbar [data-mode="quote"]'); await page.waitForTimeout(4000); await shot('6-week');
+  await page.click('.tabbar [data-mode="bible"]'); await page.waitForTimeout(2500); await shot('7-bible');
   check(await page.isVisible('#cameraBtn'), 'the camera button is showing');
   await page.evaluate(async () => {
     const c = document.createElement('canvas'); c.width = 600; c.height = 400;
@@ -63,7 +63,7 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
   });
   await page.evaluate(() => location.reload()); await page.waitForTimeout(4000);
   if (await page.isVisible('#unlockForm')) { await page.fill('#unlockPw', 'correct horse 1'); await page.click('#unlockBtn'); await page.waitForSelector('#app:not([hidden])'); }
-  await page.click('.modeswitch [data-mode="photos"]'); await page.waitForTimeout(3000); await shot('7b-photos');
+  await page.click('.tabbar [data-mode="photos"]'); await page.waitForTimeout(3000); await shot('7b-photos');
   check(await page.evaluate(() => [...document.querySelectorAll('.ph-tile img')].some(i => i.src.startsWith('data:image/jpeg'))), 'the Photos view shows the photo');
   const s = await page.evaluate(() => window.wellwrite.bibleSearch('web', 'be still', 0));
   check(s.results.length > 0, 'Bible search works (' + s.total + ' results)');
@@ -79,7 +79,7 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
 
   // The camera: the button opens the phone's camera app, and the photo comes back into today's entry.
   await page.click('#menuBtn').catch(() => {}); await device.shell('input keyevent 4'); await page.waitForTimeout(500);
-  await page.evaluate(() => document.querySelector('.modeswitch [data-mode="journal"]').click());
+  await page.evaluate(() => document.querySelector('.tabbar [data-mode="journal"]').click());
   const before = await page.evaluate(() => window.wellwrite.list().then(l => l.reduce((a, m) => a + m.images, 0)));
   await page.click('#cameraBtn');
   await page.waitForTimeout(6000);

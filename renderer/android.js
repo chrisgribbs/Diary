@@ -106,6 +106,7 @@
   window.wellwrite = {
     platform: 'android',
     onBack: fn => backHandlers.push(fn),
+    systemBars: o => app('bars', { color: String(o.color), light: !!o.light }),
     status: () => engine('vault:status'),
     create: pw => engine('vault:create', pw),
     unlock: pw => engine('vault:unlock', pw),
