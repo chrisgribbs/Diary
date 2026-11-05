@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Bible versions, week pictures, WordPress and update checks. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Installs WellWrite's own updates (Android asks you once). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:label="WellWrite"

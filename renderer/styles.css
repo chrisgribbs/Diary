@@ -1027,3 +1027,9 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   body.update-ready #moreBtn::after, body.update-ready #menuBtn::after { content: ''; position: absolute; top: 9px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--ribbon); box-shadow: 0 0 0 2px var(--paper); }
   .menu .menu-item.update { color: var(--ribbon); font-weight: 600; }
 }
+/* the Bible: a swiped-in chapter slides in from the side it came from */
+.rd-text.rd-in-left { animation: rdInLeft .24s ease-out; }
+.rd-text.rd-in-right { animation: rdInRight .24s ease-out; }
+@keyframes rdInLeft { from { transform: translateX(48px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes rdInRight { from { transform: translateX(-48px); opacity: 0; } to { transform: none; opacity: 1; } }
+.rd-text { touch-action: pan-y; }

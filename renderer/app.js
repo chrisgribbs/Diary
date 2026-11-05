@@ -2483,13 +2483,37 @@ async function renderReader(body, { verse = 0, to = 0 } = {}) {
   const books = bibleBooksList;
   const prev = pos.c > 1 ? { b: pos.b, c: pos.c - 1 } : pos.b > 0 ? { b: pos.b - 1, c: books[pos.b - 1].chapters } : null;
   const next = pos.c < books[pos.b].chapters ? { b: pos.b, c: pos.c + 1 } : pos.b < books.length - 1 ? { b: pos.b + 1, c: 1 } : null;
-  const go = p => { setReaderPos(p.b, p.c); renderBibleView(); $('#bibleView').scrollTop = 0; };
+  const go = p => { setReaderPos(p.b, p.c); renderBibleView(); $('#bibleView').scrollTop = 0; $('#sheetScroll').scrollTop = 0; };
   const label = p => `${bookShort(books[p.b].name)} ${p.c}`;
 
   // verses, each tappable
   const selected = new Set();
-  const text = el('article', { class: 'rd-text' });
+  const text = el('article', { class: 'rd-text' + (state.readerSlide ? ' rd-in-' + state.readerSlide : '') });
+  state.readerSlide = null;
   text.append(el('h2', { class: 'rd-title' }, label(pos)));
+  // Swipe left for the next chapter, right for the one before (not from the screen's edges, which are Android's Back).
+  let touch = null;
+  text.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    touch = e.touches.length === 1 && t.clientX > 28 && t.clientX < innerWidth - 28 ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
+  }, { passive: true });
+  text.addEventListener('touchmove', e => {
+    if (!touch) return;
+    const dx = e.touches[0].clientX - touch.x, dy = e.touches[0].clientY - touch.y;
+    if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5 && ((dx < 0 && next) || (dx > 0 && prev))) {
+      text.style.transition = 'none'; text.style.transform = `translateX(${dx * 0.35}px)`; text.style.opacity = String(1 - Math.min(Math.abs(dx) / 600, .4));
+    }
+  }, { passive: true });
+  text.addEventListener('touchend', e => {
+    if (!touch) return;
+    const t = e.changedTouches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y, quick = Date.now() - touch.at < 800;
+    touch = null;
+    const swiped = quick && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.8 && !String(getSelection()).trim();
+    const to = swiped ? (dx < 0 ? next : prev) : null;
+    if (to) { state.readerSlide = dx < 0 ? 'left' : 'right'; go(to); return; }
+    text.style.transition = 'transform .2s, opacity .2s'; text.style.transform = ''; text.style.opacity = '';
+  }, { passive: true });
+  text.addEventListener('touchcancel', () => { touch = null; text.style.transform = ''; text.style.opacity = ''; });
   const verseText = new Map();
   for (const block of ch.blocks) {
     if (block[0] === 'h') { text.append(el('p', { class: 'rd-head' }, block[1])); continue; }
@@ -2544,7 +2568,7 @@ async function renderReader(body, { verse = 0, to = 0 } = {}) {
     el('div', { class: 'rd-foot' },
       prev ? el('button', { type: 'button', class: 'btn-plain', onclick: () => go(prev) }, '‹ ' + label(prev)) : el('span'),
       next ? el('button', { type: 'button', class: 'btn-plain', onclick: () => go(next) }, label(next) + ' ›') : el('span')),
-    el('p', { class: 'rv-note' }, ch.copyright || `${ch.translation}, public domain. Tap a verse to copy it or write about it.`),
+    el('p', { class: 'rv-note' }, (ch.copyright || `${ch.translation}, public domain. Tap a verse to copy it or write about it.`) + (TOUCH ? ' Swipe left or right for the next or previous chapter.' : '')),
     selBar,
   ].filter(Boolean));
   if (verse) {
@@ -3347,7 +3371,7 @@ function openSettings(section) {
         wordpressControls(() => openSettings('wordpress'))),
 
       panel('about', 'About', null,
-        el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, ANDROID ? 'New versions come from the WellWrite releases page; Android asks before installing them.' : 'Updates install automatically when you restart.')),
+        el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, ANDROID ? 'New versions download on Wi-Fi by themselves; tap Update now and Android installs them. Your journal stays as it is.' : 'Updates install automatically when you restart.')),
           el('button', { type: 'button', class: 'btn-plain', onclick: checkUpdates }, 'Check for updates')),
         el('p', { class: 'set-intro' }, 'Bible texts: World English Bible and King James Version (public domain); other versions from API.Bible. Week pictures: public-domain works from Wikimedia Commons.')),
     ];
@@ -3422,7 +3446,7 @@ async function checkUpdates() {
   if (r.status === 'ready') {
     showUpdate(r.version);
     // On the phone, the download is right here too.
-    if (ANDROID && !out.parentNode.querySelector('.upd-get')) out.after(el('button', { type: 'button', class: 'btn-ink btn-small upd-get', style: 'margin-top:8px', onclick: () => $('#updateBtn').click() }, 'Download update'));
+    if (ANDROID && !out.parentNode.querySelector('.upd-get')) out.after(el('button', { type: 'button', class: 'btn-ink btn-small upd-get', style: 'margin-top:8px', onclick: () => $('#updateBtn').click() }, 'Update now'));
   }
 }
 
@@ -3430,13 +3454,18 @@ function showUpdate(version) {
   state.updateReady = version;
   // Phones: a dot on the menu buttons, and the update at the top of the ⋯ menu.
   document.body.classList.add('update-ready');
-  $('#updateText').textContent = ANDROID ? `WellWrite ${version} is available.` : `WellWrite ${version} is ready to install.`;
-  if (ANDROID) $('#updateBtn').textContent = 'Download update';
+  $('#updateText').textContent = ANDROID ? `WellWrite ${version} is ready.` : `WellWrite ${version} is ready to install.`;
+  if (ANDROID) { $('#updateBtn').textContent = 'Update now'; if (api.prefetchUpdate) api.prefetchUpdate().catch(() => {}); }
   $('#updateBar').hidden = false;
 }
 $('#updateBtn').onclick = async () => {
   await saveNow();
-  if (ANDROID) { api.installUpdate(); toast('When it has downloaded, open it to install. Your journal stays as it is.'); return; }
+  if (ANDROID) {
+    $('#updateBtn').disabled = true;
+    try { await api.installUpdate(); } catch (x) { toast(x.message); }
+    $('#updateBtn').disabled = false;
+    return;
+  }
   $('#updateBtn').disabled = true; $('#updateBtn').textContent = 'Restarting…';
   api.installUpdate();
 };
@@ -3756,6 +3785,17 @@ setInterval(() => { if (state.unlocked && todayISO() !== lastDay) { lastDay = to
 
 api.onFlush(() => saveNow());
 api.onUpdateReady(showUpdate);
+// Phones: how the download is going, on the update bar.
+if (api.onUpdateProgress) api.onUpdateProgress(p => {
+  if (!state.updateReady) return;
+  // The bar is in the sidebar; the toast shows it wherever you are.
+  const say = t => { $('#updateText').textContent = t; toast(t); };
+  if (p.error) { say(p.error); $('#updateBtn').disabled = false; return; }
+  if (p.downloading) { const pct = Math.round(p.progress * 100); if (pct % 10 === 0) say(`Downloading WellWrite ${state.updateReady}… ${pct}%`); }
+  else if (p.ready) $('#updateText').textContent = `WellWrite ${state.updateReady} is ready.`;
+  else if (p.permission) say('Turn on “Allow from this source”, then come back to WellWrite.');
+  else if (p.installing) say('Tap Update when Android asks. Your journal stays as it is.');
+});
 api.version().then(v => {
   state.version = v.version;
   const b = $('#versionBtn'); b.textContent = 'v' + v.version; b.hidden = false;
@@ -3787,7 +3827,7 @@ $('#moreBtn').addEventListener('click', () => {
     pop.classList.add('menu');
     const item = (label, fn, cls = '') => el('button', { type: 'button', class: 'menu-item ' + cls, onclick: () => { closePopover(); fn(); } }, label);
     const c = state.current, writing = state.mode === 'journal' && c && !$('#sheet').hidden;
-    if (state.updateReady) pop.append(item(`Download WellWrite ${state.updateReady}`, () => $('#updateBtn').click(), 'update'), el('hr'));
+    if (state.updateReady) pop.append(item(`Update to WellWrite ${state.updateReady}`, () => $('#updateBtn').click(), 'update'), el('hr'));
     if (writing) {
       pop.append(el('p', { class: 'menu-info' }, [$('#saveState').textContent, $('#wordCount').textContent].filter(Boolean).join(' · ')));
       if (!$('#wpBtn').hidden) pop.append(item('Post to WordPress', () => $('#wpBtn').click()));

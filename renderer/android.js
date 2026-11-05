@@ -19,6 +19,7 @@
     const raw = String(e.data);
     const kind = raw[0];
     if (kind === 'B') { back(); return; }
+    if (kind === 'U') { try { emit('update-progress', JSON.parse(raw.slice(1))); } catch {} return; }
     let m; try { m = JSON.parse(raw.slice(1)); } catch { return; }
     if (kind === 'P') {        // from WellWrite's engine
       if (m.ev) { emit(m.ev, ...(m.args || [])); return; }
@@ -199,8 +200,11 @@
     onBackupResult: fn => on('backup:result', fn),
     version: () => engine('app:version'),
     checkUpdates: () => engine('app:checkUpdates'),
-    installUpdate: () => engine('app:installUpdate'),
+    // Updates: downloaded by the app (on Wi-Fi, without asking), then Android's own "Update" prompt.
+    installUpdate: async () => { const u = await engine('app:installUpdate'); if (u) return app('installUpdate', u); },
+    onUpdateProgress: fn => on('update-progress', fn),
     onUpdateReady: fn => on('app:update-ready', fn),
+    prefetchUpdate: async () => { const u = await engine('app:installUpdate'); if (u) return app('downloadUpdate', { ...u, auto: true }); },
     onFlush: fn => on('app:flush', fn),
     onLock: fn => on('app:lock', fn),
   };

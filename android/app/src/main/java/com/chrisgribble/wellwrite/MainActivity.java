@@ -67,6 +67,7 @@ public class MainActivity extends ComponentActivity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private WebView web;
     private FrameLayout root;
+    private Updater updater;
     private JavaScriptReplyProxy page;
     private final List<String> toPage = new ArrayList<>();
 
@@ -83,6 +84,7 @@ public class MainActivity extends ComponentActivity {
         EdgeToEdge.enable(this);
         super.onCreate(saved);
         NodeBridge.start(this);
+        updater = new Updater(this, json -> post("U" + ascii(json)));
         if (saved == null) clearCameraCache(getCacheDir());
 
         root = new FrameLayout(this);
@@ -267,6 +269,11 @@ public class MainActivity extends ComponentActivity {
             case "openUrl": openUrl(req.optString("url")); reply(req, true, true, null); break;
             case "background": moveTaskToBack(true); reply(req, true, true, null); break;
             case "saveFile": saveFile(req); break;
+            case "downloadUpdate": {
+                String err = updater.download(req.optString("url"), req.optString("version"), req.optBoolean("auto"), () -> {});
+                reply(req, err == null, true, err); break;
+            }
+            case "installUpdate": updater.install(req.optString("url"), req.optString("version")); reply(req, true, true, null); break;
             case "bars": systemBars(req.optString("color"), req.optBoolean("light")); reply(req, true, true, null); break;
             default: reply(req, false, null, "Unknown request");
         }
@@ -343,6 +350,9 @@ public class MainActivity extends ComponentActivity {
         }
         return b.toString();
     }
+
+    @Override
+    protected void onResume() { super.onResume(); if (updater != null) updater.onResume(); }
 
     @Override
     protected void onDestroy() {

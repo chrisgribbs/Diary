@@ -78,6 +78,19 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(ref1 && ref1 !== ref0, `› goes to the next chapter (${ref0} → ${ref1})`);
   await tap('.rd-arrow', '‹');
   check(await is(() => document.querySelector('#rdRef').textContent.trim()) === ref0, '‹ goes back');
+  // Swipes, with a real finger.
+  const swipe = async dir => {
+    const r = await page.evaluate(() => { const b = document.querySelector('.rd-text').getBoundingClientRect(); return { y: Math.min(b.top + 260, innerHeight - 120), w: innerWidth }; });
+    const y = Math.round(box.y + r.y * dpr), a = Math.round(r.w * 0.78 * dpr), b = Math.round(r.w * 0.22 * dpr);
+    await device.shell(dir === 'left' ? `input swipe ${a} ${y} ${b} ${y} 180` : `input swipe ${b} ${y} ${a} ${y} 180`);
+    await wait(1500);
+  };
+  await swipe('left');
+  check(await is(() => document.querySelector('#rdRef').textContent.trim()) === ref1, `swiping left goes to the next chapter (${ref1})`);
+  await shot('swiped');
+  await swipe('right');
+  check(await is(() => document.querySelector('#rdRef').textContent.trim()) === ref0, 'swiping right goes back');
+  await is(() => { document.querySelector('#sheetScroll').scrollTop = 0; });
   await tap('#rdRef');
   check(await dialogOpen(), 'tapping the chapter name opens “Choose a passage”');
   await shot('picker');
@@ -186,6 +199,17 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(await is(() => !document.querySelector('#popover').hidden), 'the category button opens its menu');
   await device.shell('input keyevent 4'); await wait(800);
   await is(() => closePopover());
+
+  // Updates: WellWrite downloads the release itself and refuses a file that isn't signed with its own key
+  // (this test copy is signed with a test key, so the real release must be refused).
+  const upd = await page.evaluate(() => new Promise(resolve => {
+    const seen = [];
+    window.wellwrite.onUpdateProgress(p => { seen.push(p); if (p.error || p.ready) resolve(seen); });
+    window.WellWriteNative.postMessage('N' + JSON.stringify({ id: 999999, op: 'downloadUpdate', url: 'https://github.com/chrisgribbs/Diary/releases/download/v1.20.1/WellWrite-1.20.1.apk', version: '1.20.1', auto: false }));
+    setTimeout(() => resolve(seen), 90000);
+  }));
+  log('update progress:', JSON.stringify(upd.slice(-3)));
+  check(upd.some(p => p.downloading) && upd.some(p => p.error && /signed/.test(p.error)), 'the app downloads an update itself and checks who signed it');
 
   log(failures ? `${failures} TAP CHECKS FAILED` : 'ALL TAP CHECKS PASSED');
   await device.close();

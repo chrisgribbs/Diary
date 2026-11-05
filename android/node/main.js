@@ -128,10 +128,8 @@ function start(transport, dirs, opts = {}) {
     try { const u = await checkForUpdate(); return u ? { status: 'ready', version: u.version } : { status: 'latest' }; }
     catch { return { status: 'offline' }; }
   });
-  handle('app:installUpdate', () => {
-    if (update && /^https:\/\/github\.com\//.test(update.url)) toApp({ op: 'openUrl', url: update.url });
-    return true;
-  });
+  // The Android app downloads and installs it (android/…/Updater.java); this just says which file.
+  handle('app:installUpdate', () => (update && /^https:\/\/github\.com\/chrisgribbs\/Diary\/releases\/download\//.test(update.url) ? update : null));
   if (!opts.noUpdateCheck) {
     const check = () => checkForUpdate().then(u => { if (u) toPage({ ev: 'app:update-ready', args: [u.version] }); }).catch(() => {});
     setTimeout(check, 8000);
