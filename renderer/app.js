@@ -3360,12 +3360,18 @@ function openSettings(section) {
     const content = el('div', { class: 'set-content' }, ...panels);
     const show = key => {
       tab = key;
+      lay.classList.remove('at-list');
       try { localStorage.setItem('settingsTab', key); } catch {}
       for (const b of nav.querySelectorAll('.set-tab')) { const on = b.dataset.tab === key; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); }
       for (const p of panels) p.hidden = p.dataset.tab !== key;
       content.scrollTop = 0;
     };
-    f.append(el('div', { class: 'set-layout' }, nav, content));
+    // Phones: a list of sections first (unless asked for one), each opening on its own with ‹ Settings to go back.
+    const lay = el('div', { class: 'set-layout' + (matchMedia('(max-width: 720px)').matches && !section ? ' at-list' : '') }, nav, content);
+    content.prepend(el('div', { class: 'set-top' },
+      el('button', { type: 'button', class: 'btn-link set-back', 'data-back': '', onclick: () => { lay.classList.add('at-list'); } }, '‹ Settings'),
+      el('button', { type: 'button', class: 'btn-ink btn-small', onclick: () => done() }, 'Done')));
+    f.append(lay);
     setTimeout(() => { const b = nav.querySelector('.set-tab.on'); if (b) b.focus({ focusVisible: false }); });
     renderBackupSection();
     refreshBackupInfo();

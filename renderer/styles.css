@@ -943,18 +943,18 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .q-row { grid-template-columns: auto 1fr; }
   .q-row > .q-row-btns { grid-column: 2; }
   .q-row-btns .btn-link { padding: 6px 2px; }
-  /* settings: one scrolling row of sections, with Done always in reach */
-  .set-layout { position: relative; }
-  .set-nav { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; gap: 4px; padding: 10px 104px 10px 10px !important; align-items: center; height: 58px; box-sizing: border-box; }
-  .set-nav::-webkit-scrollbar { display: none; }
-  .set-tab { white-space: nowrap; padding: 9px 11px; }
-  /* Done sits over the end of the row, which fades out beneath it */
-  .set-layout::after { content: ''; position: absolute; top: 0; right: 0; width: 120px; height: 57px; pointer-events: none; z-index: 1;
-    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--pencil) 5%, var(--paper)) 32%); }
-  .set-nav .set-done { display: inline-flex; position: absolute; top: 10px; right: 10px; margin: 0; z-index: 2; }
-  .q-kind-row, .q-occ-row { display: flex !important; flex-wrap: wrap; gap: 8px; }
-  .q-kind-row > * { flex: 1 1 10em; min-width: 0; }
-  .ap-top { background: var(--paper); margin: -16px -16px 0; padding: 10px 16px; }
+  /* settings, as a phone does it: a list of sections; tap one to open it, ‹ Settings to go back */
+  .set-layout { display: block; height: 100%; }
+  .set-layout.at-list .set-content { display: none; }
+  .set-layout:not(.at-list) .set-nav { display: none; }
+  .set-nav { flex-direction: column !important; flex-wrap: nowrap !important; padding: 18px 12px !important; height: 100%; overflow-y: auto; border: 0 !important; gap: 2px; }
+  .set-nav .set-nav-title { display: block !important; font-size: 26px !important; margin: 4px 8px 14px !important; }
+  .set-tab { display: flex; justify-content: space-between; align-items: center; padding: 15px 12px; font-size: 16px; color: var(--ink); border-radius: 8px; }
+  .set-tab::after { content: '›'; color: var(--pencil); font-size: 20px; line-height: 1; }
+  .set-tab.on { background: none; font-weight: 400; }
+  .set-nav .set-done { display: block !important; margin-top: 18px; width: 100%; padding: 13px; font-size: 15px; }
+  .set-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; top: -18px; margin: -18px -18px 10px; padding: 10px 12px; background: var(--paper); z-index: 2; border-bottom: 1px solid var(--rule); }
+  .set-top .set-back { font-size: 15px; font-weight: 600; color: var(--ribbon); padding: 8px 6px; }
   .set-content { padding: 18px 18px 40px; }
   /* the Christian year: the dates on their own line */
   .season-year .season-row { grid-template-columns: 1fr auto; gap: 2px 10px; padding: 8px 8px; }
@@ -980,7 +980,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 /* ============ phones: app navigation ============ */
 /* A top bar (entries · where you are · new · more), and the main places along the bottom with the camera in the
    middle. The formatting buttons appear above the keyboard while you write. */
-.tabbar, .top-title, .top-btn { display: none; }
+.tabbar, .top-title, .top-btn, .set-top { display: none; }
 @media (max-width: 720px) {
   .pagebar { flex-wrap: nowrap; align-items: center; gap: 2px; padding: 4px 6px; min-height: 52px; }
   .pagebar .modes { display: none; }
@@ -1019,4 +1019,5 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .menu .menu-item.danger { color: var(--danger); }
   .menu .menu-item { min-height: 40px; }
   .ph-head h2 { display: none; }
+  .set-top { display: flex; }
 }

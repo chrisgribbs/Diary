@@ -90,6 +90,9 @@
   // Closes whatever is open on top; otherwise the app goes to the background (like Home).
   function back() {
     const dlg = [...document.querySelectorAll('dialog[open]')].pop();
+    // A dialog with its own way back (Settings: from a section to the list) uses that first.
+    const own = dlg && [...dlg.querySelectorAll('[data-back]')].find(b => b.checkVisibility());
+    if (own) { own.click(); return; }
     if (dlg) { const c = new Event('cancel', { cancelable: true }); dlg.dispatchEvent(c); if (!c.defaultPrevented) dlg.close(); return; }
     for (const sel of ['#popover:not([hidden])', '#lightbox:not([hidden])']) {
       const el = document.querySelector(sel);

@@ -169,9 +169,13 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   // ---- settings
   await tap('#menuBtn'); await tap('#settingsBtn');
   check(await dialogOpen(), 'Settings opens');
-  for (const t of ['readings', 'bible', 'privacy', 'backups', 'wordpress', 'about']) {
+  check(await is(() => document.querySelector('.set-layout').classList.contains('at-list')), 'Settings starts with the list of sections');
+  for (const t of ['general', 'readings', 'bible', 'privacy', 'backups', 'wordpress', 'about']) {
     await tap(`.set-tab[data-tab="${t}"]`);
-    check(await page.evaluate(t => !document.querySelector('#set-' + t).hidden, t).catch(() => false), `Settings: ${t} tab`);
+    check(await page.evaluate(t => !document.querySelector('#set-' + t).hidden && !document.querySelector('.set-layout').classList.contains('at-list'), t).catch(() => false), `Settings: ${t} opens`);
+    if (t === 'privacy') await shot('settings-section');
+    if (t === 'bible') await tap('.set-back'); else { await device.shell('input keyevent 4'); await wait(900); }
+    check(await is(() => document.querySelector('.set-layout').classList.contains('at-list') && !!document.querySelector('dialog[open]')), `  ${t === 'bible' ? '‹ Settings' : 'Back'} returns to the list`);
   }
   await shot('settings');
   await tap('.set-done');
