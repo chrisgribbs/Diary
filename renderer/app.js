@@ -3129,6 +3129,7 @@ function caretToEnd() {
 }
 /** The camera: the photo goes into today's entry (a new one if you're looking at another day), ready for a caption. */
 $('#cameraBtn').addEventListener('click', () => $('#cameraFile').click());
+$('#cameraTopBtn').addEventListener('click', () => $('#cameraFile').click());   // tablets held sideways
 $('#cameraFile').addEventListener('change', async e => {
   const files = [...e.target.files]; e.target.value = '';
   if (!files.length) return;
@@ -3391,7 +3392,7 @@ function openSettings(section) {
       content.scrollTop = 0;
     };
     // Phones: a list of sections first (unless asked for one), each opening on its own with ‹ Settings to go back.
-    const lay = el('div', { class: 'set-layout' + (matchMedia('(max-width: 720px)').matches && !section ? ' at-list' : '') }, nav, content);
+    const lay = el('div', { class: 'set-layout' + (matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1024px)').matches && !section ? ' at-list' : '') }, nav, content);
     content.prepend(el('div', { class: 'set-top' },
       el('button', { type: 'button', class: 'btn-link set-back', 'data-back': '', onclick: () => { lay.classList.add('at-list'); } }, '‹ Settings'),
       el('button', { type: 'button', class: 'btn-ink btn-small', onclick: () => done() }, 'Done')));

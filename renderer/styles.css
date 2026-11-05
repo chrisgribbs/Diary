@@ -877,7 +877,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .ph-empty { text-align: center; padding: 50px 10px; color: var(--pencil); }
 .ph-empty p { max-width: 30em; margin: 0 auto 18px; }
 
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1024px) {
   html, body { overscroll-behavior: none; }
   .app { grid-template-columns: 1fr; height: 100dvh; }
   .cloth {
@@ -894,7 +894,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .pagebar .modes { margin-left: auto; order: 1; display: flex; align-items: center; gap: 2px; }
   .pagebar .show-above { display: none; }
   .modeswitch button { padding: 7px 8px; }
-  .ph-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; }
+  .ph-grid { grid-template-columns: repeat(auto-fill, minmax(min(30vw, 150px), 1fr)); gap: 3px; }
   .ph-head h2 { font-size: 26px; }
   .toolbar { order: 2; flex: 1 0 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 2px 4px; border-top: 1px solid var(--rule); }
   .toolbar::-webkit-scrollbar { display: none; }
@@ -920,7 +920,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .toast { width: max-content; max-width: calc(100vw - 32px); text-align: center; }
 .rd-bar { top: 52px; }
 
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1024px) {
   /* dialogs: nearly the whole screen; full pages take all of it */
   .dlg { width: calc(100vw - 16px); max-width: none; }
   .dlg { max-height: calc(100dvh - 16px); }
@@ -945,6 +945,8 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .q-row-btns .btn-link { padding: 6px 2px; }
   /* settings, as a phone does it: a list of sections; tap one to open it, ‹ Settings to go back */
   .set-layout { display: block; height: 100%; }
+  .set-nav { max-width: 680px; margin: 0 auto; width: 100%; }
+  .set-content > * { max-width: 680px; margin-left: auto; margin-right: auto; }
   .set-layout.at-list .set-content { display: none; }
   .set-layout:not(.at-list) .set-nav { display: none; }
   .set-nav { flex-direction: column !important; flex-wrap: nowrap !important; padding: 18px 12px !important; height: 100%; overflow-y: auto; border: 0 !important; gap: 2px; }
@@ -981,7 +983,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 /* A top bar (entries · where you are · new · more), and the main places along the bottom with the camera in the
    middle. The formatting buttons appear above the keyboard while you write. */
 .tabbar, .top-title, .top-btn, .set-top { display: none; }
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1024px) {
   .pagebar { flex-wrap: nowrap; align-items: center; gap: 2px; padding: 4px 6px; min-height: 52px; }
   .pagebar .modes { display: none; }
   .top-title { display: block; flex: 1; min-width: 0; margin: 0 4px; font: 600 20px/1.2 var(--serif); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1022,7 +1024,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .set-top { display: flex; }
 }
 /* a new version: a dot on the menu buttons (phones) */
-@media (max-width: 720px) {
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1024px) {
   body.update-ready #moreBtn, body.update-ready #menuBtn { position: relative; }
   body.update-ready #moreBtn::after, body.update-ready #menuBtn::after { content: ''; position: absolute; top: 9px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--ribbon); box-shadow: 0 0 0 2px var(--paper); }
   .menu .menu-item.update { color: var(--ribbon); font-weight: 600; }
@@ -1033,3 +1035,18 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 @keyframes rdInLeft { from { transform: translateX(48px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes rdInRight { from { transform: translateX(-48px); opacity: 0; } to { transform: none; opacity: 1; } }
 .rd-text { touch-action: pan-y; }
+
+/* ============ tablets held sideways: the full layout, with a camera and room for fingers ============ */
+@media (pointer: coarse) and (min-width: 1025px) {
+  [data-platform="android"] .camera-btn { display: inline-grid !important; width: 40px; height: 40px; color: var(--ribbon); }
+  .camera-btn svg { width: 22px; height: 22px; }
+  .toolbar .icon-btn { width: 40px; height: 40px; }
+  .modeswitch button { padding: 9px 16px; font-size: 14px; }
+  .show-above { padding: 9px 10px; font-size: 13.5px; }
+  .sidetabs button { padding: 9px 0; font-size: 14px; }
+  .cal-grid button { min-height: 40px; font-size: 15px; }
+  .cloth-foot .icon-btn { width: 42px; height: 42px; }
+  .item { padding-top: 10px; padding-bottom: 10px; }
+  .chip button:not(.chip-name) { width: 28px; height: 28px; }
+  input[type=checkbox], .dlg input[type=checkbox] { width: 24px; height: 24px; }
+}
