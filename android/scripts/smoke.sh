@@ -2,6 +2,9 @@
 # On the emulator: install, open, create a journal, write an entry, screenshot each step.
 set -x
 mkdir -p smoke
+# The emulator's own "isn't responding" pop-ups (the launcher, on a slow machine) would cover the app.
+adb shell settings put global hide_error_dialogs 1
+adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 adb logcat -c
 adb shell am start -n com.chrisgribble.wellwrite/.MainActivity
