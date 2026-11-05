@@ -51,10 +51,14 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
   // Open the journal.
   await wait(2000);
-  if (await is(() => !document.querySelector('#trustForm').hidden)) await tap('#trustOpen');
-  if (await is(() => !document.querySelector('#unlockForm').hidden)) {
-    await tap('#unlockPw'); await device.shell("input text 'correct\\ horse\\ 1'"); await device.shell('input keyevent 66'); await wait(3000);
+  const locked = () => is(() => !document.querySelector('#lock').hidden);
+  if (await locked() && await is(() => !document.querySelector('#trustForm').hidden)) await tap('#trustOpen');
+  if (await locked() && await is(() => !document.querySelector('#unlockForm').hidden)) {
+    await tap('#unlockPw'); await device.shell('input text correct%shorse%s1'); await device.shell('input keyevent 66'); await wait(3000);
   }
+  // Start with the keyboard put away (the camera test leaves the cursor in today's entry).
+  if (await is(() => document.body.classList.contains('keyboard'))) { await device.shell('input keyevent 4'); await wait(1500); }
+  check(await is(() => !document.body.classList.contains('keyboard')), 'Back puts the keyboard away');
   check(await is(() => !document.querySelector('#app').hidden), 'journal open');
   await is(() => { document.querySelectorAll('dialog[open]').forEach(d => d.close()); document.body.classList.remove('drawer-open'); });
 
@@ -110,7 +114,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await tap('.bv-tab', 'Search');
   check(await is(() => !!document.querySelector('#bsFind')), 'Search opens');
   await shot('search');
-  await tap('#bsFind'); await device.shell("input text 'still\\ waters'"); await device.shell('input keyevent 66'); await wait(2000);
+  await tap('#bsFind'); await device.shell('input text still%swaters'); await device.shell('input keyevent 66'); await wait(2000);
   check(await is(() => document.querySelectorAll('.bs-results .bs-item').length > 0), 'searching shows results');
   await shot('search-results');
   await device.shell('input keyevent 4'); await wait(800);   // keyboard away
