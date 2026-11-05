@@ -1,0 +1,61 @@
+13:41:52 webview at { x: 0, y: 128 } dpr 2.625
+13:41:54 PASS Back puts the keyboard away
+13:41:54 PASS journal open
+13:41:55 PASS tapping Bible opens it
+13:41:57 PASS tapping Week opens it
+13:41:58 PASS tapping Photos opens it
+13:42:00 PASS tapping Journal opens it
+13:42:05 PASS › goes to the next chapter (Psalm 23 ▾ → Psalm 24 ▾)
+13:42:07 PASS ‹ goes back
+13:42:09 PASS swiping left goes to the next chapter (Psalm 24 ▾)
+13:42:11 PASS swiping right goes back
+13:42:13 PASS tapping the chapter name opens “Choose a passage”
+13:42:14 PASS Close closes “Choose a passage”
+13:42:17 PASS tapping Genesis shows its chapters
+13:42:19 PASS tapping 3 opens Genesis 3
+13:42:24 PASS Ruth 2 opens
+13:42:26 PASS the button at the end goes on to Ruth 3
+13:42:27 PASS the version ▾ opens the list
+13:42:29 PASS choosing a version closes the list
+13:42:34 PASS tapping a verse selects it
+13:42:35 PASS Back clears the chosen verse and stays in the Bible
+13:42:37 PASS Search opens
+13:42:41 PASS searching shows results
+13:42:44 PASS Plans opens
+13:42:45 PASS back to Read
+13:42:48 PASS Back from Photos goes to the journal
+13:42:49 PASS + starts a new entry
+13:42:52 PASS while writing, the formatting buttons sit above the keyboard
+13:42:55 PASS a formatting button keeps the cursor in the entry
+13:42:56 PASS putting the keyboard away brings the bottom bar back
+13:42:58 PASS ⋯ opens the menu
+13:43:00 PASS ⋯ → Settings opens Settings
+13:43:01 PASS and Done closes it
+13:43:03 PASS the menu button opens the sidebar
+13:43:07 PASS the sidebar tabs keep it open
+13:43:12 PASS tapping an entry opens it and closes the sidebar
+13:43:20 PASS Settings opens
+13:43:20 PASS Settings starts with the list of sections
+13:43:21 PASS Settings: general opens
+13:43:22 PASS   Back returns to the list
+13:43:24 PASS Settings: readings opens
+13:43:25 PASS   Back returns to the list
+13:43:26 PASS Settings: bible opens
+13:43:28 PASS   ‹ Settings returns to the list
+13:43:29 PASS Settings: privacy opens
+13:43:30 PASS   Back returns to the list
+13:43:32 PASS Settings: backups opens
+13:43:33 PASS   Back returns to the list
+13:43:34 PASS Settings: wordpress opens
+13:43:35 PASS   Back returns to the list
+13:43:37 PASS Settings: about opens
+13:43:38 PASS   Back returns to the list
+13:43:39 PASS Done closes Settings
+13:43:42 PASS tapping a photo opens it, with Delete photo
+13:43:42 PASS …without bringing up the keyboard
+13:43:43 PASS Delete photo asks first
+13:43:46 PASS Close closes the photo
+13:43:48 PASS the category button opens its menu
+13:43:51 update progress: [{"downloading":true,"progress":0.99},{"downloading":true,"progress":1},{"error":"Couldn’t download the update: it isn’t signed by WellWrite"}]
+13:43:51 PASS the app downloads an update itself and checks who signed it
+13:43:51 ALL TAP CHECKS PASSED
