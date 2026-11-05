@@ -3414,14 +3414,22 @@ async function checkUpdates() {
   const r = await api.checkUpdates().catch(() => ({ status: 'offline' }));
   out.textContent = {
     dev: 'Updates are only checked in the installed app.',
-    ready: ANDROID ? `Version ${r.version} is available. Use “Download update” in the sidebar.` : `Version ${r.version} is ready. Restart WellWrite to install it.`,
+    ready: ANDROID ? `Version ${r.version} is available.` : `Version ${r.version} is ready. Restart WellWrite to install it.`,
     downloading: `Downloading version ${r.version}. You'll be asked to restart when it's ready.`,
     latest: 'You have the latest version.',
     offline: "Couldn't reach the update server. Check your connection and try again.",
   }[r.status];
+  if (r.status === 'ready') {
+    showUpdate(r.version);
+    // On the phone, the download is right here too.
+    if (ANDROID && !out.parentNode.querySelector('.upd-get')) out.after(el('button', { type: 'button', class: 'btn-ink btn-small upd-get', style: 'margin-top:8px', onclick: () => $('#updateBtn').click() }, 'Download update'));
+  }
 }
 
 function showUpdate(version) {
+  state.updateReady = version;
+  // Phones: a dot on the menu buttons, and the update at the top of the ⋯ menu.
+  document.body.classList.add('update-ready');
   $('#updateText').textContent = ANDROID ? `WellWrite ${version} is available.` : `WellWrite ${version} is ready to install.`;
   if (ANDROID) $('#updateBtn').textContent = 'Download update';
   $('#updateBar').hidden = false;
@@ -3779,6 +3787,7 @@ $('#moreBtn').addEventListener('click', () => {
     pop.classList.add('menu');
     const item = (label, fn, cls = '') => el('button', { type: 'button', class: 'menu-item ' + cls, onclick: () => { closePopover(); fn(); } }, label);
     const c = state.current, writing = state.mode === 'journal' && c && !$('#sheet').hidden;
+    if (state.updateReady) pop.append(item(`Download WellWrite ${state.updateReady}`, () => $('#updateBtn').click(), 'update'), el('hr'));
     if (writing) {
       pop.append(el('p', { class: 'menu-info' }, [$('#saveState').textContent, $('#wordCount').textContent].filter(Boolean).join(' · ')));
       if (!$('#wpBtn').hidden) pop.append(item('Post to WordPress', () => $('#wpBtn').click()));
@@ -3832,6 +3841,13 @@ function syncSystemBars() {
   api.systemBars({ color: '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join(''), light: (r * 299 + g * 587 + b * 114) / 1000 > 140 }).catch(() => {});
 }
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => syncSystemBars());
+// Phones stay open for days: look for a new version when you come back to WellWrite (at most once an hour).
+let lastUpdateCheck = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if (!ANDROID || document.hidden || state.updateReady || Date.now() - lastUpdateCheck < 3600e3) return;
+  lastUpdateCheck = Date.now();
+  api.checkUpdates().then(r => { if (r && r.status === 'ready') showUpdate(r.version); }).catch(() => {});
+});
 $('#menuBtn').addEventListener('click', () => document.body.classList.toggle('drawer-open'));
 $('#scrim').addEventListener('click', closeDrawer);
 // Opening something from the sidebar shows it.
