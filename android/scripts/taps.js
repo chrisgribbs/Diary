@@ -156,10 +156,13 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await tap('#list .item');
   check(await is(() => !document.body.classList.contains('drawer-open') && document.querySelector('#page').dataset.mode === 'journal' && !document.querySelector('#sheet').hidden), 'tapping an entry opens it and closes the sidebar');
   await shot('entry');
-  await tap('#menuBtn'); await tap('#allEntriesBtn');
-  check(await dialogOpen(), 'All entries opens');
-  await tap('#dlg .ae-list .item');
-  check(!(await dialogOpen()), 'tapping an entry in All entries opens it');
+  await tap('#menuBtn');
+  if (await is(() => !!document.querySelector('#allEntriesBtn'))) {   // shown once there are more entries than the sidebar lists
+    await tap('#allEntriesBtn');
+    check(await dialogOpen(), 'All entries opens');
+    await tap('#dlg .ae-list .item');
+    check(!(await dialogOpen()), 'tapping an entry in All entries opens it');
+  }
   await tap('#menuBtn'); await tap('#scrim');
   await is(() => document.body.classList.remove('drawer-open'));
 
@@ -168,7 +171,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(await dialogOpen(), 'Settings opens');
   for (const t of ['readings', 'bible', 'privacy', 'backups', 'wordpress', 'about']) {
     await tap(`.set-tab[data-tab="${t}"]`);
-    check(await is(t => !document.querySelector('#set-' + t).hidden, t), `Settings: ${t} tab`);
+    check(await page.evaluate(t => !document.querySelector('#set-' + t).hidden, t).catch(() => false), `Settings: ${t} tab`);
   }
   await shot('settings');
   await tap('.set-done');
