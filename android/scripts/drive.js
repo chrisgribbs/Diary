@@ -78,7 +78,7 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
   await page.click('#settingsBtn'); await page.waitForTimeout(1200); await shot('8-settings');
 
   // The camera: the button opens the phone's camera app, and the photo comes back into today's entry.
-  await page.click('#menuBtn').catch(() => {}); await device.shell('input keyevent 4'); await page.waitForTimeout(500);
+  await page.evaluate(() => { document.querySelectorAll('dialog[open]').forEach(d => d.close()); document.body.classList.remove('drawer-open'); }); await page.waitForTimeout(500);
   await page.evaluate(() => document.querySelector('.tabbar [data-mode="journal"]').click());
   const before = await page.evaluate(() => window.wellwrite.list().then(l => l.reduce((a, m) => a + m.images, 0)));
   await page.click('#cameraBtn');

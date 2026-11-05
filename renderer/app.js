@@ -3717,7 +3717,7 @@ async function restoreFromDrive(mode) {
 /* ---------- global wiring ---------- */
 $('#newBtn').onclick = () => newEntry(state.selectedDay || todayISO());
 $('#lockBtn').onclick = lockNow;
-$('#settingsBtn').onclick = openSettings;
+$('#settingsBtn').onclick = () => openSettings();
 
 document.addEventListener('keydown', e => {
   if (!state.unlocked) return;
