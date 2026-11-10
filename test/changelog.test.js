@@ -14,5 +14,5 @@ for (const r of list) {
   assert.match(r.date, /^\d{4}-\d\d-\d\d$/); assert.ok(r.title);
   assert.ok(['new', 'improved', 'fixed'].some(k => (r[k] || []).length), `${r.v} says what changed`);
 }
-assert.equal(fs.readFileSync(path.join(__dirname, '../CHANGELOG.md'), 'utf8'), markdown(), 'CHANGELOG.md is up to date (npm run changelog)');
+assert.equal(fs.readFileSync(path.join(__dirname, '../CHANGELOG.md'), 'utf8').replace(/\r\n/g, '\n'), markdown(), 'CHANGELOG.md is up to date (npm run changelog)');
 console.log('changelog tests passed:', list.length, 'versions');
