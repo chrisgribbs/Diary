@@ -3197,8 +3197,10 @@ async function handwrite(img = null) {
   handwriting = true;
   try {
     if (!state.current) await newEntry(todayISO());
+    const saved = getSelection().rangeCount && body.contains(getSelection().anchorNode) ? getSelection().getRangeAt(0).cloneRange() : null;
     const sel = getSelection();
-    const range = !img && sel.rangeCount && body.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
+    const range = img ? null : saved;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // the phone keyboard goes away while you write
     let r;
     try { r = await window.WellWriteInk.open(img ? img.getAttribute('data-ink') : null); }
     catch (x) { toast(x.message); return; }
@@ -3945,6 +3947,7 @@ $('#moreBtn').addEventListener('click', () => {
     if (state.updateReady) pop.append(item(`Update to WellWrite ${state.updateReady}`, () => $('#updateBtn').click(), 'update'), el('hr'));
     if (writing) {
       pop.append(el('p', { class: 'menu-info' }, [$('#saveState').textContent, $('#wordCount').textContent].filter(Boolean).join(' · ')));
+      pop.append(item('Write by hand', () => handwrite()));
       if (!$('#wpBtn').hidden) pop.append(item('Post to WordPress', () => $('#wpBtn').click()));
       pop.append(item('Delete this entry', () => $('#deleteBtn').click(), 'danger'), el('hr'));
     }

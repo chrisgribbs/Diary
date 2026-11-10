@@ -2,6 +2,16 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.24.1 — Handwriting on the phone
+_11 November 2026_
+
+**Improved**
+
+- On a phone the pen button comes first in the formatting bar above the keyboard, so it’s visible without scrolling.
+- “Write by hand” is in the ⋯ menu too, so it doesn’t need the keyboard up.
+- On a phone the writing page is wider than the screen so the lines are far enough apart to write between. Scroll it in any direction with a finger.
+- The keyboard goes away while you write by hand.
+
 ## 1.24.0 — What’s new
 _11 November 2026_
 

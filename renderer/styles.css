@@ -1007,6 +1007,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
     background: var(--paper); border-top: 1px solid var(--rule); padding: 4px 6px; box-shadow: 0 -4px 14px rgba(0,0,0,.08);
   }
   body.writing .sheet { padding-bottom: 70px; }
+  .toolbar [data-k="pen"] { order: -1; }   /* handwriting first, where a phone shows it without scrolling */
   /* the bottom bar */
   .tabbar {
     display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; flex: none;
@@ -1082,6 +1083,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .ink-hint { font-size: 12.5px; color: var(--pencil); }
 .ink-scroll { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 16px 12px 40px; }
 .ink-sheet { width: max-content; margin: 0 auto; }
+@media (max-width: 700px) { .ink-scroll { padding: 10px 8px 40px; } .ink-sheet { margin: 0; } }
 .ink-canvas { display: block; touch-action: none; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.10); cursor: crosshair; }
 @media (max-width: 700px) { .ink-hint { display: none; } .ink-bar { gap: 4px 8px; padding: 6px 8px; } }
 

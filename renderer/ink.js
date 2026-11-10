@@ -181,7 +181,8 @@
       let scale = 1;
       const ctx = canvas.getContext('2d');
       function layout() {
-        const cssW = Math.max(300, Math.min(scroller.clientWidth - 24, 1100));
+        // On a phone the page is wider than the screen (scroll sideways) so the lines are far enough apart to write between.
+        const cssW = Math.max(640, Math.min(scroller.clientWidth - 24, 1100));
         scale = cssW / W;
         const dpr = window.devicePixelRatio || 1;
         canvas.style.width = cssW + 'px'; canvas.style.height = Math.round(page.h * scale) + 'px';
@@ -224,7 +225,7 @@
       // ---- pointers ----
       let current = null;          // { id, stroke } while writing
       let erase = null;            // { id, removed: [[stroke, index]] } while erasing
-      const touches = new Map();   // finger id → last y, for scrolling
+      const touches = new Map();   // finger id → last { x, y }, for scrolling
       const at = e => { const r = canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; };
       const pressure = e => e.pointerType === 'pen' ? Math.min(1, Math.max(0.05, e.pressure || 0.5)) : 0.5;
       const isEraserEnd = e => e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32));
@@ -242,7 +243,7 @@
       canvas.addEventListener('pointerdown', e => {
         if (e.pointerType === 'pen' && !penSeen) { penSeen = true; try { localStorage.setItem('wellwrite.penSeen', '1'); } catch {} sync(); }
         if (e.pointerType === 'touch') {
-          touches.set(e.pointerId, e.clientY);
+          touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
           // A finger scrolls when you write with a pen (so a resting palm leaves no marks), or when a second finger lands.
           if (penSeen || touches.size > 1) {
             if (current && current.touch) { page.strokes.pop(); current = null; redraw(); }
@@ -262,9 +263,10 @@
       canvas.addEventListener('pointermove', e => {
         if (e.pointerType === 'touch' && touches.has(e.pointerId) && (!current || current.id !== e.pointerId)) {
           if (penSeen || touches.size > 1) {
-            const y0 = touches.get(e.pointerId);
-            scroller.scrollTop -= (e.clientY - y0) / Math.max(1, touches.size);
-            touches.set(e.pointerId, e.clientY);
+            const p0 = touches.get(e.pointerId), n = Math.max(1, touches.size);
+            scroller.scrollTop -= (e.clientY - p0.y) / n;
+            scroller.scrollLeft -= (e.clientX - p0.x) / n;
+            touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
           }
           return;
         }

@@ -5,6 +5,15 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.24.1', date: '2026-11-11', title: 'Handwriting on the phone',
+    improved: [
+      'On a phone the pen button comes first in the formatting bar above the keyboard, so it’s visible without scrolling.',
+      '“Write by hand” is in the ⋯ menu too, so it doesn’t need the keyboard up.',
+      'On a phone the writing page is wider than the screen so the lines are far enough apart to write between. Scroll it in any direction with a finger.',
+      'The keyboard goes away while you write by hand.',
+    ],
+  },
+  {
     v: '1.24.0', date: '2026-11-11', title: 'What’s new',
     new: ['Settings → What’s new: every version of WellWrite since the first, with what was added, improved and fixed, and when.'],
   },
