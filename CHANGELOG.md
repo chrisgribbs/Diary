@@ -2,6 +2,18 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.24.2 — Settings always closes
+_11 November 2026_
+
+**New**
+
+- Settings → About → Problems log: a file of error messages (never your entries) that shows what went wrong if something misbehaves.
+
+**Fixed**
+
+- Done and Esc always close Settings (and other windows like Your quotes), even if something inside has gone wrong.
+- If WellWrite ever stops responding, it offers to reload. Your entries are saved as you type.
+
 ## 1.24.1 — Handwriting on the phone
 _11 November 2026_
 

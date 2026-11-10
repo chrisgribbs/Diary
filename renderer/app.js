@@ -123,7 +123,8 @@ function openDialog(build) {
   form.append = (...kids) => HTMLFormElement.prototype.append.apply(form, kids.filter(k => k != null));
   $('#dlgForm').replaceWith(form);
   return new Promise(resolve => {
-    const done = v => { resolve(v); dlg.close(); };
+    // Always closes, whatever happened inside the dialog.
+    const done = v => { resolve(v); try { dlg.close(); } catch {} if (dlg.open) dlg.removeAttribute('open'); };
     build(form, done);
     addReveal(form);
     dlg.classList.toggle('page', form.classList.contains('page') || form.classList.contains('wide'));
@@ -3488,6 +3489,7 @@ function openSettings(section) {
       panel('about', 'About', null,
         el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, ANDROID ? 'New versions download on Wi-Fi by themselves; tap Update now and Android installs them. Your journal stays as it is.' : 'Updates install automatically when you restart.')),
           el('button', { type: 'button', class: 'btn-plain', onclick: checkUpdates }, 'Check for updates')),
+        ANDROID ? null : row('Problems log', 'If something goes wrong, this file says what happened. It holds error messages only, never your entries.', el('button', { type: 'button', class: 'btn-plain', onclick: () => api.showLog() }, 'Show log')),
         el('p', { class: 'set-intro' }, 'Bible texts: World English Bible and King James Version (public domain); other versions from API.Bible. Week pictures: public-domain works from Wikimedia Commons.')),
 
       panel('whatsnew', 'What’s new', 'Every version of WellWrite, newest first: what was added, improved and fixed.', whatsNew()),
@@ -3872,6 +3874,14 @@ async function restoreFromDrive(mode) {
 $('#newBtn').onclick = () => newEntry(state.selectedDay || todayISO());
 $('#lockBtn').onclick = lockNow;
 $('#settingsBtn').onclick = () => openSettings();
+// Esc always closes the open dialog (Settings, Your quotes…), even if something inside it has the key.
+window.addEventListener('keydown', e => {
+  const dlg = $('#dlg');
+  if (e.key !== 'Escape' || !dlg.open || !$('#popover').hidden || $('.ink-pad')) return;
+  e.preventDefault();
+  try { dlg.close(); } catch {}
+  if (dlg.open) dlg.removeAttribute('open');
+}, true);
 
 document.addEventListener('keydown', e => {
   if (!state.unlocked) return;

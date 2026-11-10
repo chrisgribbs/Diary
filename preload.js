@@ -81,6 +81,7 @@ contextBridge.exposeInMainWorld('wellwrite', {
   googleRestoreFresh: (id, pw) => call('google:restoreFresh', id, pw),
   onBackupResult: fn => ipcRenderer.on('backup:result', (_e, r) => fn(r)),
   version: () => call('app:version'),
+  showLog: () => call('app:showLog'),
   checkUpdates: () => call('app:checkUpdates'),
   installUpdate: () => call('app:installUpdate'),
   onUpdateReady: fn => ipcRenderer.on('app:update-ready', (_e, v) => fn(v)),

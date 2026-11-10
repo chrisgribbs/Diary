@@ -70,6 +70,37 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.once('ready-to-show', () => win.show());
 
+  // Problems log: page errors and freezes go to <userData>/logs/wellwrite.log (newest 200 KB), so a bug
+  // report can say what actually happened. Only error messages are written, never your entries.
+  const logFile = path.join(app.getPath('userData'), 'logs', 'wellwrite.log');
+  const logLine = msg => {
+    try {
+      fs.mkdirSync(path.dirname(logFile), { recursive: true });
+      try { if (fs.statSync(logFile).size > 200 * 1024) fs.renameSync(logFile, logFile + '.old'); } catch {}
+      fs.appendFileSync(logFile, `${new Date().toISOString()} ${app.getVersion()} ${String(msg).slice(0, 600)}\n`);
+    } catch {}
+  };
+  win.webContents.on('console-message', (...a) => {
+    const e = a[0] && a[0].message !== undefined ? a[0] : { level: a[1], message: a[2], lineNumber: a[3], sourceId: a[4] };
+    const lvl = e.level;
+    if (lvl === 'error' || lvl === 3) logLine(`error: ${e.message} (${path.basename(String(e.sourceId || ''))}:${e.lineNumber || ''})`);
+  });
+  win.webContents.on('render-process-gone', (_e, d) => { logLine(`page stopped: ${d.reason}`); if (d.reason !== 'clean-exit') win.reload(); });
+  // If the page stops responding (nothing can be clicked, Esc does nothing), offer to reload it. Entries save as you
+  // type, so at most the last second of typing is lost; the journal locks and asks for your password as usual.
+  let hungAsk = false;
+  win.on('unresponsive', async () => {
+    logLine('page not responding');
+    if (hungAsk) return; hungAsk = true;
+    const r = await dialog.showMessageBox(win, { type: 'warning', buttons: ['Reload WellWrite', 'Wait'], defaultId: 0, cancelId: 1,
+      title: 'WellWrite isn’t responding', message: 'WellWrite has stopped responding.', detail: 'Reloading opens it again at the lock screen. Your entries are saved as you type.' });
+    hungAsk = false;
+    if (r.response === 0) win.webContents.forcefullyCrashRenderer();
+  });
+  win.on('responsive', () => logLine('page responding again'));
+  ipcMain.removeHandler('app:showLog');
+  ipcMain.handle('app:showLog', () => { logLine('log opened'); shell.showItemInFolder(logFile); return true; });
+
   // Never navigate away or open new windows; send web links to the real browser.
   win.webContents.on('will-navigate', e => e.preventDefault());
   win.webContents.setWindowOpenHandler(({ url }) => {

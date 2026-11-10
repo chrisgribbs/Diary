@@ -5,6 +5,14 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.24.2', date: '2026-11-11', title: 'Settings always closes',
+    fixed: [
+      'Done and Esc always close Settings (and other windows like Your quotes), even if something inside has gone wrong.',
+      'If WellWrite ever stops responding, it offers to reload. Your entries are saved as you type.',
+    ],
+    new: ['Settings → About → Problems log: a file of error messages (never your entries) that shows what went wrong if something misbehaves.'],
+  },
+  {
     v: '1.24.1', date: '2026-11-11', title: 'Handwriting on the phone',
     improved: [
       'On a phone the pen button comes first in the formatting bar above the keyboard, so it’s visible without scrolling.',

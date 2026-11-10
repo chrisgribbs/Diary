@@ -199,6 +199,7 @@
     googleRestoreFresh: (id, pw) => engine('google:restoreFresh', id, pw),
     onBackupResult: fn => on('backup:result', fn),
     version: () => engine('app:version'),
+    showLog: async () => false,
     checkUpdates: () => engine('app:checkUpdates'),
     // Updates: downloaded by the app (on Wi-Fi, without asking), then Android's own "Update" prompt.
     installUpdate: async () => { const u = await engine('app:installUpdate'); if (u) return app('installUpdate', u); },
