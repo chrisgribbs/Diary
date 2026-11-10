@@ -277,7 +277,10 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
   outline: none; min-height: 14em; max-width: 36em; caret-color: var(--ribbon); word-wrap: break-word;
 }
 .body:empty::before { content: attr(data-placeholder); color: var(--pencil); opacity: .55; font-style: italic; pointer-events: none; }
-.body p, .body div { margin: 0 0 .85em; }
+.body p, .body div { margin: 0 0 .6em; }
+/* A blank line between paragraphs (Enter pressed twice) adds a little space, not a whole empty line.
+   The blank line you're typing on stays full height so the cursor looks right. */
+.body > p:has(> br:only-child):not(.caret-here), .body > div:has(> br:only-child):not(.caret-here) { line-height: .55; margin: 0; }
 .body h2 { font: 600 1.4em/1.25 var(--serif); font-variation-settings: 'opsz' 36; margin: 1.3em 0 .45em; }
 .body h3 { font: 600 1.12em/1.3 var(--serif); margin: 1.1em 0 .4em; }
 .body blockquote { margin: 1.1em 0; padding: .1em 0 .1em 1.1em; border-left: 3px solid var(--ribbon); font-style: italic; color: var(--pencil); }
@@ -1056,3 +1059,28 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .chip button:not(.chip-name) { width: 28px; height: 28px; }
   input[type=checkbox], .dlg input[type=checkbox] { width: 24px; height: 24px; }
 }
+
+/* Handwriting: a page in an entry, and the pad you write it on (ink.js) */
+.body img[data-ink] { cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.06); }
+.ink-pad { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--cloth); }
+.ink-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 14px; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.ink-group { display: flex; align-items: center; gap: 4px; }
+.ink-end { margin-left: auto; gap: 8px; }
+.ink-btn { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 8px; color: var(--pencil); }
+.ink-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ink-btn:hover, .ink-btn.on { background: var(--paper-edge); color: var(--ink); }
+.ink-btn:disabled, .ink-text:disabled { opacity: .35; pointer-events: none; }
+.ink-swatch { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; }
+.ink-swatch::after { content: ''; width: 18px; height: 18px; border-radius: 50%; background: var(--c); }
+.ink-swatch.on { box-shadow: inset 0 0 0 2px var(--c); }
+.ink-size { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; }
+.ink-size span { border-radius: 50%; background: var(--ink); }
+.ink-size.on, .ink-size:hover { background: var(--paper-edge); }
+.ink-text { padding: 7px 10px; border-radius: 6px; color: var(--pencil); }
+.ink-text:hover { background: var(--paper-edge); color: var(--ink); }
+.ink-text.danger { color: var(--danger, #b3261e); }
+.ink-hint { font-size: 12.5px; color: var(--pencil); }
+.ink-scroll { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 16px 12px 40px; }
+.ink-sheet { width: max-content; margin: 0 auto; }
+.ink-canvas { display: block; touch-action: none; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.10); cursor: crosshair; }
+@media (max-width: 700px) { .ink-hint { display: none; } .ink-bar { gap: 4px 8px; padding: 6px 8px; } }

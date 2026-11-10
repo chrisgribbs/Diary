@@ -46,6 +46,7 @@ const ICON = {
   image: '<svg viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="1.5"/><circle cx="7.5" cy="8.5" r="1.4"/><path d="M3.5 14.5l4-4 3 3 2-2 4 4"/></svg>',
   hr: '<svg viewBox="0 0 20 20"><circle cx="5" cy="10" r=".9" fill="currentColor"/><circle cx="10" cy="10" r=".9" fill="currentColor"/><circle cx="15" cy="10" r=".9" fill="currentColor"/></svg>',
   clear: '<svg viewBox="0 0 20 20"><path d="M5 5h10M10 5l-2.5 11M4 16l12-12"/></svg>',
+  pen: '<svg viewBox="0 0 20 20"><path d="M4 16l1-4 8.5-8.5a1.4 1.4 0 0 1 2 0l1 1a1.4 1.4 0 0 1 0 2L8 15z"/><path d="M12 5l3 3"/></svg>',
   photo: '<svg viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="1.5"/><circle cx="7.5" cy="8.5" r="1.4"/><path d="M3.5 14.5l4-4 3 3 2-2 4 4"/></svg>',
   xref: '<svg viewBox="0 0 20 20"><path d="M3.5 3.5h6v8h-6zM10.5 8.5h6v8h-6z"/><path d="M9.5 6h2.5a2 2 0 0 1 2 2v.5M10.5 14H8a2 2 0 0 1-2-2v-.5"/></svg>',
   back: '<svg viewBox="0 0 20 20"><path d="M11 5l-5 5 5 5"/></svg>',
@@ -84,13 +85,15 @@ const state = {
 /* ---------- sanitising ---------- */
 const ALLOWED = {
   ALLOWED_TAGS: ['p', 'div', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'strike', 'del', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'li', 'hr', 'a', 'img', 'mark', 'sub', 'sup', 'code', 'pre', 'span'],
-  ALLOWED_ATTR: ['href', 'src', 'alt', 'title'],
+  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'data-ink'],   // data-ink: the pen strokes of a handwritten page (ink.js)
   ALLOW_DATA_ATTR: false,
+  ADD_URI_SAFE_ATTR: ['data-ink'],   // not a link: its value is checked in the hook below
   // Web links, email, and links to other entries. (Photos are data: images, which DOMPurify allows on <img>.)
   ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|wellwrite:entry\/)/i,
 };
 DOMPurify.addHook('afterSanitizeAttributes', node => {
   if (node.tagName === 'IMG' && !/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(node.getAttribute('src') || '')) node.remove();
+  if (node.hasAttribute && node.hasAttribute('data-ink') && (node.tagName !== 'IMG' || !/^v1:[A-Za-z0-9+/]+=*$/.test(node.getAttribute('data-ink')))) node.removeAttribute('data-ink');
   if (node.tagName === 'A' && !/^(https?:|mailto:|wellwrite:entry\/[a-z0-9-]{8,64}$)/i.test(node.getAttribute('href') || '')) node.removeAttribute('href');
 });
 const clean = html => DOMPurify.sanitize(html, ALLOWED);
@@ -412,6 +415,7 @@ function entryItem(m, onOpen) {
   const meta = el('div', { class: 'item-meta' });
   if (m.time) meta.append(el('span', {}, m.time));
   if (m.images) { const s = el('span'); s.innerHTML = ICON.photo + ' ' + m.images; meta.append(s); }
+  if (m.ink) { const s = el('span', { title: 'Handwritten pages' }); s.innerHTML = ICON.pen + ' ' + m.ink; meta.append(s); }
   if (m.tags.length) meta.append(el('span', {}, m.tags.slice(0, 3).map(t => '#' + t).join(' ')));
   const links = (m.links || []).length + state.metas.filter(x => x.links && x.links.includes(m.id)).length;
   if (links) { const s = el('span', { title: 'Connected entries' }); s.innerHTML = ICON.xref + ' ' + links; meta.append(s); }
@@ -3021,6 +3025,7 @@ const TOOLS = [
   { k: 'link', title: 'Web link (Ctrl+K)', run: insertLink, on: () => !!closest('A') },
   { k: 'xref', title: 'Link to another entry (type [[)', run: () => openLinkPicker() },
   { k: 'image', title: 'Add photos', run: () => $('#imgFile').click() },
+  { k: 'pen', title: 'Write by hand', run: () => handwrite() },
   { k: 'hr', title: 'Section break', run: () => exec('insertHorizontalRule') },
   '|',
   { k: 'clear', title: 'Clear formatting', run: () => { exec('removeFormat'); exec('formatBlock', 'p'); } },
@@ -3041,6 +3046,14 @@ function refreshToolbar() {
   for (const t of TOOLS) if (t.on) toolbar.querySelector(`[data-k="${t.k}"]`).classList.toggle('on', !!t.on());
 }
 document.addEventListener('selectionchange', refreshToolbar);
+// Blank lines are drawn short (see .caret-here in styles.css), except the one the cursor is on.
+document.addEventListener('selectionchange', () => {
+  const n = document.getSelection().anchorNode;
+  let blk = n && body.contains(n) ? (n.nodeType === 1 ? n : n.parentElement) : null;
+  while (blk && blk.parentElement !== body) blk = blk.parentElement;
+  body.querySelectorAll('.caret-here').forEach(x => { if (x !== blk) { x.classList.remove('caret-here'); if (!x.classList.length) x.removeAttribute('class'); } });
+  if (blk && blk !== body) blk.classList.add('caret-here');
+});
 
 function closest(tag) {
   let n = document.getSelection().anchorNode;
@@ -3087,11 +3100,13 @@ body.addEventListener('click', e => {
 body.addEventListener('mouseover', e => { const a = e.target.closest('a:not(.xref)'); if (a) a.title = 'Ctrl+click to open ' + a.getAttribute('href'); });
 body.addEventListener('dblclick', e => {
   if (e.target.tagName !== 'IMG') return;
+  if (e.target.hasAttribute('data-ink')) { handwrite(e.target); return; }
   showPhoto({ src: e.target.src, img: e.target });
 });
 // On a touch screen a tap on a photo opens it (with Delete), instead of putting the cursor there and the keyboard up.
 body.addEventListener('pointerdown', e => { if (TOUCH && e.target.tagName === 'IMG' && e.pointerType !== 'mouse') e.preventDefault(); });
 body.addEventListener('click', e => {
+  if (TOUCH && e.target.tagName === 'IMG' && e.target.hasAttribute('data-ink')) { e.preventDefault(); getSelection().removeAllRanges(); handwrite(e.target); return; }
   if (TOUCH && e.target.tagName === 'IMG') { e.preventDefault(); getSelection().removeAllRanges(); showPhoto({ src: e.target.src, img: e.target }); }
 });
 
@@ -3110,7 +3125,7 @@ $('#lbClose').onclick = hidePhoto;
 $('#lbOpen').onclick = async () => {
   const p = shownPhoto; hidePhoto();
   await openEntry(p.entryId);
-  const img = body.querySelectorAll('img')[p.index];
+  const img = body.querySelectorAll(PHOTO)[p.index];
   if (img) img.scrollIntoView({ block: 'center' });
 };
 $('#lbDelete').onclick = async () => {
@@ -3123,7 +3138,7 @@ $('#lbDelete').onclick = async () => {
 };
 /** Remove one photo from an entry: from the page if the entry is open, otherwise from the saved entry. */
 async function deletePhoto(p) {
-  const fromOpen = p.img ? p.img : (state.current && state.current.id === p.entryId && state.mode === 'journal' ? body.querySelectorAll('img')[p.index] : null);
+  const fromOpen = p.img ? p.img : (state.current && state.current.id === p.entryId && state.mode === 'journal' ? body.querySelectorAll(PHOTO)[p.index] : null);
   if (fromOpen && body.contains(fromOpen)) {
     const parent = fromOpen.parentElement;
     fromOpen.remove();
@@ -3133,7 +3148,7 @@ async function deletePhoto(p) {
   }
   const e = await api.get(p.entryId);
   const doc = new DOMParser().parseFromString(clean(e.html), 'text/html');
-  const img = doc.body.querySelectorAll('img')[p.index];
+  const img = doc.body.querySelectorAll(PHOTO)[p.index];
   if (!img) throw new Error('it has already gone');
   const parent = img.parentElement;
   img.remove();
@@ -3145,6 +3160,7 @@ async function deletePhoto(p) {
 }
 
 /* ---------- photos ---------- */
+const PHOTO = 'img:not([data-ink])';   // a handwritten page is a picture too, but not a photo
 async function imageToDataUrl(file) {
   const readAsUrl = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
   if (file.type === 'image/gif' && file.size < 6e6) return readAsUrl(file); // keep animation
@@ -3172,6 +3188,38 @@ async function insertImages(files) {
 }
 
 $('#imgFile').addEventListener('change', e => { insertImages(e.target.files); e.target.value = ''; });
+
+/* ---------- handwriting (ink.js): a page written with a pen, kept as a picture plus its strokes ---------- */
+let handwriting = false;
+/** Open the writing pad: for a new page at the cursor, or to carry on with a page already in the entry. */
+async function handwrite(img = null) {
+  if (handwriting) return;
+  handwriting = true;
+  try {
+    if (!state.current) await newEntry(todayISO());
+    const sel = getSelection();
+    const range = !img && sel.rangeCount && body.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
+    let r;
+    try { r = await window.WellWriteInk.open(img ? img.getAttribute('data-ink') : null); }
+    catch (x) { toast(x.message); return; }
+    if (!r) return;
+    if (r === 'delete') {
+      if (!img || !body.contains(img)) return;
+      const parent = img.parentElement; img.remove();
+      if (parent && parent !== body && !parent.textContent.trim() && !parent.querySelector('img')) parent.remove();
+      markDirty(); updateCounts(); toast('Handwritten page deleted');
+      return;
+    }
+    if (img && body.contains(img)) { img.src = r.dataUrl; img.setAttribute('data-ink', r.ink); markDirty(); }
+    else {
+      body.focus();
+      if (range) { sel.removeAllRanges(); sel.addRange(range); }
+      else { const end = document.createRange(); end.selectNodeContents(body); end.collapse(false); sel.removeAllRanges(); sel.addRange(end); }
+      exec('insertHTML', `<img src="${r.dataUrl}" data-ink="${r.ink}" alt="Handwritten page"><p><br></p>`);
+    }
+    updateCounts();
+  } finally { handwriting = false; }
+}
 
 /* ---------- a photo journal: the camera, photos from the gallery, and every photo in one place ---------- */
 /** Put the cursor at the end of the entry, so a new photo goes after what's there. */
@@ -3255,7 +3303,7 @@ async function thumbsFor(m) {
   if (state.photoThumbs.has(key)) return state.photoThumbs.get(key);
   const job = (async () => {
     const e = await api.get(m.id);
-    const srcs = [...new DOMParser().parseFromString(clean(e.html), 'text/html').querySelectorAll('img')].map(i => i.getAttribute('src')).filter(Boolean);
+    const srcs = [...new DOMParser().parseFromString(clean(e.html), 'text/html').querySelectorAll(PHOTO)].map(i => i.getAttribute('src')).filter(Boolean);
     const out = [];
     for (const src of srcs) out.push(await thumbOf(src));
     return out;
@@ -3307,7 +3355,7 @@ async function renderPhotosView() {
         onclick: async () => {
           try {
             const e = await api.get(m.id);
-            const src = [...new DOMParser().parseFromString(clean(e.html), 'text/html').querySelectorAll('img')][i];
+            const src = [...new DOMParser().parseFromString(clean(e.html), 'text/html').querySelectorAll(PHOTO)][i];
             if (src) showPhoto({ src: src.getAttribute('src'), entryId: m.id, index: i });
           } catch (x) { toast(x.message); }
         } },

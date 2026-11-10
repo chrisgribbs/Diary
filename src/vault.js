@@ -178,7 +178,8 @@ class Vault {
       id: e.id, date: e.date, time: e.time || '', title: e.title || '', tags: e.tags || [],
       category: e.category || '', links: Vault.linksIn(e.html, e.id),
       text, words: (text.match(/\S+/g) || []).length,
-      images: (String(e.html || '').match(/<img\b/gi) || []).length,
+      images: (String(e.html || '').match(/<img\b(?![^>]*\sdata-ink=)/gi) || []).length,   // photos
+      ink: (String(e.html || '').match(/<img\b(?=[^>]*\sdata-ink=)/gi) || []).length,     // handwritten pages
       created: e.created, updated: e.updated,
     };
   }

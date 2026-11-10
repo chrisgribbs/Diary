@@ -26,6 +26,7 @@ Download **WellWrite-<version>.apk** from the [releases page](https://github.com
 - **Bible reading plans** — the whole Bible in a year, Old and New Testament each day, the New Testament in 90 days, the Gospels in 30 days, or Psalms and Proverbs in 60 days. World English Bible or King James Version, both built in and public domain. Mark each day as read, catch up on missed days, and write about the reading. A verse of the day goes with it.
 - **Rich text** — bold, italic, underline, strikethrough, headings, quotes, lists, highlight, links, section breaks.
 - **Photos** — add with the toolbar button, paste, or drag in. Large photos are resized to keep the journal light. Double-click a photo to view it full size.
+- **Handwriting** — the pen button opens a lined page to write on with a pen (or a finger or mouse), with pressure, colours, pen sizes, an eraser and undo. The page goes into the entry, encrypted like everything else, and keeps every pen stroke so it can be opened again (double-click, or tap on a tablet) and added to, and later turned into typed text. Once a pen has been used, a finger scrolls instead of writing, so a resting palm leaves no marks.
 - **Titles** — every new entry starts with its date as the title (e.g. "Friday 30 October 2026"). Add to it, or replace it with your own.
 - **Autosave** — saves as you type. Change an entry's date or time by clicking it.
 - **Lock** — locks after inactivity (1 minute to 1 hour, or never), when Windows locks or sleeps, and optionally when minimised. Ctrl+L locks now.
