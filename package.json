@@ -1,19 +1,20 @@
 {
   "name": "wellwrite",
   "productName": "WellWrite",
-  "version": "1.23.0",
+  "version": "1.24.0",
   "description": "A private, encrypted desktop journal",
   "main": "main.js",
   "author": "Chris Gribble",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node test/vault.test.js && node test/backup.test.js && node test/migrate.test.js && node test/bible.test.js && node test/trust.test.js && node test/seasons.test.js && node test/packs.test.js && node test/apibible.test.js && node test/android.test.js",
+    "test": "node test/vault.test.js && node test/backup.test.js && node test/migrate.test.js && node test/bible.test.js && node test/trust.test.js && node test/seasons.test.js && node test/packs.test.js && node test/apibible.test.js && node test/android.test.js && node test/changelog.test.js",
     "assets": "node -e \"const f=require('fs');f.copyFileSync('node_modules/dompurify/dist/purify.min.js','renderer/purify.min.js')\"",
     "dist": "electron-builder --win nsis --x64 --publish never",
     "dist:portable": "electron-builder --win portable --x64 --publish never",
     "test:e2e": "electron --no-sandbox test/calendar.e2e.js && electron --no-sandbox test/connections.e2e.js && electron --no-sandbox test/daily.e2e.js && electron --no-sandbox test/trust.e2e.js && electron --no-sandbox test/weeks.e2e.js && electron --no-sandbox test/readings.e2e.js && electron --no-sandbox test/pictures.e2e.js && electron --no-sandbox test/apibible.e2e.js && electron --no-sandbox test/wordpress.e2e.js && electron --no-sandbox test/bible.e2e.js && electron --no-sandbox test/handwriting.e2e.js",
-    "build:bible": "node scripts/build-bible.js node_modules/world-english-bible node_modules/kjv"
+    "build:bible": "node scripts/build-bible.js node_modules/world-english-bible node_modules/kjv",
+    "changelog": "node scripts/changelog.js"
   },
   "devDependencies": {
     "@fontsource-variable/instrument-sans": "^5.3.0",
@@ -27,7 +28,7 @@
   "build": {
     "appId": "com.daybook.journal",
     "productName": "WellWrite",
-    "copyright": "Copyright \u00a9 2026 Chris Gribble",
+    "copyright": "Copyright © 2026 Chris Gribble",
     "files": [
       "main.js",
       "preload.js",

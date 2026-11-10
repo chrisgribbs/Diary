@@ -3404,10 +3404,19 @@ async function updateSetting(patch) {
   applySettings();
 }
 
+/** Settings → What's new: every version from changelog.js. */
+function whatsNew() {
+  const sections = [['new', 'New'], ['improved', 'Improved'], ['fixed', 'Fixed']];
+  return el('div', { class: 'whatsnew' }, ...(window.WellWriteChangelog || []).map(r => el('article', { class: 'wn-version' + (r.v === state.version ? ' current' : '') },
+    el('header', {}, el('h3', {}, r.title), el('span', { class: 'wn-meta' }, `${r.v} · ${fmt(r.date, { day: 'numeric', month: 'long', year: 'numeric' })}`, r.v === state.version ? el('b', {}, ' · this version') : null)),
+    ...sections.filter(([k]) => (r[k] || []).length).map(([k, label]) => el('div', { class: 'wn-part' },
+      el('span', { class: 'wn-tag wn-' + k }, label), el('ul', {}, ...r[k].map(x => el('li', {}, x))))))));
+}
+
 /** Settings, as a page with tabs down the side: each area has its own place. */
 const SETTINGS_TABS = [
   ['general', 'General'], ['readings', 'Quotes & readings'], ['bible', 'Bible'], ['privacy', 'Privacy & lock'],
-  ['backups', 'Backups'], ['wordpress', 'WordPress'], ['about', 'About'],
+  ['backups', 'Backups'], ['wordpress', 'WordPress'], ['about', 'About'], ['whatsnew', 'What’s new'],
 ];
 function openSettings(section) {
   let tab = SETTINGS_TABS.some(([k]) => k === section) ? section : (() => { try { return localStorage.getItem('settingsTab') || 'general'; } catch { return 'general'; } })();
@@ -3478,6 +3487,8 @@ function openSettings(section) {
         el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, ANDROID ? 'New versions download on Wi-Fi by themselves; tap Update now and Android installs them. Your journal stays as it is.' : 'Updates install automatically when you restart.')),
           el('button', { type: 'button', class: 'btn-plain', onclick: checkUpdates }, 'Check for updates')),
         el('p', { class: 'set-intro' }, 'Bible texts: World English Bible and King James Version (public domain); other versions from API.Bible. Week pictures: public-domain works from Wikimedia Commons.')),
+
+      panel('whatsnew', 'What’s new', 'Every version of WellWrite, newest first: what was added, improved and fixed.', whatsNew()),
     ];
 
     const nav = el('nav', { class: 'set-nav', role: 'tablist', 'aria-label': 'Settings' },
