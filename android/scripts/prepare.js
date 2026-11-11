@@ -27,7 +27,7 @@ fs.rmSync(ASSETS, { recursive: true, force: true });
 copyDir(path.join(ROOT, 'renderer'), path.join(ASSETS, 'www'));
 
 const project = path.join(ASSETS, 'nodejs-project');
-copyDir(path.join(ROOT, 'src'), path.join(project, 'src'), name => name === 'google-config.json');
+copyDir(path.join(ROOT, 'src'), path.join(project, 'src'));
 copyDir(path.join(ROOT, 'bible'), path.join(project, 'bible'));
 fs.copyFileSync(path.join(ROOT, 'android', 'node', 'main.js'), path.join(project, 'main.js'));
 const pkg = require(path.join(ROOT, 'package.json'));

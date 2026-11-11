@@ -289,6 +289,7 @@ async function enterApp() {
   state.metas = await api.list();
   try { state.categories = await api.getCategories(); } catch { state.categories = []; }
   try { state.quotes = await api.getQuotes(); } catch { state.quotes = []; }
+  api.syncStatus().then(st => { state.sync = st; renderSyncState(); }).catch(() => {});
   await syncReadings();
   try { state.bible = await api.bibleInfo(); } catch { state.bible = null; }
   state.bibleDay = null;
@@ -719,6 +720,7 @@ function isBlank() {
 let saveTimer, saving = Promise.resolve();
 function markDirty() {
   if (!state.current) return;
+  if (!state.dirty && state.current.saved) api.syncHold(state.current.id).catch(() => {});   // sync leaves it alone while you type
   state.dirty = true;
   $('#saveState').textContent = 'Saving…';
   clearTimeout(saveTimer);
@@ -739,7 +741,7 @@ function saveNow() {
     c.saved = true;
     const i = state.metas.findIndex(m => m.id === meta.id);
     if (i >= 0) state.metas[i] = meta; else state.metas.push(meta);
-    if (state.current === c && !state.dirty) $('#saveState').textContent = 'Saved';
+    if (state.current === c && !state.dirty) { $('#saveState').textContent = 'Saved'; api.syncHold('').catch(() => {}); }
     renderSidebar();
     if (state.current === c) renderConnections();
   }).catch(err => {
@@ -3419,7 +3421,7 @@ function whatsNew() {
 /** Settings, as a page with tabs down the side: each area has its own place. */
 const SETTINGS_TABS = [
   ['general', 'General'], ['readings', 'Quotes & readings'], ['bible', 'Bible'], ['privacy', 'Privacy & lock'],
-  ['backups', 'Backups'], ['wordpress', 'WordPress'], ['about', 'About'], ['whatsnew', 'What’s new'],
+  ['sync', 'Sync'], ['backups', 'Backups'], ['wordpress', 'WordPress'], ['about', 'About'], ['whatsnew', 'What’s new'],
 ];
 function openSettings(section) {
   let tab = SETTINGS_TABS.some(([k]) => k === section) ? section : (() => { try { return localStorage.getItem('settingsTab') || 'general'; } catch { return 'general'; } })();
@@ -3470,6 +3472,9 @@ function openSettings(section) {
         row(ANDROID ? 'Lock when I leave WellWrite' : 'Lock when minimised', ANDROID ? 'Locks whenever you switch to another app or the screen turns off.' : 'Also locks when Windows locks or the computer sleeps.', check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
         row('Password', null, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); changePassword(); } }, 'Change password'))),
 
+      panel('sync', 'Sync between your devices', 'Keep your journal the same on your computer, phone and tablet, through your own Google Drive. Everything is encrypted with your journal password before it leaves this device.',
+        el('div', { id: 'syncSection' }, el('p', {}, 'Checking…'))),
+
       panel('backups', 'Backups', 'Backups are encrypted with your password, so they are safe to keep online or on a USB drive.',
         ANDROID ? el('p', {}, 'Save a backup file now and then. Android lets you save it straight to Google Drive, OneDrive or your phone.') : el('div', { id: 'backupSection' }),
         el('h3', {}, 'Backup files'),
@@ -3518,6 +3523,7 @@ function openSettings(section) {
     setTimeout(() => { const b = nav.querySelector('.set-tab.on'); if (b) b.focus({ focusVisible: false }); });
     renderBackupSection();
     refreshBackupInfo();
+    renderSyncSection();
   });
 }
 
@@ -3802,6 +3808,120 @@ async function backupNow() {
   const r = await api.backupNow().catch(x => ({ ok: false, error: x.message }));
   toast(r.ok ? `Backed up ${plainEntries(r.count)} to ${r.where}` : (r.where ? `Backed up to ${r.where}, but ` : 'Backup failed. ') + r.error);
   refreshBackupInfo();
+}
+
+/* ---------- sync between devices (src/sync.js) ---------- */
+state.sync = null;
+function renderSyncState() {
+  const s = state.sync, n = $('#syncState');
+  n.hidden = !(s && s.on);
+  if (n.hidden) return;
+  n.textContent = s.busy ? 'Syncing…' : s.error ? 'Not synced' : 'Synced';
+  n.title = s.error ? s.error : s.last ? 'Last synced ' + new Date(s.last).toLocaleString() : '';
+  n.classList.toggle('sync-bad', !!s.error && !s.busy);
+}
+api.onSyncStatus(s => {
+  const was = state.sync;
+  state.sync = s; renderSyncState();
+  if (s.error && s.code === 'reauth' && state.unlocked && !shownErrors.has('sync:' + s.error)) { shownErrors.add('sync:' + s.error); toast('Sync stopped: ' + s.error); }
+  if ($('#dlg').open && $('#syncSection') && (!was || was.busy !== s.busy || was.error !== s.error || was.on !== s.on)) renderSyncSection();
+});
+api.onSyncChanged(async r => {
+  if (!state.unlocked || !r) return;
+  state.metas = await api.list();
+  if (r.categories) { try { state.categories = await api.getCategories(); } catch {} }
+  const c = state.current;
+  if (c && c.saved && r.changed.includes(c.id) && !state.dirty) {
+    if (state.metas.some(m => m.id === c.id)) { state.current = null; await openEntry(c.id, { keepMode: true }); }
+    else { toast('This entry was deleted on another device'); state.current = null; await newEntry(); }
+  }
+  renderSidebar();
+  if (r.copies && r.copies.length) toast(r.copies.length === 1
+    ? 'An entry was changed on two devices. Both versions are kept: look for “(from another device)”.'
+    : `${r.copies.length} entries were changed on two devices. Both versions are kept: look for “(from another device)”.`);
+});
+const ago = iso => {
+  const s = Math.round((Date.now() - new Date(iso)) / 1000);
+  return s < 60 ? 'just now' : s < 3600 ? plural(Math.round(s / 60), 'minute') + ' ago' : s < 86400 ? plural(Math.round(s / 3600), 'hour') + ' ago' : new Date(iso).toLocaleString();
+};
+/** Settings → Sync. */
+async function renderSyncSection() {
+  const box = $('#syncSection');
+  if (!box) return;
+  let s;
+  try { s = state.sync = await api.syncStatus(); } catch (x) { box.replaceChildren(el('p', {}, x.message)); return; }
+  renderSyncState();
+  const row = (label, help, control) => el('div', { class: 'row' }, el('div', { class: 'row-text' }, label, help ? el('small', {}, help) : null), el('span', { class: 'row-ctl' }, control));
+  const btn = (text, cls, fn) => el('button', { type: 'button', class: cls, onclick: fn }, text);
+  const how = el('div', { class: 'sync-how' },
+    el('h3', {}, 'How it works'),
+    el('ul', {},
+      el('li', {}, 'Turn sync on here, then on each of your other devices, with the same Google account.'),
+      el('li', {}, 'Changes go up a few seconds after you stop writing, and come down when WellWrite opens and every few minutes.'),
+      el('li', {}, 'Deleting an entry deletes it everywhere. If you change the same entry on two devices before they sync, both versions are kept.'),
+      el('li', {}, 'Your entries and categories sync. Quotes, settings and week pictures stay on each device.'),
+      el('li', {}, 'Google only ever sees scrambled files, in a “WellWrite sync” folder. Nobody can read them without your password, not even Google.')));
+  if (!s.available) { box.replaceChildren(el('p', {}, 'Sync uses Google Drive, which isn’t set up in this version of WellWrite.')); return; }
+  if (!s.connected) {
+    box.replaceChildren(
+      row('Google Drive', 'Not connected. WellWrite can only see the files it puts in your Drive, never anything else.', btn('Connect Google Drive', 'btn-ink', syncConnect)),
+      how);
+    return;
+  }
+  if (!s.on) {
+    box.replaceChildren(
+      row('Google Drive', s.email || 'Connected', btn('Turn on sync', 'btn-ink', syncTurnOn)),
+      how);
+    return;
+  }
+  const line = s.busy ? 'Syncing…' : s.error ? 'Not synced: ' + s.error : s.last ? 'Last synced ' + ago(s.last) : 'Not synced yet';
+  box.replaceChildren(
+    row('Sync is on', `${s.email || 'Google Drive'} · ${plainEntries(s.count)} in sync`, btn('Turn off', 'btn-link', syncTurnOff)),
+    row(el('span', { class: s.error && !s.busy ? 'sync-bad' : '' }, line), s.code === 'reauth' ? 'Connect Google Drive again to carry on.' : '',
+      s.code === 'reauth' ? btn('Connect again', 'btn-ink', syncConnect) : btn(s.busy ? 'Syncing…' : 'Sync now', 'btn-plain', async () => { await saveNow(); api.syncNow().catch(x => toast(x.message)); })),
+    how);
+}
+async function syncConnect() {
+  const waiting = openDialog((f, done) => f.append(
+    el('h2', {}, 'Sign in to Google'),
+    el('p', {}, ANDROID
+      ? 'Your browser has opened Google’s sign-in. Choose your account and allow WellWrite, then come back to WellWrite.'
+      : 'Finish signing in in the browser window that just opened, then come back here.'),
+    el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', autofocus: true, onclick: () => { api.googleCancel(); done(); } }, 'Cancel'))));
+  let ok = false;
+  try { await api.googleConnect(); ok = true; } catch (x) { if (!/cancel/i.test(x.message)) toast(x.message); }
+  if ($('#dlg').open) $('#dlg').close();
+  await waiting;
+  state.backup = await api.backupInfo().catch(() => state.backup);
+  openSettings('sync');
+  if (ok) { const s = await api.syncStatus().catch(() => null); if (s && !s.on) syncTurnOn(); }
+}
+async function syncTurnOn() {
+  await saveNow();
+  const pw = await promptDialog({
+    title: 'Turn on sync',
+    text: 'Enter your WellWrite password. If you already use sync on another device, enter the password you use there. It locks your journal in Google Drive.',
+    label: 'Password', type: 'password', ok: 'Turn on sync',
+  });
+  if (!pw) { openSettings('sync'); return; }
+  const working = openDialog(f => f.append(el('h2', {}, 'Turning on sync…'), el('p', {}, 'Bringing your devices into step. The first time can take a minute if you have many photos.')));
+  try {
+    await api.syncEnable(pw);
+    if ($('#dlg').open) $('#dlg').close(); await working;
+    state.metas = await api.list();
+    try { state.categories = await api.getCategories(); } catch {}
+    renderSidebar();
+    toast('Sync is on');
+  } catch (x) {
+    if ($('#dlg').open) $('#dlg').close(); await working;
+    await confirmDialog({ title: 'Sync isn’t on', text: x.message, ok: 'OK' });
+  }
+  openSettings('sync');
+}
+async function syncTurnOff() {
+  const ok = await confirmDialog({ title: 'Turn off sync on this device?', text: 'This device stops syncing. Your journal stays here as it is, and what’s in your Google Drive stays there for your other devices.', ok: 'Turn off' });
+  if (ok) { try { await api.syncDisable(); toast('Sync is off on this device'); } catch (x) { toast(x.message); } }
+  openSettings('sync');
 }
 
 api.onBackupResult(r => {

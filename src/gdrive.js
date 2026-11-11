@@ -7,7 +7,7 @@
  *  - Uses the drive.file scope, so WellWrite can only see files it created itself.
  *  - The refresh token is kept encrypted by the operating system (Windows DPAPI
  *    via the `protect`/`unprotect` functions passed in).
- *  - Backups go into a "WellWrite backups" folder in the user's Drive.
+ *  - Backups go into a "WellWrite backups" folder in the user's Drive; sync uses a "WellWrite sync" folder.
  */
 const http = require('http');
 const crypto = require('crypto');
@@ -15,6 +15,7 @@ const fs = require('fs');
 
 const SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/drive.file'];
 const FOLDER_NAME = 'WellWrite backups';
+const SYNC_FOLDER = 'WellWrite sync';
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 const SIGN_IN_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -209,6 +210,68 @@ class GoogleDrive {
     return id;
   }
 
+  // ---------- sync: a "WellWrite sync" folder of encrypted files (see sync.js) ----------
+  /** The sync folder, found or made. Kept separate from backups. */
+  async syncFolderId() {
+    const d = this._load() || {};
+    if (d.syncFolderId) {
+      const r = await this._api(`${this.ep.api}/files/${encodeURIComponent(d.syncFolderId)}?fields=id,trashed`).catch(() => null);
+      if (r) { const j = await r.json(); if (!j.trashed) return j.id; }
+    }
+    const q = `name='${SYNC_FOLDER}' and mimeType='${FOLDER_MIME}' and trashed=false and 'root' in parents`;
+    const found = await (await this._api(`${this.ep.api}/files?${new URLSearchParams({ q, fields: 'files(id,createdTime)', orderBy: 'createdTime', spaces: 'drive' })}`)).json();
+    let id = found.files && found.files[0] && found.files[0].id;
+    if (!id) {
+      id = (await (await this._api(`${this.ep.api}/files?fields=id`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: SYNC_FOLDER, mimeType: FOLDER_MIME, description: 'WellWrite keeps your journal in step between your devices here. Everything in it is encrypted with your journal password.' }),
+      })).json()).id;
+    }
+    this._save({ ...this._load(), syncFolderId: id });
+    return id;
+  }
+
+  /** Every file in a folder: [{ id, name, version }]. */
+  async listFolder(folderId) {
+    const out = [];
+    let pageToken = '';
+    do {
+      const params = new URLSearchParams({ q: `'${folderId}' in parents and trashed=false`, pageSize: '1000', fields: 'nextPageToken,files(id,name,version)', spaces: 'drive' });
+      if (pageToken) params.set('pageToken', pageToken);
+      const j = await (await this._api(`${this.ep.api}/files?${params}`)).json();
+      out.push(...(j.files || []).map(f => ({ id: f.id, name: f.name, version: String(f.version || '') })));
+      pageToken = j.nextPageToken || '';
+    } while (pageToken);
+    return out;
+  }
+
+  /** Create (no id) or replace (id) a file's contents. Returns { id, version }. */
+  async putFile(folderId, name, data, id = null) {
+    const meta = id ? {} : { name, parents: [folderId], mimeType: 'application/octet-stream', appProperties: { wellwrite: 'sync' } };
+    const start = await this._api(`${this.ep.upload}/files${id ? '/' + encodeURIComponent(id) : ''}?uploadType=resumable&fields=id,version`, {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Upload-Content-Type': 'application/octet-stream', 'X-Upload-Content-Length': String(data.length) },
+      body: JSON.stringify(meta),
+    });
+    const session = start.headers.get('location');
+    if (!session) throw new Error('Google Drive did not accept the upload');
+    const r = await this.fetch(session, { method: 'PUT', headers: { 'Content-Type': 'application/octet-stream' }, body: data });
+    if (!r.ok) { const e = new Error(`Upload to Google Drive failed (${r.status})`); e.status = r.status; throw e; }
+    const j = await r.json();
+    return { id: j.id, version: String(j.version || '') };
+  }
+
+  async readFile(id) {
+    const r = await this._api(`${this.ep.api}/files/${encodeURIComponent(id)}?alt=media`);
+    return Buffer.from(await r.arrayBuffer());
+  }
+
+  async trashFile(id) {
+    await this._api(`${this.ep.api}/files/${encodeURIComponent(id)}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }),
+    });
+  }
+
   // ---------- backups ----------
   /** Upload a local file into the backups folder. Resumable upload handles any size. */
   async upload(localFile, name) {
@@ -261,4 +324,4 @@ class GoogleDrive {
   }
 }
 
-module.exports = { GoogleDrive, FOLDER_NAME };
+module.exports = { GoogleDrive, FOLDER_NAME, SYNC_FOLDER };

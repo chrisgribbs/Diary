@@ -56,7 +56,8 @@ function start(transport, dirs, opts = {}) {
     fetch: (url, o) => fetch(url, o),
     send: (ev, ...args) => toPage({ ev, args }),
     openBrowser: url => toApp({ op: 'openUrl', url }),
-    googleConfig: null,
+    // Google sign-in: the same as on Windows (the phone's browser signs in and comes back to WellWrite).
+    googleConfig: opts.googleConfig !== undefined ? opts.googleConfig : (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'google-config.json'), 'utf8')); } catch { return null; } })(),
     apiBibleBase: opts.apiBibleBase || null,
     picturesUrl: opts.picturesUrl || null,
   });
@@ -103,7 +104,6 @@ function start(transport, dirs, opts = {}) {
   handle('backup:chooseFolder', notHere);
   handle('backup:showFolder', () => true);
   handle('app:showDataFolder', () => true);
-  handle('google:connect', notHere);
   handle('shell:openExternal', url => { if (/^https?:\/\//i.test(String(url))) toApp({ op: 'openUrl', url: String(url) }); return true; });
   handle('wp:open', url => { if (backend.wpLinkOk(url)) toApp({ op: 'openUrl', url }); return true; });
 

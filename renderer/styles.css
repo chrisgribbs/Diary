@@ -1101,3 +1101,9 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .wn-tag.wn-new { color: var(--ribbon); }
 .wn-tag.wn-fixed { color: #2e7d4f; }
 @media (max-width: 720px) { .wn-part { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Sync */
+#syncState { color: var(--pencil); }
+.sync-bad, #syncState.sync-bad { color: var(--danger, #b3261e); }
+.sync-how ul { margin: 0; padding-left: 1.1em; line-height: 1.55; color: var(--pencil); font-size: 14px; }
+.sync-how li + li { margin-top: 4px; }

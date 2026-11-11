@@ -132,6 +132,13 @@ class Vault {
     this.index = null;
   }
 
+  /** Whether a password opens this journal (without changing anything). */
+  checkPassword(pw) {
+    const k = unwrapDataKey(pw, JSON.parse(fs.readFileSync(this.vaultFile, 'utf8')));
+    if (!k) return false;
+    k.fill(0); return true;
+  }
+
   changePassword(oldPw, newPw) {
     this._requireKey();
     if (!newPw || String(newPw).length < 6) throw new Error('Use a password of at least 6 characters');
@@ -222,8 +229,9 @@ class Vault {
     return out;
   }
 
-  setCategories(list) {
-    return this._writeMeta({ categories: Vault.cleanCategories(list) });
+  /** Categories, stamped with when they changed so sync knows which device's list is newest. */
+  setCategories(list, changed = new Date().toISOString()) {
+    return this._writeMeta({ categories: Vault.cleanCategories(list), categoriesUpdated: changed });
   }
 
   _writeMeta(patch) {
@@ -619,4 +627,4 @@ blockquote{border-left:3px solid #ccc;margin-left:0;padding-left:1em;color:#555}
   }
 }
 
-module.exports = { Vault, CATEGORY_COLORS, _internal: { seal, open, deriveKey } };
+module.exports = { Vault, CATEGORY_COLORS, ID_RE, _internal: { seal, open, deriveKey, wrapDataKey, unwrapDataKey } };

@@ -2,6 +2,18 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.25.0 — Sync between your devices
+_11 November 2026_
+
+**New**
+
+- Settings → Sync keeps your journal the same on your computer, phone and tablet, through your own Google Drive. Anyone can use it with their own Google account.
+- Everything is encrypted with your journal password before it leaves the device, so Google only sees scrambled files (in a “WellWrite sync” folder).
+- Changes go up a few seconds after you stop writing, and come down when WellWrite opens and every few minutes. The status bar says Synced, Syncing… or Not synced.
+- Deleting an entry deletes it everywhere. If the same entry is changed on two devices before they sync, both versions are kept, the other titled “(from another device)”. An edit beats a delete.
+- Entries and categories sync. Quotes, settings and week pictures stay on each device.
+- Google Drive now works on Android too: sign in through your phone’s browser, then come back to WellWrite.
+
 ## 1.24.2 — Settings always closes
 _11 November 2026_
 

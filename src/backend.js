@@ -11,6 +11,7 @@ const { BOOKS } = require('./bible-books');
 const bible = require('./bible');
 const { Trust } = require('./trust');
 const { GoogleDrive } = require('./gdrive');
+const { Sync } = require('./sync');
 const { BackupManager, suggestFolders } = require('./backup');
 
 const ROOT = path.join(__dirname, '..');
@@ -91,7 +92,26 @@ function createBackend(platform) {
     unprotect: t => (t.startsWith('os:') ? platform.unprotect(t.slice(3)) : Buffer.from(t.replace(/^plain:/, ''), 'base64').toString()),
     openBrowser: url => platform.openBrowser(url),
     fetch: (...a) => platform.fetch(...a),
+    endpoints: platform.googleBase ? { auth: platform.googleBase + '/auth', token: platform.googleBase + '/token', revoke: platform.googleBase + '/revoke', api: platform.googleBase + '/drive/v3', upload: platform.googleBase + '/upload/drive/v3' } : undefined,
   });
+  // ---------- sync between your devices (sync.js) ----------
+  const sync = new Sync({ vault, drive, dataDir: DATA_DIR, send });
+  // Starts when the journal opens, stops when it locks (however that happens), and runs soon after any change.
+  for (const fn of ['unlock', 'unlockWithKey', 'create', 'restoreFresh']) {
+    const orig = vault[fn].bind(vault);
+    vault[fn] = (...a) => { const r = orig(...a); if (vault.isUnlocked()) { sync.st = null; sync.start(); } return r; };
+  }
+  { const orig = vault.lock.bind(vault); vault.lock = () => { sync.stop(); orig(); }; }
+  for (const fn of ['save', 'remove', 'setCategories', 'recategorize']) {
+    const orig = vault[fn].bind(vault);
+    vault[fn] = (...a) => { const r = orig(...a); sync.touch(); return r; };
+  }
+  handle('sync:status', () => sync.status());
+  handle('sync:enable', async pw => { await sync.enable(String(pw || '')); return sync.status(); });
+  handle('sync:disable', () => sync.disable());
+  handle('sync:now', async () => { await sync.run('manual'); return sync.status(); });
+  handle('sync:hold', id => { sync.hold(typeof id === 'string' ? id : ''); return true; });
+
   const publicResult = r => ({ ok: r.ok, reason: r.reason, error: r.error || '', code: r.code || '', count: r.count, where: r.where || '' });
   const backups = new BackupManager({
     vault, dataDir: DATA_DIR, drive, getSettings: readSettings, tmpDir: platform.tmpDir,
@@ -137,7 +157,7 @@ function createBackend(platform) {
   });
   handle('vault:setTrust', mode => trust.save(mode, vault.key));
   handle('vault:lock', () => { vault.lock(); return true; });
-  handle('vault:changePassword', (a, b) => { vault.changePassword(a, b); return true; });
+  handle('vault:changePassword', (a, b) => { vault.changePassword(a, b); sync.passwordChanged(b); return true; });
   handle('entries:list', () => vault.list());
   handle('entries:get', id => vault.get(id));
   handle('entries:save', e => vault.save(e));
@@ -362,7 +382,7 @@ function createBackend(platform) {
   }
 
   return {
-    handlers, handle, call, vault, backups, drive, trust, wordpress, apiBible,
+    handlers, handle, call, vault, backups, drive, sync, trust, wordpress, apiBible,
     readSettings, writeSettings, backupInfo, suggestFolders, setReadingsFile, watchReadings, connectGoogle, setBackupFolder,
     wpLinkOk, startTimers, dataDir: DATA_DIR, deviceDir: DEVICE_DIR, version: APP_VERSION,
   };

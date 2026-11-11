@@ -132,11 +132,16 @@ jobs:
         env:
           # The signing key: its password on the first line, then the key file in base64.
           ANDROID_SIGNING: ${{ secrets.ANDROID_SIGNING }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           set -o pipefail
           export WELLWRITE_KEYSTORE="$RUNNER_TEMP/wellwrite.keystore"
           export WELLWRITE_KEYSTORE_PASSWORD="$(printf '%s\n' "$ANDROID_SIGNING" | head -n 1 | tr -d '\r ')"
           printf '%s\n' "$ANDROID_SIGNING" | tail -n +2 | tr -d '\r ' | base64 -d > "$WELLWRITE_KEYSTORE"
+          if [ -n "$GOOGLE_CLIENT_ID" ]; then
+            node -e "require('fs').writeFileSync('src/google-config.json', JSON.stringify({ clientId: process.env.GOOGLE_CLIENT_ID.trim(), clientSecret: (process.env.GOOGLE_CLIENT_SECRET || '').trim() }))"
+          fi
           node android/scripts/prepare.js
           if ! gradle -p android assembleRelease 2>&1 | tee build.log; then
             msg=$(tail -n 60 build.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
