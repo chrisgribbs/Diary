@@ -109,6 +109,12 @@ function cleanPaste(html) {
 
 /* ---------- toast & dialogs ---------- */
 let toastTimer;
+/** Note something in the problems log (Settings → About). Never entry text. */
+function diag(msg) { try { api.log(String(msg)).catch(() => {}); } catch {} }
+window.addEventListener('error', e => diag(`error: ${e.message} (${(e.filename || '').split('/').pop()}:${e.lineno})`));
+window.addEventListener('unhandledrejection', e => diag(`error: ${(e.reason && (e.reason.stack || e.reason.message)) || e.reason}`.slice(0, 500)));
+const caller = () => ((new Error().stack || '').split('\n')[3] || '').trim().replace(/\(.*\/(?=[^/]+\))/, '(');
+
 function toast(msg) {
   const t = $('#toast');
   t.textContent = msg; t.classList.add('show');
@@ -124,7 +130,12 @@ function openDialog(build) {
   $('#dlgForm').replaceWith(form);
   return new Promise(resolve => {
     // Always closes, whatever happened inside the dialog.
-    const done = v => { resolve(v); try { dlg.close(); } catch {} if (dlg.open) dlg.removeAttribute('open'); };
+    const done = v => {
+      resolve(v); try { dlg.close(); } catch (x) { diag('dialog close failed: ' + x.message); }
+      if (dlg.open) { dlg.removeAttribute('open'); diag('dialog needed forcing shut'); }
+      const was = form;
+      setTimeout(() => { if (dlg.open && $('#dlgForm') !== was && form.classList.contains('settings-page')) diag('settings reopened straight after closing'); }, 400);
+    };
     build(form, done);
     addReveal(form);
     dlg.classList.toggle('page', form.classList.contains('page') || form.classList.contains('wide'));
@@ -3409,6 +3420,24 @@ async function updateSetting(patch) {
   applySettings();
 }
 
+/** The problems log, to read or copy and send. */
+async function showProblemsLog() {
+  const text = (await api.readLog().catch(() => '')) || 'Nothing has gone wrong yet.';
+  await openDialog((f, done) => {
+    f.classList.add('wide');
+    const pre = el('pre', { class: 'log-text' }, text);
+    f.append(el('h2', {}, 'Problems log'),
+      el('p', {}, 'Copy this and send it to whoever looks after WellWrite for you. It has no journal text in it.'),
+      pre,
+      el('div', { class: 'actions' },
+        ANDROID ? null : el('button', { type: 'button', class: 'btn-link', onclick: () => api.showLog() }, 'Show the file'),
+        el('button', { type: 'button', class: 'btn-plain', onclick: async () => { try { await navigator.clipboard.writeText(text); toast('Copied'); } catch { const r = document.createRange(); r.selectNodeContents(pre); getSelection().removeAllRanges(); getSelection().addRange(r); toast('Selected: copy it from here'); } } }, 'Copy'),
+        el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Close')));
+    setTimeout(() => { pre.scrollTop = pre.scrollHeight; });
+  });
+  openSettings('about');
+}
+
 /** Settings → What's new: every version from changelog.js. */
 function whatsNew() {
   const sections = [['new', 'New'], ['improved', 'Improved'], ['fixed', 'Fixed']];
@@ -3424,6 +3453,7 @@ const SETTINGS_TABS = [
   ['sync', 'Sync'], ['backups', 'Backups'], ['wordpress', 'WordPress'], ['about', 'About'], ['whatsnew', 'What’s new'],
 ];
 function openSettings(section) {
+  diag(`settings open ${section || ''} from ${caller()}`);
   let tab = SETTINGS_TABS.some(([k]) => k === section) ? section : (() => { try { return localStorage.getItem('settingsTab') || 'general'; } catch { return 'general'; } })();
   if (!SETTINGS_TABS.some(([k]) => k === tab)) tab = 'general';
   return openDialog((f, done) => {
@@ -3494,17 +3524,18 @@ function openSettings(section) {
       panel('about', 'About', null,
         el('div', { class: 'row' }, el('div', {}, 'WellWrite ' + state.version, el('small', { id: 'updStatus' }, ANDROID ? 'New versions download on Wi-Fi by themselves; tap Update now and Android installs them. Your journal stays as it is.' : 'Updates install automatically when you restart.')),
           el('button', { type: 'button', class: 'btn-plain', onclick: checkUpdates }, 'Check for updates')),
-        ANDROID ? null : row('Problems log', 'If something goes wrong, this file says what happened. It holds error messages only, never your entries.', el('button', { type: 'button', class: 'btn-plain', onclick: () => api.showLog() }, 'Show log')),
+        row('Problems log', 'If something goes wrong, this says what happened. It holds error messages only, never your entries.', el('button', { type: 'button', class: 'btn-plain', onclick: showProblemsLog }, 'Show log')),
         el('p', { class: 'set-intro' }, 'Bible texts: World English Bible and King James Version (public domain); other versions from API.Bible. Week pictures: public-domain works from Wikimedia Commons.')),
 
       panel('whatsnew', 'What’s new', 'Every version of WellWrite, newest first: what was added, improved and fixed.', whatsNew()),
     ];
 
     const nav = el('nav', { class: 'set-nav', role: 'tablist', 'aria-label': 'Settings' },
-      el('p', { class: 'set-nav-title' }, 'Settings'),
+      el('div', { class: 'set-nav-head' }, el('p', { class: 'set-nav-title' }, 'Settings'),
+        el('button', { type: 'button', class: 'set-close', 'aria-label': 'Close Settings', title: 'Close Settings', onpointerup: e => { e.preventDefault(); diag('settings ✕'); done(); }, onclick: () => done() }, '✕')),
       ...SETTINGS_TABS.map(([key, label]) => el('button', { type: 'button', role: 'tab', class: 'set-tab' + (key === tab ? ' on' : ''), 'data-tab': key, 'aria-selected': String(key === tab),
         onclick: () => show(key) }, label)),
-      el('button', { type: 'button', class: 'btn-ink set-done', onclick: () => done() }, 'Done'));
+      el('button', { type: 'button', class: 'btn-ink set-done', onclick: () => { diag('settings Done'); done(); } }, 'Done'));
     const content = el('div', { class: 'set-content' }, ...panels);
     const show = key => {
       tab = key;
@@ -3518,7 +3549,7 @@ function openSettings(section) {
     const lay = el('div', { class: 'set-layout' + (matchMedia('(max-width: 720px), (pointer: coarse) and (max-width: 1024px)').matches && !section ? ' at-list' : '') }, nav, content);
     content.prepend(el('div', { class: 'set-top' },
       el('button', { type: 'button', class: 'btn-link set-back', 'data-back': '', onclick: () => { lay.classList.add('at-list'); } }, '‹ Settings'),
-      el('button', { type: 'button', class: 'btn-ink btn-small', onclick: () => done() }, 'Done')));
+      el('button', { type: 'button', class: 'btn-ink btn-small', onclick: () => { diag('settings Done (section)'); done(); } }, 'Done')));
     f.append(lay);
     setTimeout(() => { const b = nav.querySelector('.set-tab.on'); if (b) b.focus({ focusVisible: false }); });
     renderBackupSection();

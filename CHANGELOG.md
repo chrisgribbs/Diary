@@ -2,6 +2,18 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.25.1 — A sure way out of Settings
+_12 November 2026_
+
+**New**
+
+- The problems log is on the phone too: Settings → About → Show log, with a Copy button. It records when Settings opens and closes, so if it ever won’t close, the log says why. It never contains your entries.
+
+**Fixed**
+
+- Settings has a ✕ at the top as well as Done, on the computer and the phone.
+- On phones, Done and the end of each Settings page stay clear of the navigation bar.
+
 ## 1.25.0 — Sync between your devices
 _11 November 2026_
 

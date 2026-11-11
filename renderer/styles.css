@@ -964,6 +964,8 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .set-tab::after { content: '›'; color: var(--pencil); font-size: 20px; line-height: 1; }
   .set-tab.on { background: none; font-weight: 400; }
   .set-nav .set-done { display: block !important; margin-top: 18px; width: 100%; padding: 13px; font-size: 15px; }
+  .set-nav { padding-bottom: calc(24px + env(safe-area-inset-bottom)) !important; }
+  .set-content { padding-bottom: calc(40px + env(safe-area-inset-bottom)); }
   .set-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: sticky; top: -18px; margin: -18px -18px 10px; padding: 10px 12px; background: var(--paper); z-index: 2; border-bottom: 1px solid var(--rule); }
   .set-top .set-back { font-size: 15px; font-weight: 600; color: var(--ribbon); padding: 8px 6px; }
   .set-content { padding: 18px 18px 40px; }
@@ -1107,3 +1109,9 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .sync-bad, #syncState.sync-bad { color: var(--danger, #b3261e); }
 .sync-how ul { margin: 0; padding-left: 1.1em; line-height: 1.55; color: var(--pencil); font-size: 14px; }
 .sync-how li + li { margin-top: 4px; }
+
+/* Settings: ✕ beside the title; the problems log */
+.set-nav-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.set-close { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; color: var(--pencil); margin: -6px -2px 0 0; flex: none; }
+.set-close:hover { background: var(--paper-edge); color: var(--ink); }
+.log-text { max-height: 55vh; overflow: auto; font: 12px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-word; background: color-mix(in srgb, var(--pencil) 8%, transparent); padding: 10px 12px; border-radius: 6px; }

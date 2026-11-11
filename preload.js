@@ -89,6 +89,8 @@ contextBridge.exposeInMainWorld('wellwrite', {
   onSyncChanged: fn => ipcRenderer.on('sync:changed', (_e, r) => fn(r)),
   version: () => call('app:version'),
   showLog: () => call('app:showLog'),
+  log: msg => call('app:log', msg),
+  readLog: () => call('app:readLog'),
   checkUpdates: () => call('app:checkUpdates'),
   installUpdate: () => call('app:installUpdate'),
   onUpdateReady: fn => ipcRenderer.on('app:update-ready', (_e, v) => fn(v)),

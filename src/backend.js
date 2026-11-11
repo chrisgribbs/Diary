@@ -106,6 +106,18 @@ function createBackend(platform) {
     const orig = vault[fn].bind(vault);
     vault[fn] = (...a) => { const r = orig(...a); sync.touch(); return r; };
   }
+  // ---------- problems log: error messages and what the app was doing, never entries ----------
+  const LOG = platform.logFile || path.join(DEVICE_DIR, 'logs', 'wellwrite.log');
+  const log = msg => {
+    try {
+      fs.mkdirSync(path.dirname(LOG), { recursive: true });
+      try { if (fs.statSync(LOG).size > 200 * 1024) fs.renameSync(LOG, LOG + '.old'); } catch {}
+      fs.appendFileSync(LOG, `${new Date().toISOString()} ${APP_VERSION} ${String(msg).replace(/\s+/g, ' ').slice(0, 600)}\n`);
+    } catch {}
+  };
+  handle('app:log', msg => { log(msg); return true; });
+  handle('app:readLog', () => { try { return fs.readFileSync(LOG, 'utf8').split('\n').slice(-300).join('\n'); } catch { return ''; } });
+
   handle('sync:status', () => sync.status());
   handle('sync:enable', async pw => { await sync.enable(String(pw || '')); return sync.status(); });
   handle('sync:disable', () => sync.disable());

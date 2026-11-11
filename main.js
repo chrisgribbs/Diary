@@ -43,6 +43,7 @@ const backend = createBackend({
   },
   googleConfig: loadGoogleConfig(),
   apiBibleBase: process.env.WELLWRITE_APIBIBLE_URL || null,
+  logFile: path.join(app.getPath('userData'), 'logs', 'wellwrite.log'),
   // Tests: a stand-in for Google's servers (never in the installed app).
   googleBase: !app.isPackaged ? process.env.WELLWRITE_GOOGLE_URL || null : null,
   picturesUrl: process.env.WELLWRITE_PICTURES_URL || null,

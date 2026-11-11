@@ -207,6 +207,8 @@
     onSyncChanged: fn => on('sync:changed', fn),
     version: () => engine('app:version'),
     showLog: async () => false,
+    log: msg => engine('app:log', msg),
+    readLog: () => engine('app:readLog'),
     checkUpdates: () => engine('app:checkUpdates'),
     // Updates: downloaded by the app (on Wi-Fi, without asking), then Android's own "Update" prompt.
     installUpdate: async () => { const u = await engine('app:installUpdate'); if (u) return app('installUpdate', u); },

@@ -5,6 +5,16 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.25.1', date: '2026-11-12', title: 'A sure way out of Settings',
+    fixed: [
+      'Settings has a ✕ at the top as well as Done, on the computer and the phone.',
+      'On phones, Done and the end of each Settings page stay clear of the navigation bar.',
+    ],
+    new: [
+      'The problems log is on the phone too: Settings → About → Show log, with a Copy button. It records when Settings opens and closes, so if it ever won’t close, the log says why. It never contains your entries.',
+    ],
+  },
+  {
     v: '1.25.0', date: '2026-11-11', title: 'Sync between your devices',
     new: [
       'Settings → Sync keeps your journal the same on your computer, phone and tablet, through your own Google Drive. Anyone can use it with their own Google account.',

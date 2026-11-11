@@ -45,12 +45,29 @@ app.whenReady().then(async () => {
   assert.ok(!(await open()), 'Done closes even when close() fails');
   await js(`delete document.querySelector('#dlg').close`);
 
+  // the ✕ closes it too, on a computer and at phone size (list and section)
+  await js(`openSettings('general')`); await wait(600);
+  await click('.set-close');
+  assert.ok(!(await open()), '✕ closes Settings');
+  win.setMinimumSize(300, 300); win.setSize(380, 700); await wait(500);
+  await js(`openSettings()`); await wait(600);
+  assert.ok(await js(`const r = document.querySelector('.set-nav .set-done').getBoundingClientRect(); return r.bottom <= innerHeight || document.querySelector('.set-nav').scrollHeight > document.querySelector('.set-nav').clientHeight`), 'phone list: Done on screen or reachable by scrolling');
+  await click('.set-close');
+  assert.ok(!(await open()), 'phone: ✕ closes the list');
+  await js(`openSettings('sync')`); await wait(600);
+  await click('.set-top .btn-ink');
+  assert.ok(!(await open()), 'phone: Done in a section closes');
+  win.setSize(1400, 900); await wait(400);
+
   // the problems log
   await js(`console.error('test: something went wrong')`); await wait(300);
   const log = fs.readFileSync(path.join(profile, 'logs', 'wellwrite.log'), 'utf8');
   assert.match(log, /error: test: something went wrong/);
+  assert.match(log, /settings open/); assert.match(log, /settings Done/);
   await js(`openSettings('about')`); await wait(600);
-  assert.ok(await js(`return [...document.querySelectorAll('#dlg button')].some(b => b.textContent === 'Show log')`), 'Show log in About');
+  await js(`[...document.querySelectorAll('#dlg button')].find(b => b.textContent === 'Show log').click()`); await wait(600);
+  assert.match(await js(`return document.querySelector('.log-text').textContent`), /settings Done/, 'log viewer shows the log');
+  await js(`[...document.querySelectorAll('#dlg button')].find(b => b.textContent === 'Close').click()`); await wait(400);
 
   console.log('settings close e2e passed');
   app.exit(0);
