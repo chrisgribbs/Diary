@@ -13,7 +13,9 @@
  *      changed in both places  → keep both: yours stays, the other becomes a copy titled "(from another device)"
  *    Deleting sends up a small "deleted" marker so other devices delete it too. An edit beats a delete.
  *  - The first time a device syncs it has no history, so for an entry on both sides the newer one wins.
- *  - Quotes, settings and week pictures stay per device.
+ *  - Your quotes sync too ("quotes"): your own in full; for the built-in collections (on every device already) just
+ *    your favourites, edits and deletions. The most recent change wins; a device's first sync merges instead.
+ *  - Settings and week pictures stay per device.
  */
 const fs = require('fs');
 const path = require('path');
@@ -22,6 +24,7 @@ const { ID_RE, _internal: { seal, open, wrapDataKey, unwrapDataKey } } = require
 
 const KEY_FILE = 'sync-key';
 const CATS = 'categories';
+const QUOTES = 'quotes';
 const GONE = '§deleted';
 const QUIET_MS = 4000;              // after you stop typing
 const EVERY_MS = 3 * 60 * 1000;     // and every few minutes
@@ -161,7 +164,7 @@ class Sync {
         this.running = null;
         this._status();
       }
-      if (result && (result.changed.length || result.copies.length || result.categories)) this.send('sync:changed', result);
+      if (result && (result.changed.length || result.copies.length || result.categories || result.quotes)) this.send('sync:changed', result);
       return result;
     })();
     return this.running;
@@ -172,7 +175,7 @@ class Sync {
     const st = this.st, vault = this.vault, drive = this.drive;
     if (!st || !st.on || !vault.isUnlocked()) return null;
     const key = this._key();
-    const out = { changed: [], copies: [], removed: [], categories: false, sent: 0 };
+    const out = { changed: [], copies: [], removed: [], categories: false, quotes: false, sent: 0 };
     const save = () => { if (this.vault.isUnlocked() && this.st === st) this._write(); };
     try {
       const files = await drive.listFolder(st.folder);
@@ -201,6 +204,7 @@ class Sync {
         if (base && base.f === file.id && base.r === file.version) continue;   // nothing new there
         if (!payload) { try { payload = await readPayload(file); } catch { continue; } }   // not ours, or damaged: leave it
         if (name === CATS) this._applyCategories(payload, file, out);
+        else if (name === QUOTES) this._applyQuotes(payload, file, out);
         else if (name.startsWith('e-') && ID_RE.test(name.slice(2)) && payload.id === name.slice(2)) this._applyEntry(name, payload, file, out);
         save();
       }
@@ -226,6 +230,14 @@ class Sync {
       if (catsAt && (!st.items[CATS] || st.items[CATS].u !== catsAt)) {
         await this._put(CATS, { categories: meta.categories || [], updated: catsAt }, out);
         st.items[CATS].u = catsAt;
+        save();
+      }
+      // Quotes: a device that has never synced them sends what it has (merged with anything already there).
+      let q = vault.quotesForSync();
+      if (!q.updated && !byName.has(QUOTES)) { vault.setQuotes(vault.getQuotes()); q = vault.quotesForSync(); }
+      if (q.updated && (!st.items[QUOTES] || st.items[QUOTES].u !== q.updated)) {
+        await this._put(QUOTES, q, out);
+        st.items[QUOTES].u = q.updated;
         save();
       }
       return out;
@@ -285,6 +297,21 @@ class Sync {
     const theirs = String(p.updated || '');
     if (theirs > mine && Array.isArray(p.categories)) { vault.setCategories(p.categories, theirs); out.categories = true; }
     st.items[CATS] = { f: file.id, r: file.version, u: theirs >= mine ? theirs : (st.items[CATS] ? st.items[CATS].u : '') };
+  }
+
+  _applyQuotes(p, file, out) {
+    const st = this.st, vault = this.vault;
+    const mine = vault.quotesForSync().updated;
+    const theirs = String(p.updated || '');
+    if (!mine) {
+      // This device's first time: keep both sets, then send the result.
+      vault.applySyncedQuotes(p, new Date().toISOString(), { merge: true });
+      out.quotes = true;
+      st.items[QUOTES] = { f: file.id, r: file.version, u: '' };
+      return;
+    }
+    if (theirs > mine) { vault.applySyncedQuotes(p, theirs); out.quotes = true; }
+    st.items[QUOTES] = { f: file.id, r: file.version, u: theirs >= mine ? theirs : (st.items[QUOTES] ? st.items[QUOTES].u : '') };
   }
 }
 

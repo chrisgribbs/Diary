@@ -47,7 +47,7 @@ const ID1 = 'aaaaaaaa-1111', ID2 = 'bbbbbbbb-2222', ID3 = 'cccccccc-3333';
   entry(A.vault, ID2, 'Tuesday');
   await A.sync.enable('river-stone');
   const names = [...drive.shared.files.values()].map(f => f.name).sort();
-  assert.deepEqual(names, ['e-' + ID1, 'e-' + ID2, KEY_FILE], 'entries and the key are on Drive');
+  assert.deepEqual(names, ['e-' + ID1, 'e-' + ID2, 'quotes', KEY_FILE], 'entries, quotes and the key are on Drive');
   for (const f of drive.shared.files.values()) assert.ok(!f.data.includes('Monday') && !f.data.includes('<p>'), 'nothing readable on Drive');
   assert.ok(A.sync.status().on && A.sync.status().last, 'on, with a time');
 

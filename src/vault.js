@@ -387,8 +387,72 @@ class Vault {
     return { quotes: clean, added, updated, removed };
   }
 
-  setQuotes(list) {
-    return this._writeMeta({ quotes: Vault.cleanQuotes(list), quotesSeeded: true }).quotes;
+  /** Your changes to your quotes (adding, editing, deleting, favourites). `changed` is when, for sync. */
+  setQuotes(list, changed = new Date().toISOString()) {
+    return this._writeMeta({ quotes: Vault.cleanQuotes(list), quotesSeeded: true, quotesUpdated: changed }).quotes;
+  }
+
+  /**
+   * Your quotes, as sync sends them. The built-in collections are on every device already, so for those only what
+   * you changed goes: favourites, your edits, and the ones you deleted. Your own quotes (and your readings file's)
+   * go in full.
+   */
+  quotesForSync() {
+    const meta = this.getMeta();
+    const quotes = this.getQuotes();
+    const packs = meta.packs || {};
+    const builtin = q => q.pack && q.pack !== 'file';
+    const own = quotes.filter(q => !builtin(q));
+    const favs = [], edited = [], removed = [];
+    const have = new Set(quotes.map(q => q.id));
+    for (const q of quotes.filter(builtin)) {
+      if (q.fav) favs.push(q.id);
+      const was = ((packs[q.pack] || {}).items || {})[q.id.slice(q.pack.length + 1)];
+      if (Vault.readingHash(q) !== was) edited.push(q);
+    }
+    for (const [pack, p] of Object.entries(packs)) {
+      if (pack === 'file') continue;
+      for (const k of Object.keys(p.items || {})) if (!have.has(`${pack}-${k}`)) removed.push(`${pack}-${k}`);
+    }
+    return { own, favs, edited, removed, updated: meta.quotesUpdated || '' };
+  }
+
+  /**
+   * Quotes from another device. Normally theirs replace yours (they changed them more recently). With
+   * `merge` (the first sync on a device), nothing is lost: both sets of your own quotes are kept, and favourites,
+   * edits and deletions from both devices count.
+   */
+  applySyncedQuotes(p, updated, { merge = false } = {}) {
+    this._requireKey();
+    const meta = this.getMeta();
+    const packs = JSON.parse(JSON.stringify(meta.packs || {}));
+    const builtin = q => q.pack && q.pack !== 'file';
+    const local = this.getQuotes();
+    const removed = new Set(Array.isArray(p.removed) ? p.removed : []);
+    const favs = new Set(Array.isArray(p.favs) ? p.favs : []);
+    const edited = new Map((Array.isArray(p.edited) ? p.edited : []).filter(q => q && builtin(q)).map(q => [q.id, q]));
+    const packOf = id => Object.keys(packs).find(k => k !== 'file' && id.startsWith(k + '-'));
+    let list = local.filter(builtin).filter(q => !removed.has(q.id)).map(q => {
+      const e = edited.get(q.id);
+      const next = e ? { ...e, fav: q.fav } : { ...q };
+      next.fav = merge ? (q.fav || favs.has(q.id)) : favs.has(q.id);
+      return next;
+    });
+    // Edited ones this device doesn't have (its collection is off, or it deleted them before).
+    for (const [id, q] of edited) if (!list.some(x => x.id === id) && !removed.has(id)) list.push({ ...q, fav: favs.has(id) });
+    // Deleted there: they stay deleted here when the collections next update.
+    for (const id of removed) {
+      const pack = packOf(id) || (id.match(/^([a-z0-9]{1,20})-/) || [])[1];
+      if (!pack || pack === 'file') continue;
+      const items = ((packs[pack] = packs[pack] || { items: {} }).items = packs[pack].items || {});
+      const k = id.slice(pack.length + 1);
+      if (!items[k]) items[k] = 'deleted';
+    }
+    const theirOwn = (Array.isArray(p.own) ? p.own : []).filter(q => q && !builtin(q));
+    const own = merge ? [...local.filter(q => !builtin(q)), ...theirOwn] : theirOwn;
+    list = Vault.cleanQuotes([...own, ...list]);
+    this._writeMeta({ quotes: list, quotesSeeded: true, quotesUpdated: updated, packs });
+    return list;
   }
 
   /** Move every entry in one category to another ('' = none). Keeps their "last edited" time. */

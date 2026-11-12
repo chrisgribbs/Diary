@@ -3870,6 +3870,7 @@ api.onSyncChanged(async r => {
   if (!state.unlocked || !r) return;
   state.metas = await api.list();
   if (r.categories) { try { state.categories = await api.getCategories(); } catch {} }
+  if (r.quotes) { try { state.quotes = await api.getQuotes(); refreshQuote(); if ($('#dlg').open && $('#dlg .q-summary')) manageQuotes(); } catch {} }
   const c = state.current;
   if (c && c.saved && r.changed.includes(c.id) && !state.dirty) {
     if (state.metas.some(m => m.id === c.id)) { state.current = null; await openEntry(c.id, { keepMode: true }); }
@@ -3899,7 +3900,7 @@ async function renderSyncSection() {
       el('li', {}, 'Turn sync on here, then on each of your other devices, with the same Google account.'),
       el('li', {}, 'Changes go up a few seconds after you stop writing, and come down when WellWrite opens and every few minutes.'),
       el('li', {}, 'Deleting an entry deletes it everywhere. If you change the same entry on two devices before they sync, both versions are kept.'),
-      el('li', {}, 'Your entries and categories sync. Quotes, settings and week pictures stay on each device.'),
+      el('li', {}, 'Your entries, categories and quotes sync (including favourites and the ones you’ve edited or deleted). Settings and week pictures stay on each device.'),
       el('li', {}, 'Google only ever sees scrambled files, in a “WellWrite sync” folder. Nobody can read them without your password, not even Google.')));
   if (!s.available) { box.replaceChildren(el('p', {}, 'Sync uses Google Drive, which isn’t set up in this version of WellWrite.')); return; }
   if (!s.connected) {

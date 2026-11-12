@@ -2,6 +2,14 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.26.0 — Your quotes sync too
+_12 November 2026_
+
+**New**
+
+- Your quotes now sync between your devices along with your entries: quotes you add, edit or delete, your favourites, and changes to the built-in readings (deleting one, or editing its themes).
+- The first time each device syncs its quotes, nothing is lost: quotes from both devices are kept, and favourites and deletions from both count.
+
 ## 1.25.5 — Turning on sync no longer says “Journal is locked”
 _12 November 2026_
 

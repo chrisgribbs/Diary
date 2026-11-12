@@ -5,6 +5,13 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.26.0', date: '2026-11-12', title: 'Your quotes sync too',
+    new: [
+      'Your quotes now sync between your devices along with your entries: quotes you add, edit or delete, your favourites, and changes to the built-in readings (deleting one, or editing its themes).',
+      'The first time each device syncs its quotes, nothing is lost: quotes from both devices are kept, and favourites and deletions from both count.',
+    ],
+  },
+  {
     v: '1.25.5', date: '2026-11-12', title: 'Turning on sync no longer says “Journal is locked”',
     fixed: [
       'While you sign in to Google in the browser, WellWrite no longer locks itself (with “Lock when I leave WellWrite” or the inactivity timer). That lock is what made turning on sync fail with “Journal is locked”.',
