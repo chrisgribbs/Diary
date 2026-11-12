@@ -5,6 +5,10 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.25.2', date: '2026-11-12', title: 'Google Drive switched on',
+    fixed: ['Google Drive now works, on Windows and Android: sync between your devices and automatic backups to Drive. (Earlier versions were built without the Google connection.)'],
+  },
+  {
     v: '1.25.1', date: '2026-11-12', title: 'A sure way out of Settings',
     fixed: [
       'Settings has a ✕ at the top as well as Done, on the computer and the phone.',

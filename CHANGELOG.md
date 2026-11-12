@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.25.2 — Google Drive switched on
+_12 November 2026_
+
+**Fixed**
+
+- Google Drive now works, on Windows and Android: sync between your devices and automatic backups to Drive. (Earlier versions were built without the Google connection.)
+
 ## 1.25.1 — A sure way out of Settings
 _12 November 2026_
 
