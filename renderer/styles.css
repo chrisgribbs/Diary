@@ -237,7 +237,7 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .toolbar[aria-disabled="true"] { opacity: .35; pointer-events: none; }
 
 .sheet-scroll { flex: 1; overflow-y: auto; min-height: 0; }
-.sheet { position: relative; max-width: 46em; margin: 0 auto; padding: 56px 56px 120px; }
+.sheet { position: relative; max-width: 46em; margin: 0 auto; padding: 36px 56px 120px; }
 
 /* The ribbon bookmark hanging from the top edge of the page */
 .ribbon { position: absolute; top: 0; right: 40px; width: 18px; height: 64px; background: var(--ribbon);
@@ -297,7 +297,7 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .page-foot { display: flex; gap: 18px; align-items: center; padding: 8px 22px; border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--pencil); }
 .page-foot #wordCount { flex: 1; }
 
-.empty { max-width: 32em; margin: 18vh auto 0; padding: 0 32px; text-align: center; }
+.empty { max-width: 32em; margin: 28px auto 0; padding: 0 32px 40px; text-align: center; }
 .empty h2 { font: italic 400 34px/1.2 var(--serif); font-variation-settings: 'opsz' 48; margin: 0 0 12px; color: var(--ink); }
 .empty p { color: var(--pencil); margin: 0 0 22px; line-height: 1.55; }
 

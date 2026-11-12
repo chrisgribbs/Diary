@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.26.1', date: '2026-11-13', title: 'Less empty space at the top',
+    fixed: [
+      'The big gap above the quote and verse, before you start today’s entry, is gone, and an entry’s page starts a little higher too.',
+    ],
+  },
+  {
     v: '1.26.0', date: '2026-11-12', title: 'Your quotes sync too',
     new: [
       'Your quotes now sync between your devices along with your entries: quotes you add, edit or delete, your favourites, and changes to the built-in readings (deleting one, or editing its themes).',

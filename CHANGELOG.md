@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.26.1 — Less empty space at the top
+_13 November 2026_
+
+**Fixed**
+
+- The big gap above the quote and verse, before you start today’s entry, is gone, and an entry’s page starts a little higher too.
+
 ## 1.26.0 — Your quotes sync too
 _12 November 2026_
 
