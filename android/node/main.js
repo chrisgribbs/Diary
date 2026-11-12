@@ -56,9 +56,11 @@ function start(transport, dirs, opts = {}) {
     fetch: (url, o) => fetch(url, o),
     send: (ev, ...args) => toPage({ ev, args }),
     openBrowser: url => toApp({ op: 'openUrl', url }),
+    backToApp: 'wellwrite://signed-in',
     // Google sign-in: the same as on Windows (the phone's browser signs in and comes back to WellWrite).
     googleConfig: opts.googleConfig !== undefined ? opts.googleConfig : (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'google-config.json'), 'utf8')); } catch { return null; } })(),
     apiBibleBase: opts.apiBibleBase || null,
+    googleBase: opts.googleBase || null,
     picturesUrl: opts.picturesUrl || null,
   });
   const { handle, vault } = backend;
@@ -101,6 +103,13 @@ function start(transport, dirs, opts = {}) {
   });
   handle('readings:pickFile', notHere);
   handle('backup:pick', notHere);
+  // Google sign-in. The phone's browser signs in and comes back to a little server inside WellWrite, so WellWrite
+  // must keep running while you're in the browser: Android is asked to, for the length of the sign-in.
+  handle('google:connect', async () => {
+    toApp({ op: 'keepRunning', on: true });
+    try { return await backend.connectGoogle(); }
+    finally { toApp({ op: 'keepRunning', on: false }); }
+  });
   handle('backup:chooseFolder', notHere);
   handle('backup:showFolder', () => true);
   handle('app:showDataFolder', () => true);

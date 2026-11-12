@@ -15,8 +15,8 @@ const { start } = require('../android/node/main');
 const base = fs.mkdtempSync(path.join(os.tmpdir(), 'ww-android-'));
 const sent = [];
 let listener;
-start({ send: s => sent.push(s), onMessage: fn => { listener = fn; } }, { files: path.join(base, 'f'), cache: path.join(base, 'c') }, { noUpdateCheck: true });
 const replies = new Map();
+const appMsgs = [];
 const ask = (id, ch, ...args) => new Promise(resolve => {
   replies.set(id, resolve);
   listener(JSON.stringify({ id, ch, args }));
@@ -24,6 +24,7 @@ const ask = (id, ch, ...args) => new Promise(resolve => {
 const pump = setInterval(() => {
   while (sent.length) {
     const s = sent.shift();
+    if (s[0] === 'N') { appMsgs.push(JSON.parse(s.slice(1))); continue; }
     if (s[0] !== 'P') continue;
     assert.ok(/^[\x00-\x7e]*$/.test(s), 'messages are plain ASCII');
     const m = JSON.parse(s.slice(1));
@@ -32,6 +33,8 @@ const pump = setInterval(() => {
 }, 5);
 
 (async () => {
+  const fakeGoogle = await require('./fake-google').start();
+  start({ send: s => sent.push(s), onMessage: fn => { listener = fn; } }, { files: path.join(base, 'f'), cache: path.join(base, 'c') }, { noUpdateCheck: true, googleConfig: { clientId: 'test' }, googleBase: fakeGoogle.url });
   // Requests wait for the device key.
   const early = ask(1, 'vault:status');
   listener('S' + JSON.stringify({ type: 'secret', key: 'ab'.repeat(32) }));
@@ -50,10 +53,21 @@ const pump = setInterval(() => {
   const rf = (await ask(8, 'android:setReadingsText', 'My readings.txt', 'A line\n— Someone')).value;
   assert.ok(rf.startsWith(path.join(base, 'f', 'device')));
   assert.strictEqual((await ask(9, 'readings:readFile')).value.text, 'A line\n— Someone');
-  assert.strictEqual((await ask(10, 'google:connect')).ok, false);
+  // Connecting Google Drive on the phone: the browser opens, signs in, comes back; WellWrite stays awake meanwhile.
+  const connecting = ask(10, 'google:connect');
+  let open;
+  for (let i = 0; i < 100 && !(open = appMsgs.find(m => m.op === 'openUrl')); i++) await new Promise(r => setTimeout(r, 20));
+  assert.ok(open, 'the sign-in page opens in the browser');
+  assert.ok(appMsgs.some(m => m.op === 'keepRunning' && m.on === true), 'Android is asked to keep WellWrite running');
+  const page = await (await fetch(open.url)).text();   // the fake Google sends the browser straight back
+  assert.ok(page.includes('wellwrite://signed-in'), 'the page offers a way back to the app');
+  const conn = await connecting;
+  assert.ok(conn.ok, 'google:connect works on Android: ' + conn.error);
+  assert.ok(appMsgs.some(m => m.op === 'keepRunning' && m.on === false), 'and is told when sign-in is over');
   assert.strictEqual((await ask(11, 'app:version')).value.platform, 'android');
   assert.strictEqual((await ask(12, 'nope')).ok, false);
   clearInterval(pump);
+  fakeGoogle.close();
   fs.rmSync(base, { recursive: true, force: true });
   console.log('android tests passed');
   process.exit(0);

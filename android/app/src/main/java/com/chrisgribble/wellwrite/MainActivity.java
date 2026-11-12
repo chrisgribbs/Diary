@@ -233,7 +233,9 @@ public class MainActivity extends ComponentActivity {
         else if (kind == 'N') {
             try {
                 JSONObject o = new JSONObject(m.substring(1));
-                if ("openUrl".equals(o.optString("op"))) ui.post(() -> openUrl(o.optString("url")));
+                String op = o.optString("op");
+                if ("openUrl".equals(op)) ui.post(() -> openUrl(o.optString("url")));
+                else if ("keepRunning".equals(op)) ui.post(() -> { if (o.optBoolean("on")) SignInService.start(this); else SignInService.stop(this); });
             } catch (Exception ignored) {}
         }
     }

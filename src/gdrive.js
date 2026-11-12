@@ -38,6 +38,7 @@ class GoogleDrive {
     this.protect = o.protect;
     this.unprotect = o.unprotect;
     this.openBrowser = o.openBrowser;
+    this.backToApp = o.backToApp || '';   // phones: a link that reopens WellWrite after signing in
     this.fetch = o.fetch || fetch;
     this.ep = {
       auth: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -83,9 +84,11 @@ class GoogleDrive {
         clearTimeout(timer); server.close(); this.pendingSignIn = null;
         err ? reject(err) : resolve(val);
       };
-      const page = (title, msg) => `<!doctype html><meta charset="utf-8"><title>WellWrite</title>
+      // On a phone the page offers a way straight back to the app (and tries it by itself).
+      const back = this.backToApp ? `<p><a href="${this.backToApp}" style="display:inline-block;margin-top:14px;padding:12px 22px;border-radius:8px;background:#d6b263;color:#1d2a47;font:600 16px system-ui,sans-serif;text-decoration:none">Back to WellWrite</a></p><script>setTimeout(function(){location.href=${JSON.stringify(this.backToApp)}},400)</script>` : '';
+      const page = (title, msg) => `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WellWrite</title>
 <body style="font:17px/1.5 Georgia,serif;background:#1d2a47;color:#e9e4d6;display:grid;place-items:center;height:90vh;margin:0">
-<div style="text-align:center;max-width:28em"><h1 style="font-style:italic;font-weight:500;color:#d6b263">${title}</h1><p>${msg}</p></div>`;
+<div style="text-align:center;max-width:28em;padding:0 20px"><h1 style="font-style:italic;font-weight:500;color:#d6b263">${title}</h1><p>${msg}</p>${back}</div>`;
 
       const server = http.createServer((req, res) => {
         const url = new URL(req.url, 'http://127.0.0.1');
@@ -94,10 +97,10 @@ class GoogleDrive {
         if (p.get('state') !== state) { res.writeHead(400).end('Unexpected request'); return; }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         if (p.get('error')) {
-          res.end(page('Not connected', 'Google Drive was not connected. You can close this tab and try again from WellWrite.'));
+          res.end(page('Not connected', 'Google Drive was not connected. ' + (this.backToApp ? 'Go back to WellWrite and try again.' : 'You can close this tab and try again from WellWrite.')));
           finish(new Error(p.get('error') === 'access_denied' ? 'Sign-in was cancelled' : 'Google sign-in failed: ' + p.get('error')));
         } else if (p.get('code')) {
-          res.end(page('Google Drive connected', 'You can close this tab and go back to WellWrite.'));
+          res.end(page('Google Drive connected', '' + (this.backToApp ? 'Taking you back to WellWrite…' : 'You can close this tab and go back to WellWrite.')));
           finish(null, { code: p.get('code'), redirectUri: `http://127.0.0.1:${server.address().port}` });
         } else res.end('Missing code');
       });

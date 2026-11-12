@@ -91,6 +91,7 @@ function createBackend(platform) {
     protect: t => (platform.canProtect() ? 'os:' + platform.protect(t) : 'plain:' + Buffer.from(t).toString('base64')),
     unprotect: t => (t.startsWith('os:') ? platform.unprotect(t.slice(3)) : Buffer.from(t.replace(/^plain:/, ''), 'base64').toString()),
     openBrowser: url => platform.openBrowser(url),
+    backToApp: platform.backToApp || '',
     fetch: (...a) => platform.fetch(...a),
     endpoints: platform.googleBase ? { auth: platform.googleBase + '/auth', token: platform.googleBase + '/token', revoke: platform.googleBase + '/revoke', api: platform.googleBase + '/drive/v3', upload: platform.googleBase + '/upload/drive/v3' } : undefined,
   });

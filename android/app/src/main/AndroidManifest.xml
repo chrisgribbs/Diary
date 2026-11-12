@@ -5,6 +5,8 @@
     <!-- Installs WellWrite's own updates (Android asks you once). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Keeps WellWrite awake while you sign in to Google in the browser. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:label="WellWrite"
@@ -25,6 +27,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- "Back to WellWrite" after signing in to Google -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="wellwrite" android:host="signed-in" />
+            </intent-filter>
         </activity>
         <!-- Lets the camera app save a photo straight into WellWrite's private cache. -->
         <provider
@@ -34,5 +43,6 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+        <service android:name=".SignInService" android:exported="false" android:foregroundServiceType="shortService" />
     </application>
 </manifest>
