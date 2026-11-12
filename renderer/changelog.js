@@ -5,6 +5,14 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.25.4', date: '2026-11-12', title: 'Connect Google Drive on the phone',
+    fixed: [
+      'On Android, “Connect Google Drive” did nothing (the screen just flickered): the phone app was missing that step. It now opens Google’s sign-in in your browser.',
+      'While you sign in, WellWrite stays awake (a quiet “Signing in to Google” notification shows), so Android doesn’t freeze it before Google hands back.',
+      'When you’ve signed in, the browser takes you straight back to WellWrite, with a “Back to WellWrite” button if it doesn’t.',
+    ],
+  },
+  {
     v: '1.25.3', date: '2026-11-12', title: 'Google Drive switched on (properly)',
     fixed: ['Google Drive sign-in works on Windows and Android, so you can turn on sync and backups to Drive. (1.25.2 was built with the Google details in the wrong shape.)'],
   },
