@@ -62,7 +62,7 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           if [ -n "$GOOGLE_CLIENT_ID" ]; then
-            node -e "require('fs').writeFileSync('src/google-config.json', JSON.stringify({ clientId: process.env.GOOGLE_CLIENT_ID.trim(), clientSecret: (process.env.GOOGLE_CLIENT_SECRET || '').trim() }))"
+            node scripts/google-config.js
             echo "Google Drive backups are switched on for this build."
           else
             echo "::warning title=Google Drive off::The GOOGLE_CLIENT_ID secret isn't set, so this build can't connect to Google Drive."
@@ -140,7 +140,7 @@ jobs:
           export WELLWRITE_KEYSTORE_PASSWORD="$(printf '%s\n' "$ANDROID_SIGNING" | head -n 1 | tr -d '\r ')"
           printf '%s\n' "$ANDROID_SIGNING" | tail -n +2 | tr -d '\r ' | base64 -d > "$WELLWRITE_KEYSTORE"
           if [ -n "$GOOGLE_CLIENT_ID" ]; then
-            node -e "require('fs').writeFileSync('src/google-config.json', JSON.stringify({ clientId: process.env.GOOGLE_CLIENT_ID.trim(), clientSecret: (process.env.GOOGLE_CLIENT_SECRET || '').trim() }))"
+            node scripts/google-config.js
           fi
           node android/scripts/prepare.js
           if ! gradle -p android assembleRelease 2>&1 | tee build.log; then
