@@ -2,6 +2,15 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.25.5 — Turning on sync no longer says “Journal is locked”
+_12 November 2026_
+
+**Fixed**
+
+- While you sign in to Google in the browser, WellWrite no longer locks itself (with “Lock when I leave WellWrite” or the inactivity timer). That lock is what made turning on sync fail with “Journal is locked”.
+- If the journal does lock before sync is turned on, unlocking it carries straight on to turning sync on.
+- On phones and tablets, touching and scrolling count as activity, so reading for a while doesn’t lock the journal.
+
 ## 1.25.4 — Connect Google Drive on the phone
 _12 November 2026_
 

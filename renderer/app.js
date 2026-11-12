@@ -316,10 +316,19 @@ async function enterApp() {
   renderSidebar();
   refreshBackupInfo();
   setMode(state.mode);
+  // Something waiting for the journal to be open (turning on sync after signing in to Google).
+  const next = state.afterUnlock; state.afterUnlock = null;
+  if (next) setTimeout(next, 300);
 }
 
-async function lockNow() {
+/** Signing in to Google happens in the browser; the journal mustn't lock itself meanwhile (that broke turning on sync). */
+async function whileSigningIn(fn) {
+  state.signingIn = (state.signingIn || 0) + 1;
+  try { return await fn(); } finally { state.signingIn--; state.lastActivity = Date.now(); }
+}
+async function lockNow({ auto = false } = {}) {
   if (!state.unlocked) return;
+  if (auto && state.signingIn) return;
   await saveNow();
   state.unlocked = false;
   try { await api.lock(); } catch {}
@@ -3809,7 +3818,7 @@ function renderBackupSection() {
 async function connectDrive() {
   state.connecting = true; renderBackupSection();
   try {
-    state.backup = await api.googleConnect();
+    state.backup = await whileSigningIn(() => api.googleConnect());
     toast('Google Drive connected. Your first backup starts now.');
   } catch (x) {
     if (!/cancel/i.test(x.message)) toast(x.message);
@@ -3920,7 +3929,7 @@ async function syncConnect() {
       : 'Finish signing in in the browser window that just opened, then come back here.'),
     el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', autofocus: true, onclick: () => { api.googleCancel(); done(); } }, 'Cancel'))));
   let ok = false;
-  try { await api.googleConnect(); ok = true; } catch (x) { if (!/cancel/i.test(x.message)) toast(x.message); }
+  try { await whileSigningIn(() => api.googleConnect()); ok = true; } catch (x) { if (!/cancel/i.test(x.message)) toast(x.message); }
   if ($('#dlg').open) $('#dlg').close();
   await waiting;
   state.backup = await api.backupInfo().catch(() => state.backup);
@@ -3928,6 +3937,7 @@ async function syncConnect() {
   if (ok) { const s = await api.syncStatus().catch(() => null); if (s && !s.on) syncTurnOn(); }
 }
 async function syncTurnOn() {
+  if (!state.unlocked) { state.afterUnlock = syncTurnOn; toast('Unlock your journal, then sync turns on'); return; }
   await saveNow();
   const pw = await promptDialog({
     title: 'Turn on sync',
@@ -3945,6 +3955,7 @@ async function syncTurnOn() {
     toast('Sync is on');
   } catch (x) {
     if ($('#dlg').open) $('#dlg').close(); await working;
+    if (/locked/i.test(x.message)) { state.afterUnlock = syncTurnOn; toast('Unlock your journal, then sync turns on'); return; }
     await confirmDialog({ title: 'Sync isn’t on', text: x.message, ok: 'OK' });
   }
   openSettings('sync');
@@ -3972,7 +3983,7 @@ async function restoreFromDrive(mode) {
       el('h2', {}, 'Sign in to Google'),
       el('p', {}, 'Finish signing in in the browser window that just opened, then come back here.'),
       el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', autofocus: true, onclick: () => { api.googleCancel(); done(); } }, 'Cancel'))));
-    try { await api.googleConnect(); } catch (x) { $('#dlg').close(); if (!/cancel/i.test(x.message)) toast(x.message); return; }
+    try { await whileSigningIn(() => api.googleConnect()); } catch (x) { $('#dlg').close(); if (!/cancel/i.test(x.message)) toast(x.message); return; }
     $('#dlg').close(); await waiting;
   }
   let files;
@@ -4049,12 +4060,12 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('#lightbox').hidden) hidePhoto();
 }, true);
 
-for (const ev of ['mousemove', 'keydown', 'mousedown', 'wheel']) {
+for (const ev of ['mousemove', 'keydown', 'mousedown', 'wheel', 'pointerdown', 'touchstart', 'input']) {
   window.addEventListener(ev, () => { state.lastActivity = Date.now(); }, { passive: true, capture: true });
 }
 setInterval(() => {
   const m = state.settings.autoLockMinutes;
-  if (state.unlocked && m > 0 && Date.now() - state.lastActivity > m * 60000) lockNow();
+  if (state.unlocked && m > 0 && Date.now() - state.lastActivity > m * 60000) lockNow({ auto: true });
 }, 10000);
 
 // Keep "today" correct if the app stays open past midnight.
@@ -4093,7 +4104,7 @@ $('#versionBtn').addEventListener('click', async () => {
     offline: "Couldn't check for updates. Check your internet connection.",
   }[r.status]);
 });
-api.onLock(() => lockNow());
+api.onLock(() => lockNow({ auto: true }));
 
 // ---------- phones: the sidebar slides out from the menu button ----------
 function closeDrawer() { document.body.classList.remove('drawer-open'); }

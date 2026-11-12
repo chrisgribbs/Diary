@@ -5,6 +5,14 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.25.5', date: '2026-11-12', title: 'Turning on sync no longer says “Journal is locked”',
+    fixed: [
+      'While you sign in to Google in the browser, WellWrite no longer locks itself (with “Lock when I leave WellWrite” or the inactivity timer). That lock is what made turning on sync fail with “Journal is locked”.',
+      'If the journal does lock before sync is turned on, unlocking it carries straight on to turning sync on.',
+      'On phones and tablets, touching and scrolling count as activity, so reading for a while doesn’t lock the journal.',
+    ],
+  },
+  {
     v: '1.25.4', date: '2026-11-12', title: 'Connect Google Drive on the phone',
     fixed: [
       'On Android, “Connect Google Drive” did nothing (the screen just flickered): the phone app was missing that step. It now opens Google’s sign-in in your browser.',
