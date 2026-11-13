@@ -1,0 +1,17 @@
+name: Relay check
+on: { push: { branches: [relay-check] } }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          U=https://wellwrite-bible.chris-db8.workers.dev
+          H="x-wellwrite-device: 0123abcd0123abcd"
+          echo "== health"; curl -sS $U/health; echo
+          echo "== no device header (want 403)"; curl -s -o /dev/null -w "%{http_code}\n" "$U/v1/bibles"
+          echo "== disallowed path (want 404/403)"; curl -s -o /dev/null -w "%{http_code}\n" -H "$H" "$U/v1/bibles/x/books"
+          echo "== English versions"; curl -sS -H "$H" "$U/v1/bibles?language=eng" | jq -r '.data | length as $n | "\($n) versions", (.[0:8][] | "  \(.abbreviationLocal)  \(.name)")'
+          ID=$(curl -sS -H "$H" "$U/v1/bibles?language=eng" | jq -r '[.data[]|select(.abbreviationLocal=="KJV" or .abbreviationLocal=="ASV" or .abbreviationLocal=="BSB")][0].id')
+          echo "== John 3:16 from $ID"; curl -sS -H "$H" "$U/v1/bibles/$ID/passages/JHN.3.16-JHN.3.16?content-type=text&include-titles=false&include-verse-numbers=false" | jq -r '.data.content'
+          echo "== Psalm 23 chapter"; curl -sS -H "$H" "$U/v1/bibles/$ID/chapters/PSA.23?content-type=text" | jq -r '.data.reference, (.data.content|.[0:120])'
+          echo "== cached second time"; curl -sS -D - -o /dev/null -H "$H" "$U/v1/bibles/$ID/chapters/PSA.23?content-type=text" | grep -iE "^HTTP|x-wellwrite|cf-cache|age"
