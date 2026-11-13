@@ -1,10 +1,11 @@
 'use strict';
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu, powerMonitor, nativeTheme, safeStorage, net } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu, powerMonitor, nativeTheme, safeStorage, net, Notification, Tray, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const { migrateJournal } = require('./src/migrate');
 const { createBackend, stripActive } = require('./src/backend');
+const prayer = require('./src/prayer');
 
 app.setAppUserModelId('com.daybook.journal'); // kept from the Daybook days so updates and pins carry over
 if (!app.requestSingleInstanceLock()) { app.quit(); }
@@ -40,6 +41,7 @@ const backend = createBackend({
   onSettings: clean => {
     nativeTheme.themeSource = ['light', 'dark'].includes(clean.theme) ? clean.theme : 'system';
     if (win) win.webContents.session.setSpellCheckerEnabled(!!clean.spellcheck);
+    if (app.isReady()) prayerChanged(clean);
   },
   googleConfig: loadGoogleConfig(),
   apiBibleBase: process.env.WELLWRITE_APIBIBLE_URL || null,
@@ -71,7 +73,9 @@ function createWindow() {
   });
   win.webContents.session.setSpellCheckerEnabled(!!settings.spellcheck);
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  win.once('ready-to-show', () => win.show());
+  // Started with Windows for the prayer bell: stay in the tray until you open it.
+  const hiddenStart = process.argv.includes('--hidden') && readSettings().prayerBell;
+  win.once('ready-to-show', () => { if (!hiddenStart) win.show(); });
 
   // Problems log: page errors and freezes go to <userData>/logs/wellwrite.log (newest 200 KB), so a bug
   // report can say what actually happened. Only error messages are written, never your entries.
@@ -126,6 +130,23 @@ function createWindow() {
 
   // Ask the page to save before the window closes.
   win.on('close', e => {
+    // With the prayer bell on, closing the window keeps WellWrite in the tray, locked, so the bell can still ring.
+    if (!quitting && !reallyQuitting && bellKeepsRunning()) {
+      e.preventDefault();
+      const hide = () => {
+        if (vault.isUnlocked()) win.webContents.send('app:lock');
+        win.hide();
+        if (!readSettings().prayerTrayTold && Notification.isSupported()) {
+          new Notification({ title: 'WellWrite is still here', body: 'It’s in the tray, by the clock, so the prayer bell can ring. Quit it from there.', silent: true, icon: path.join(__dirname, 'build', 'icon.png') }).show();
+          writeSettings({ prayerTrayTold: true });
+        }
+      };
+      if (!vault.isUnlocked()) { hide(); return; }
+      win.webContents.send('app:flush');
+      const t = setTimeout(hide, 2500);
+      ipcMain.once('app:flushed', () => { clearTimeout(t); hide(); });
+      return;
+    }
     if (quitting || !vault.isUnlocked()) return;
     e.preventDefault();
     win.webContents.send('app:flush');
@@ -278,20 +299,90 @@ handle('shell:openExternal', url => {
   return true;
 });
 
+// ---------- the prayer bell (src/prayer.js) ----------
+// Windows can only ring it while WellWrite runs, so with the bell on WellWrite lives on in the tray.
+let reallyQuitting = false, tray = null, bellTimer = null;
+const rung = new Set();
+const bellKeepsRunning = () => !!readSettings().prayerBell;
+function showWindow() {
+  if (!win) return;
+  if (win.isMinimized()) win.restore();
+  win.show(); win.focus();
+}
+function ring(bell) {
+  const s = readSettings();
+  if (s.prayerSound !== 'silent' && win) win.webContents.send('prayer:ring');
+  if (testPrayer) testPrayer.push({ title: bell.title, body: bell.body });
+  if (!Notification.isSupported()) return;
+  const n = new Notification({ title: bell.title, body: bell.body, silent: true, icon: path.join(__dirname, 'build', 'icon.png'), timeoutType: 'default' });
+  n.on('click', () => { showWindow(); win.webContents.send('prayer:open', bell.key); });
+  n.show();
+}
+const testPrayer = process.env.WELLWRITE_TEST_PRAYER === '1' && !app.isPackaged ? [] : null;
+function planBell() {
+  clearTimeout(bellTimer);
+  const s = readSettings();
+  if (!s.prayerBell) return;
+  const now = Date.now();
+  // A bell missed while the computer slept isn't rung late (only within 3 minutes of its time).
+  for (const b of prayer.upcoming(s, new Date(now - 3 * 60000), 1)) {
+    if (b.at <= now && !rung.has(b.date + b.key)) { rung.add(b.date + b.key); ring(b); }
+  }
+  const next = prayer.upcoming(s, new Date(now), 2)[0];
+  if (!next) { bellTimer = setTimeout(planBell, 60 * 60000); return; }
+  bellTimer = setTimeout(planBell, Math.max(1000, Math.min(next.at - now + 500, 30 * 60000)));
+}
+function updateTray(s) {
+  if (!s.prayerBell) { if (tray) { tray.destroy(); tray = null; } return; }
+  if (!tray) {
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png')).resize({ width: 16, height: 16 }));
+    tray.setToolTip('WellWrite');
+    tray.on('click', showWindow);
+  }
+  const muted = s.prayerMutedOn === prayer.iso(new Date());
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Open WellWrite', click: showWindow },
+    { label: 'Pause for prayer', click: () => { showWindow(); win.webContents.send('prayer:open', null); } },
+    { label: muted ? 'Unmute the bell today' : 'Mute the bell today', click: () => {
+      writeSettings({ prayerMutedOn: muted ? '' : prayer.iso(new Date()) });
+      if (win) win.webContents.send('prayer:settings');
+    } },
+    { type: 'separator' },
+    { label: 'Quit WellWrite', click: () => { reallyQuitting = true; app.quit(); } },
+  ]));
+}
+function prayerChanged(s = readSettings()) {
+  planBell();
+  updateTray(s);
+  if (app.isPackaged) {
+    try { app.setLoginItemSettings({ openAtLogin: !!(s.prayerBell && s.startWithWindows), args: ['--hidden'] }); } catch {}
+  }
+}
+handle('prayer:test', () => {
+  const s = readSettings();
+  const key = prayer.hourAt(s);
+  ring({ key, date: prayer.iso(new Date()), ...prayer.bellText(key, new Date()) });
+  return true;
+});
+handle('prayer:testLog', () => testPrayer || []);
+
 // ---------- lifecycle ----------
-app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.focus(); } });
+app.on('second-instance', () => showWindow());
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   createWindow();
   setupUpdates();
   backend.startTimers();
+  prayerChanged();
+  setInterval(() => updateTray(readSettings()), 10 * 60000);   // "Mute today" ends at midnight
+  powerMonitor.on('resume', planBell);
   const lockAll = () => { if (win && vault.isUnlocked()) win.webContents.send('app:lock'); };
   powerMonitor.on('lock-screen', lockAll);
   powerMonitor.on('suspend', lockAll);
 });
 
-app.on('before-quit', () => { vault.lock(); });
+app.on('before-quit', () => { reallyQuitting = true; vault.lock(); });
 app.on('window-all-closed', () => app.quit());
 
 module.exports = { getWindow: () => win, vault };

@@ -225,6 +225,42 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   log('update progress:', JSON.stringify(upd.slice(-3)));
   check(upd.some(p => p.downloading) && upd.some(p => p.error && /signed/.test(p.error)), 'the app downloads an update itself and checks who signed it');
 
+  // ---- the prayer bell: turned on, a bell from Android's alarm clock (with WellWrite in the background),
+  // its notification and "Mute today", and tapping it opens Pause for prayer.
+  await device.shell('pm grant com.chrisgribble.wellwrite android.permission.POST_NOTIFICATIONS');
+  await is(() => updateSetting({ prayerBell: true, prayerMutedOn: '' }));
+  await wait(1500);
+  const soon = Date.now() + 25000;
+  const sched = await page.evaluate(at => window.wellwrite.prayerSchedule({ sound: 'bell', bells: [{ at, key: 'midday', date: new Date(at).toISOString().slice(0, 10), title: 'Midday prayer', body: 'Be still, and know that I am God. — Psalm 46:10' }] }), soon).catch(e => ({ error: e.message }));
+  log('scheduled:', JSON.stringify(sched));
+  await device.shell('input keyevent 3');   // Home: WellWrite in the background
+  await wait(40000);
+  const notes = String(await device.shell('dumpsys notification --noredact | grep -A3 -i "prayer_bell_3\|Midday prayer" | head -20'));
+  log('notifications:', notes.replace(/\s+/g, ' ').slice(0, 400));
+  check(/Midday prayer|prayer_bell_3/.test(notes), 'the bell rings from the alarm clock with WellWrite in the background');
+  await device.shell('cmd statusbar expand-notifications'); await wait(1500); await shot('bell-notification');
+  // Tap it: WellWrite opens at Pause for prayer.
+  const xml = String(await device.shell('uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; cat /sdcard/ui.xml'));
+  const n = [...xml.matchAll(/<node [^>]*>/g)].map(m => m[0]).find(x => /text="Midday prayer"/.test(x));
+  if (n) { const [, x1, y1, x2, y2] = n.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/).map(Number); await device.shell(`input tap ${(x1 + x2) >> 1} ${(y1 + y2) >> 1}`); }
+  else await device.shell('cmd statusbar collapse');
+  await wait(4000);
+  check(await is(() => !!document.querySelector('.prayer-pause')), 'tapping the bell opens Pause for prayer');
+  await shot('pause-for-prayer');
+  await is(() => document.querySelectorAll('dialog[open]').forEach(d => d.close()));
+  // "Mute today" from the notification's button.
+  await page.evaluate(() => window.wellwrite.prayerTest()); await wait(2000);
+  await device.shell('cmd statusbar expand-notifications'); await wait(1500);
+  const xml2 = String(await device.shell('uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; cat /sdcard/ui.xml'));
+  const mb = [...xml2.matchAll(/<node [^>]*>/g)].map(m => m[0]).find(x => /text="(Mute today|MUTE TODAY)"/i.test(x));
+  if (mb) { const [, x1, y1, x2, y2] = mb.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/).map(Number); await device.shell(`input tap ${(x1 + x2) >> 1} ${(y1 + y2) >> 1}`); }
+  else log('no Mute today button visible (the notification may be collapsed)');
+  await wait(1500); await device.shell('cmd statusbar collapse'); await wait(800);
+  await device.shell('am start -n com.chrisgribble.wellwrite/.MainActivity'); await wait(2500);
+  const r2 = await page.evaluate(() => syncPrayerBell().then(() => mutedToday())).catch(() => null);
+  check(r2 === true, '“Mute today” on the notification mutes the bell in WellWrite too');
+  await is(() => updateSetting({ prayerBell: false }));
+
   log(failures ? `${failures} TAP CHECKS FAILED` : 'ALL TAP CHECKS PASSED');
   await device.close();
   process.exit(failures ? 1 : 0);

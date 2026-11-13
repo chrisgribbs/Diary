@@ -96,4 +96,12 @@ contextBridge.exposeInMainWorld('wellwrite', {
   onUpdateReady: fn => ipcRenderer.on('app:update-ready', (_e, v) => fn(v)),
   onFlush: fn => ipcRenderer.on('app:flush', async () => { try { await fn(); } finally { ipcRenderer.send('app:flushed'); } }),
   onLock: fn => ipcRenderer.on('app:lock', () => fn()),
+  prayerUpcoming: days => call('prayer:upcoming', days),
+  prayerPause: (key, at) => call('prayer:pause', key, at),
+  prayerHours: () => call('prayer:hours'),
+  prayerTest: () => call('prayer:test'),
+  prayerTestLog: () => call('prayer:testLog'),
+  onPrayerOpen: fn => ipcRenderer.on('prayer:open', (_e, key) => fn(key)),
+  onPrayerRing: fn => ipcRenderer.on('prayer:ring', () => fn()),
+  onPrayerSettings: fn => ipcRenderer.on('prayer:settings', () => fn()),
 });

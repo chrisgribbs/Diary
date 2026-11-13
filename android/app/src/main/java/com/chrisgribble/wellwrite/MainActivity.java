@@ -76,6 +76,8 @@ public class MainActivity extends ComponentActivity {
     private ActivityResultLauncher<Intent> saver;
     private ActivityResultLauncher<Intent> camera;
     private File cameraFile;
+    private ActivityResultLauncher<String> notifyPermission;
+    private JSONObject pendingPermission;
     private JSONObject pendingSave;
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -182,6 +184,10 @@ public class MainActivity extends ComponentActivity {
                 cb.onReceiveValue(new Uri[] { FileProvider.getUriForFile(this, getPackageName() + ".files", f) });
             else cb.onReceiveValue(null);
         });
+        notifyPermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+            JSONObject req = pendingPermission; pendingPermission = null;
+            if (req != null) reply(req, true, granted, null);
+        });
         saver = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), r -> {
             JSONObject req = pendingSave;
             pendingSave = null;
@@ -223,6 +229,7 @@ public class MainActivity extends ComponentActivity {
         });
 
         web.loadUrl(START);
+        prayerFrom(getIntent());
     }
 
     // ---------- messages ----------
@@ -276,6 +283,19 @@ public class MainActivity extends ComponentActivity {
                 reply(req, err == null, true, err); break;
             }
             case "installUpdate": updater.install(req.optString("url"), req.optString("version")); reply(req, true, true, null); break;
+            case "prayerSchedule": {
+                try {
+                    String muted = PrayerBell.schedule(this, req.optJSONArray("bells") == null ? new org.json.JSONArray() : req.getJSONArray("bells"), req.optString("sound"));
+                    JSONObject r = new JSONObject(); r.put("mutedDay", muted);
+                    reply(req, true, r, null);
+                } catch (Exception e) { reply(req, false, null, e.getMessage()); }
+                break;
+            }
+            case "prayerTest": PrayerBell.show(this, req.optJSONObject("bell") == null ? new JSONObject() : req.optJSONObject("bell"), req.optString("sound")); reply(req, true, true, null); break;
+            case "notifyPermission":
+                if (Build.VERSION.SDK_INT < 33 || checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) reply(req, true, true, null);
+                else { pendingPermission = req; notifyPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS); }
+                break;
             case "bars": systemBars(req.optString("color"), req.optBoolean("light")); reply(req, true, true, null); break;
             default: reply(req, false, null, "Unknown request");
         }
@@ -352,6 +372,17 @@ public class MainActivity extends ComponentActivity {
         }
         return b.toString();
     }
+
+    /** Opened from the prayer bell: show "Pause for prayer". */
+    private void prayerFrom(Intent i) {
+        if (i == null || !i.hasExtra(PrayerBell.EXTRA_KEY)) return;
+        String key = i.getStringExtra(PrayerBell.EXTRA_KEY);
+        i.removeExtra(PrayerBell.EXTRA_KEY);
+        try { post("Q" + ascii(new JSONObject().put("key", key == null ? JSONObject.NULL : key).toString())); } catch (Exception ignored) {}
+    }
+
+    @Override
+    protected void onNewIntent(Intent i) { super.onNewIntent(i); setIntent(i); prayerFrom(i); }
 
     @Override
     protected void onResume() { super.onResume(); if (updater != null) updater.onResume(); }

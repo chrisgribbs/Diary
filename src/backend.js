@@ -12,6 +12,7 @@ const bible = require('./bible');
 const { Trust } = require('./trust');
 const { GoogleDrive } = require('./gdrive');
 const { Sync } = require('./sync');
+const prayer = require('./prayer');
 const { BackupManager, suggestFolders } = require('./backup');
 
 const ROOT = path.join(__dirname, '..');
@@ -20,6 +21,8 @@ const APP_VERSION = require('../package.json').version;
 const DEFAULT_SETTINGS = {
   autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, classicsReadings: true, readingsFile: '', weekPictures: true, shownBoth: true,
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
+  // the prayer bell (prayer.js), per device
+  prayerBell: false, prayerTimes: {}, prayerHoursOn: {}, prayerDays: 'every', prayerSound: 'bell', prayerMutedOn: '', startWithWindows: false, prayerTrayTold: false,
 };
 const CHOICES = {
   theme: ['system', 'light', 'dark'],
@@ -27,6 +30,8 @@ const CHOICES = {
   backupKeep: [5, 10, 30, 0],
   dailyCard: ['quote', 'verse', 'both', 'none'],
   quotePlan: ['christian', 'spiritual', 'off'],
+  prayerDays: ['every', 'weekdays'],
+  prayerSound: ['bell', 'silent'],
 };
 
 /**
@@ -70,6 +75,12 @@ function createBackend(platform) {
       if (!(k in s) || typeof s[k] !== typeof DEFAULT_SETTINGS[k]) continue;
       if ((k === 'backupDir' || k === 'readingsFile') && !internal) continue; // only set through the pickers
       if (CHOICES[k] && !CHOICES[k].includes(s[k])) continue;
+      if (k === 'prayerTimes' || k === 'prayerHoursOn') {   // only the hours there are, with sensible values
+        const c = prayer.config({ [k]: s[k] }), v = {};
+        for (const h of c.hours) if (k in s && s[k] && h.key in s[k]) v[h.key] = k === 'prayerTimes' ? h.time : h.on;
+        clean[k] = v; continue;
+      }
+      if (k === 'prayerMutedOn' && s[k] && !/^\d{4}-\d{2}-\d{2}$/.test(s[k])) continue;
       clean[k] = s[k];
     }
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(clean, null, 2));
@@ -343,6 +354,15 @@ function createBackend(platform) {
   });
   handle('readings:sync', (packId, items, retired) => vault.syncPack(String(packId), items, retired));
 
+  // ---------- the prayer bell ----------
+  handle('prayer:upcoming', days => prayer.upcoming(readSettings(), new Date(), Math.min(60, Math.max(1, +days || 30))));
+  handle('prayer:pause', (key, at) => {
+    const own = vault.isUnlocked() ? vault.getQuotes().filter(q => q.kind === 'prayer' && (q.mine || q.pack === 'wellwrite')) : [];
+    const k = prayer.KEYS.includes(key) ? key : prayer.hourAt(readSettings());
+    return prayer.pause(k, at ? new Date(at) : new Date(), own);
+  });
+  handle('prayer:hours', () => prayer.config(readSettings()));
+  handle('prayer:bellNow', () => { const k = prayer.hourAt(readSettings()); return { key: k, date: prayer.iso(new Date()), at: Date.now(), ...prayer.bellText(k, new Date()) }; });
   handle('settings:get', () => readSettings());
   handle('settings:set', s => writeSettings(s || {}));
 

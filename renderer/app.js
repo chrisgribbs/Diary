@@ -205,6 +205,7 @@ async function boot() {
   document.querySelectorAll('.here').forEach(n => { n.textContent = HERE; });
   addReveal($('#lock'));
   try { state.settings = await api.getSettings(); } catch {}
+  syncPrayerBell();
   applySettings();
   const s = await api.status();
   state.dataDir = s.dataDir;
@@ -3427,7 +3428,113 @@ function applySettings() {
 async function updateSetting(patch) {
   state.settings = await api.setSettings({ ...state.settings, ...patch });
   applySettings();
+  if (Object.keys(patch).some(k => k.startsWith('prayer'))) syncPrayerBell();
 }
+
+/* ---------- the prayer bell (src/prayer.js decides when; Windows and Android ring it) ---------- */
+const prayerOn = () => !!(state.settings && state.settings.prayerBell);
+const mutedToday = () => state.settings && state.settings.prayerMutedOn === todayISO();
+/** Tell the phone's alarm clock (or Windows) what's coming. Android also says if "Mute today" was tapped there. */
+async function syncPrayerBell() {
+  $('#bellBtn').hidden = !prayerOn() || ANDROID;
+  $('#bellBtn').classList.toggle('muted', mutedToday());
+  if (!api.prayerSchedule) return;
+  try {
+    const bells = prayerOn() ? await api.prayerUpcoming(30) : [];
+    const r = await api.prayerSchedule({ bells, sound: state.settings.prayerSound || 'bell' });
+    if (r && r.mutedDay === todayISO() && !mutedToday()) await updateSetting({ prayerMutedOn: r.mutedDay });
+  } catch (x) { diag('prayer bell: ' + x.message); }
+}
+async function muteToday(on = true) {
+  await updateSetting({ prayerMutedOn: on ? todayISO() : '' });
+  toast(on ? 'The prayer bell is quiet for the rest of today' : 'The prayer bell is on again today');
+}
+/** Settings → Prayer bell. */
+function prayerControls(again) {
+  const s = state.settings;
+  const box = el('div', { class: 'prayer-set' });
+  api.prayerHours().then(c => {
+    const set = patch => updateSetting(patch).then(again);
+    const hourRow = h => {
+      const on = el('input', { type: 'checkbox', 'aria-label': h.name, onchange: e => set({ prayerHoursOn: { ...Object.fromEntries(c.hours.map(x => [x.key, x.on])), [h.key]: e.target.checked } }) });
+      on.checked = h.on;
+      const time = el('input', { type: 'time', value: h.time, 'aria-label': h.name + ' time', disabled: !h.on,
+        onchange: e => { if (/^\d\d:\d\d$/.test(e.target.value)) set({ prayerTimes: { ...Object.fromEntries(c.hours.map(x => [x.key, x.time])), [h.key]: e.target.value } }); } });
+      return el('label', { class: 'ph-row' + (h.on ? '' : ' off') }, on, el('span', {}, h.name), time);
+    };
+    const toggle = el('input', { type: 'checkbox', onchange: async e => {
+      if (e.target.checked && api.prayerPermission) {   // Android 13+: allow notifications first
+        const ok = await api.prayerPermission().catch(() => false);
+        if (!ok) { e.target.checked = false; toast('Allow WellWrite to send notifications, then turn the bell on'); return; }
+      }
+      set({ prayerBell: e.target.checked, prayerMutedOn: '' });
+    } });
+    toggle.checked = c.on;
+    const select = (val, opts, on) => { const x = el('select', { onchange: e => on(e.target.value) }, ...opts.map(([v, l]) => el('option', { value: v }, l))); x.value = val; return x; };
+    const row = (label, help, control) => el('div', { class: 'row' }, el('div', {}, label, help ? el('small', {}, help) : null), control);
+    box.replaceChildren(
+      row('Prayer bell', c.on ? (mutedToday() ? 'Quiet for the rest of today.' : 'On. It rings at the hours ticked below.') : 'Off.', toggle),
+      c.on ? el('div', { class: 'ph-hours' }, ...c.hours.map(hourRow)) : null,
+      c.on ? row('Days', null, select(c.days, [['every', 'Every day'], ['weekdays', 'Weekdays only']], v => set({ prayerDays: v }))) : null,
+      c.on ? row('Sound', 'Three soft strikes of a bell, so you know it from other notifications. Or silent.', select(c.sound, [['bell', 'Soft bell'], ['silent', 'Silent']], v => set({ prayerSound: v }))) : null,
+      c.on ? row('Today', mutedToday() ? 'The bell is quiet until tomorrow.' : 'Need quiet? The bell can rest until tomorrow.',
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => muteToday(!mutedToday()).then(again) }, mutedToday() ? 'Unmute' : 'Mute today')) : null,
+      c.on && !ANDROID ? row('Start with Windows', 'The bell rings only while WellWrite is running. With the bell on, closing the window keeps WellWrite in the tray (by the clock); quit it from there.',
+        (() => { const x = el('input', { type: 'checkbox', onchange: e => set({ startWithWindows: e.target.checked }) }); x.checked = !!s.startWithWindows; return x; })()) : null,
+      el('div', { class: 'btns', style: 'margin-top:14px' },
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => { $('#dlg').close(); pauseForPrayer(); } }, 'Pause for prayer now'),
+        c.on ? el('button', { type: 'button', class: 'btn-link', onclick: () => api.prayerTest().then(() => toast(ANDROID ? 'Look for the notification' : 'That’s the bell')).catch(x => toast(x.message)) }, 'Try the bell') : null));
+  });
+  return box;
+}
+/** "Pause for prayer": the hour's verse and prayer, a moment of quiet, then Amen or a line in today's entry. */
+async function pauseForPrayer(key) {
+  let p;
+  try { p = await api.prayerPause(key || null, null); } catch (x) { toast(x.message); return; }
+  await openDialog((f, done) => {
+    f.classList.add('prayer-pause');
+    f.append(
+      el('p', { class: 'pp-hour' }, `${p.name} prayer`),
+      el('h2', {}, 'Pause for prayer'),
+      el('p', { class: 'pp-still' }, 'Be still for a moment. Breathe slowly, and come as you are.'),
+      p.verse ? el('blockquote', { class: 'pp-verse' }, ...p.verse.text.split('\n').map(l => el('span', {}, l)), el('cite', {}, p.verse.ref)) : null,
+      el('div', { class: 'pp-prayer' }, el('p', {}, p.prayer.text), p.prayer.source ? el('cite', {}, p.prayer.source) : null),
+      el('div', { class: 'actions' },
+        prayerOn() && !mutedToday() ? el('button', { type: 'button', class: 'btn-link', onclick: () => { done(); muteToday(true); } }, 'Mute the bell today') : null,
+        state.unlocked ? el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); writePrayerLine(p.name); } }, 'Write a line') : null,
+        el('button', { type: 'button', class: 'btn-ink', autofocus: true, onclick: () => done() }, 'Amen')));
+  });
+}
+/** A short note in today's entry, under the hour's name. */
+async function writePrayerLine(name) {
+  setMode('journal');
+  const today = todayISO();
+  if (!(state.current && state.current.date === today)) {
+    const m = state.metas.filter(x => x.date === today).sort((a, b) => String(b.updated).localeCompare(String(a.updated)))[0];
+    if (m) await openEntry(m.id); else await newEntry(today);
+  }
+  caretToEnd();
+  document.execCommand('insertHTML', false, `<p><em>${name} prayer</em></p><p><br></p>`);
+  markDirty();
+}
+$('#bellBtn').addEventListener('click', () => {
+  showPopover($('#bellBtn').getBoundingClientRect(), pop => {
+    pop.classList.add('menu');
+    const item = (label, fn) => el('button', { type: 'button', class: 'menu-item', onclick: () => { closePopover(); fn(); } }, label);
+    pop.append(item('Pause for prayer', () => pauseForPrayer()),
+      item(mutedToday() ? 'Unmute the bell today' : 'Mute the bell today', () => muteToday(!mutedToday())),
+      item('Prayer bell settings', () => openSettings('prayer')));
+  });
+});
+// The bell rang and you tapped it (or chose Pause for prayer from the tray): once the journal's open if it's locked.
+// (It works while locked too: the built-in prayers are shown; yours only once the journal is open.)
+if (api.onPrayerOpen) api.onPrayerOpen(key => pauseForPrayer(key));
+if (api.onPrayerSettings) api.onPrayerSettings(async () => { state.settings = await api.getSettings(); syncPrayerBell(); });
+// Windows: the bell's sound comes from here (notifications themselves are silent).
+let bellAudio = null;
+if (api.onPrayerRing && !ANDROID) api.onPrayerRing(() => {
+  try { bellAudio = bellAudio || new Audio('sounds/bell.ogg'); bellAudio.volume = 0.7; bellAudio.currentTime = 0; bellAudio.play().catch(() => {}); } catch {}
+});
 
 /** The problems log, to read or copy and send. */
 async function showProblemsLog() {
@@ -3458,7 +3565,7 @@ function whatsNew() {
 
 /** Settings, as a page with tabs down the side: each area has its own place. */
 const SETTINGS_TABS = [
-  ['general', 'General'], ['readings', 'Quotes & readings'], ['bible', 'Bible'], ['privacy', 'Privacy & lock'],
+  ['general', 'General'], ['readings', 'Quotes & readings'], ['prayer', 'Prayer bell'], ['bible', 'Bible'], ['privacy', 'Privacy & lock'],
   ['sync', 'Sync'], ['backups', 'Backups'], ['wordpress', 'WordPress'], ['about', 'About'], ['whatsnew', 'What’s new'],
 ];
 function openSettings(section) {
@@ -3500,6 +3607,9 @@ function openSettings(section) {
         row('Your quotes', 'Add, edit and theme quotes, and choose whether they follow the Christian year or a theme each month.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Your quotes')),
         row('Above your journal', ANDROID ? 'What appears at the top of each entry.' : 'What appears at the top of each entry. You can also change it with “Above journal” at the top right.', select(dailyChoice(), [['both', 'Quote and verse'], ['quote', 'Quote of the day'], ['verse', 'Verse of the day'], ['none', 'Nothing']], async v => { await updateSetting({ dailyCard: v, showQuote: true }); refreshQuote(); })),
         readingsControls(() => openSettings('readings'))),
+
+      panel('prayer', 'Prayer bell', 'A gentle bell at the hours you choose, inviting you to stop and pray, as a rhythm through the day. Tap it for a short verse and prayer. It’s set on each device separately.',
+        prayerControls(() => openSettings('prayer'))),
 
       panel('bible', 'Bible', 'The version used for the verse of the day, the weekly pages and reading plans. You can also switch version from the ▾ under any verse.',
         bibleVersionControls(() => openSettings('bible')),
@@ -4131,7 +4241,9 @@ $('#moreBtn').addEventListener('click', () => {
           onclick: async () => { closePopover(); await updateSetting({ dailyCard: v, showQuote: true }); refreshQuote(); } }, label));
       pop.append(el('hr'));
     }
-    pop.append(item('Settings', () => openSettings()), item('Lock journal', () => lockNow()));
+    pop.append(item('Pause for prayer', () => pauseForPrayer()));
+    if (prayerOn()) pop.append(item(mutedToday() ? 'Unmute the prayer bell today' : 'Mute the prayer bell today', () => muteToday(!mutedToday())));
+    pop.append(el('hr'), item('Settings', () => openSettings()), item('Lock journal', () => lockNow()));
   });
 });
 // While a box has the keyboard, the bottom bar steps aside; while writing an entry, the formatting buttons sit above the keyboard.

@@ -19,6 +19,7 @@
     const raw = String(e.data);
     const kind = raw[0];
     if (kind === 'B') { back(); return; }
+    if (kind === 'Q') { try { emit('prayer:open', JSON.parse(raw.slice(1)).key || null); } catch {} return; }
     if (kind === 'U') { try { emit('update-progress', JSON.parse(raw.slice(1))); } catch {} return; }
     let m; try { m = JSON.parse(raw.slice(1)); } catch { return; }
     if (kind === 'P') {        // from WellWrite's engine
@@ -215,6 +216,17 @@
     onUpdateProgress: fn => on('update-progress', fn),
     onUpdateReady: fn => on('app:update-ready', fn),
     prefetchUpdate: async () => { const u = await engine('app:installUpdate'); if (u) return app('downloadUpdate', { ...u, auto: true }); },
+    // The prayer bell: the engine works out the bells; Android's alarm clock rings them, even with WellWrite closed.
+    prayerUpcoming: days => engine('prayer:upcoming', days),
+    prayerPause: (key, at) => engine('prayer:pause', key, at),
+    prayerHours: () => engine('prayer:hours'),
+    prayerSchedule: o => app('prayerSchedule', o),
+    prayerPermission: () => app('notifyPermission'),
+    prayerTest: async () => app('prayerTest', { bell: await engine('prayer:bellNow'), sound: (await engine('settings:get')).prayerSound }),
+    prayerTestLog: async () => [],
+    onPrayerOpen: fn => on('prayer:open', fn),
+    onPrayerRing: () => {},        // Android's notification rings the bell itself
+    onPrayerSettings: fn => on('prayer:settings', fn),
     onFlush: fn => on('app:flush', fn),
     onLock: fn => on('app:lock', fn),
   };
