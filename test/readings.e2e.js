@@ -47,8 +47,8 @@ app.whenReady().then(async () => {
   await shot('r1c-author-page');
   await js(`document.querySelector('#dlg .back-journal').click();`); await wait(300);
   assert.ok(!(await js(`return document.querySelector('#dlg').open`)), 'back to the journal');
-  // every quoted writer has a biography
-  const missing = await js(`return [...new Set(state.quotes.map(q => q.author))].filter(a => a && !authorBio(a))`);
+  // every quoted writer has a biography (the Daily prayers' sources are named in each prayer's credit instead)
+  const missing = await js(`return [...new Set(state.quotes.filter(q => q.pack !== 'prayers').map(q => q.author))].filter(a => a && !authorBio(a))`);
   assert.deepEqual(missing.filter(a => a !== 'Chris Gribble'), [], 'biography for every writer');
 
   // choose a readings file once

@@ -2,6 +2,17 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.29.0 — A prayer for each day
+_14 November 2026_
+
+**New**
+
+- Prayer for today: a prayer under the quote and verse each day, following the Christian year, with its own prayer on Ash Wednesday, through Holy Week, on Easter Day, Pentecost, Christmas Eve and Christmas Day. Turn it off in Settings → Quotes & readings.
+- 365 Daily prayers come built in: Celtic prayers from the Carmina Gadelica, Augustine, Thomas à Kempis, Anselm, Columba, the old sacramentaries and more, chosen for quiet, reflective prayer from A Collection of Prayers. Each carries its credit and licence.
+- Say what you think of each prayer: “I like this” keeps it in your favourites; “Not for me” means it won’t come again (with Undo). Both sync between your devices.
+- In the morning, Pause for prayer prays the day’s prayer.
+- Share prayers (Your quotes → Share prayers…): save the prayers you like and your own as a prayer pack that anyone with WellWrite can add with Import from a file. Every prayer keeps its credit and licence; changed copies of licensed prayers stay with you.
+
 ## 1.28.0 — More Bible versions for everyone
 _14 November 2026_
 

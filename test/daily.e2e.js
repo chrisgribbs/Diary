@@ -67,7 +67,7 @@ app.whenReady().then(async () => {
   // --- above journal: both / none
   await js(`document.querySelector('#showAbove').click();`); await wait(200);
   await js(`[...document.querySelectorAll('#popover .menu-item')].find(b => b.textContent === 'Quote and verse').click();`); await wait(800);
-  assert.equal(await js(`return document.querySelectorAll('#quoteSlot .quote-card').length`), 2, 'quote and verse above the journal');
+  assert.equal(await js(`return document.querySelectorAll('#quoteSlot .quote-card:not(.prayer)').length`), 2, 'quote and verse above the journal');
   await shot('d4-journal-both');
   await js(`document.querySelector('#showAbove').click();`); await wait(200);
   await js(`[...document.querySelectorAll('#popover .menu-item')].find(b => b.textContent.startsWith('Nothing')).click();`); await wait(500);
@@ -79,7 +79,7 @@ app.whenReady().then(async () => {
   // --- an entry on another day shows that day's quote and verse too (both by default)
   assert.equal(await js(`return state.settings.dailyCard`), 'verse');   // set above in this test
   await js(`await updateSetting({ dailyCard: 'both' }); await newEntry(addDays(todayISO(), 1));`); await wait(1200);
-  assert.equal(await js(`return document.querySelectorAll('#quoteSlot .quote-card').length`), 2, 'quote and verse on tomorrow’s entry');
+  assert.equal(await js(`return document.querySelectorAll('#quoteSlot .quote-card:not(.prayer)').length`), 2, 'quote and verse on tomorrow’s entry');
   await shot('d4b-other-day');
   // a long title wraps instead of being cut off
   await js(`const t = document.querySelector('#title'); t.value = 'Saturday, 31 October 2026 - Working out what rest really means when the week has been long'; t.dispatchEvent(new Event('input'));`); await wait(200);

@@ -80,10 +80,11 @@ function start(transport, dirs, opts = {}) {
     const count = vault.exportReadable(f, stripActive);
     return toSave(f, 'WellWrite journal.html', 'text/html', { count });
   });
-  handle('quotes:export', text => {
+  const exportName = n => (/^WellWrite [\w ’'-]{1,40}\.txt$/.test(String(n || '')) ? String(n) : 'WellWrite quotes.txt');
+  handle('quotes:export', (text, name) => {
     const f = tmpFile('quotes.txt');
     fs.writeFileSync(f, '﻿' + String(text).replace(/\n/g, '\r\n'));
-    return toSave(f, 'WellWrite quotes.txt', 'text/plain', {});
+    return toSave(f, exportName(name), 'text/plain', {});
   });
   // A file you picked (a backup to restore), copied in so it can be read.
   handle('android:stageFile', (name, b64) => {

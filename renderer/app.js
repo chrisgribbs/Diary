@@ -69,6 +69,8 @@ const state = {
   trail: [],            // entries visited by following links, for "Back"
   quotes: [],           // [{ id, text, author, source, fav }]
   quoteSkip: {},        // date -> how many times "Another" was pressed today
+  prayerSkip: {},       // date -> how many times "Another" was pressed on today's prayer
+  prayerRemoved: {},    // date -> the prayer you just said was "Not for me" (so it can be undone)
   promptSkip: {},       // date -> how many times "Another question" was pressed
   mode: (() => { try { return localStorage.getItem('mode') || 'journal'; } catch { return 'journal'; } })(),
   bible: null,          // { plans, translations, state: { plan, translation, start, done } }
@@ -1726,13 +1728,14 @@ const readings = { file: null, packs: [] };
 /** Built-in psalms and reflections count as "your" writing for the weekly Reflection, prayers and blessings. */
 const ownish = q => q.mine || q.pack === 'wellwrite';
 /** Each built-in collection has its own switch in Settings. */
-const PACK_SETTING = { wellwrite: 'builtinReadings', classics: 'classicsReadings' };
+const PACK_SETTING = { wellwrite: 'builtinReadings', classics: 'classicsReadings', prayers: 'prayersReadings' };
 const packOn = id => state.settings[PACK_SETTING[id]] !== false;
 async function syncReadings({ quiet = true } = {}) {
   let changed = 0;
   try {
     const packs = await api.builtinReadings();
     readings.packs = packs.map(p => ({ id: p.id, name: p.name, about: p.about, count: p.items.length }));
+    readings.originals = new Set(packs.flatMap(p => p.items.map(it => it.text)));
     for (const p of packs) {
       const r = await api.syncReadings(p.id, packOn(p.id) ? p.items : [], p.retired);
       state.quotes = r.quotes; changed += r.added + r.updated + r.removed;
@@ -1844,12 +1847,16 @@ function yearPlan(year) {
   const nextReflection = roundRobin(longs.length ? longs : state.quotes.filter(q => ownish(q) && ['', 'reflection', 'fieldnote', 'psalm', 'poem'].includes(q.kind || '')), 'r' + year);
   const weekSeasons = new Map();   // week key → { season, occasions, number }
   const recent = [];
+  const prayers = new Map(), recentPrayers = [];
+  const nextPrayer = roundRobin(dailyPrayerPool(), 'p' + year);
   for (let d = `${year}-01-01`; d.startsWith(String(year)); d = addDays(d, 1)) {
     const s = seasonOn(d);
     if (!s) break;
     const occ = occasionsOn(d);
     const q = nextQuote(s, x => (x.author === recent[recent.length - 1] ? 200 : recent.includes(x.author) ? 30 : 0), occ);
     if (q) { quotes.set(d, q); recent.push(q.author); if (recent.length > 3) recent.shift(); }
+    const pr = nextPrayer(s, x => (x.author === recentPrayers[recentPrayers.length - 1] ? 200 : recentPrayers.includes(x.author) ? 30 : 0), occ);
+    if (pr) { prayers.set(d, pr); recentPrayers.push(pr.author); if (recentPrayers.length > 3) recentPrayers.shift(); }
     const wk = window.WellWriteWeeks && window.WellWriteWeeks.weekOf(s);
     const wkKey = wk && `${s.id}|${wk.index}`;
     if (wk && !weeks.has(wkKey)) {
@@ -1873,7 +1880,7 @@ function yearPlan(year) {
       if (best) { taken.add(best); weeks.get(best)[slot] = q; }
     }
   }
-  const out = { quotes, weeks };
+  const out = { quotes, weeks, prayers };
   yearPlans.set(k, out);
   return out;
 }
@@ -1893,6 +1900,71 @@ function quoteFor(iso) {
   if (!pool.length) return null;
   const n = dayNumber(iso) + (state.quoteSkip[iso] || 0);
   return pool[((n % pool.length) + pool.length) % pool.length];
+}
+
+/* --- a prayer for each day: the Daily prayers, and prayers others have shared with you --- */
+/** Your own prayers have their week on the weekly page; every other prayer can be a day's prayer. */
+const isDailyPrayer = q => q.kind === 'prayer' && !ownish(q);
+const dailyPrayerPool = () => state.quotes.filter(isDailyPrayer);
+function prayerFor(iso) {
+  const pool = dailyPrayerPool();
+  if (!pool.length) return null;
+  const skip = state.prayerSkip[iso] || 0;
+  const season = seasonOn(iso);
+  if (season) {
+    const planned = yearPlan(+iso.slice(0, 4)).prayers.get(iso);
+    if (!skip && planned) return planned;
+    // "Another": the prayers that suit the day, in turn
+    const occ = occasionsOn(iso);
+    const fit = pool.filter(q => q !== planned && fitsOccasion(q, occ)).sort((a, b) => strHash(a.id) - strHash(b.id));
+    if (fit.length) return fit[(season.dayIndex + skip - 1 + fit.length) % fit.length];
+  }
+  const sorted = [...pool].sort((a, b) => strHash(a.id) - strHash(b.id));
+  const n = dayNumber(iso) + skip;
+  return sorted[((n % sorted.length) + sorted.length) % sorted.length];
+}
+/** The short credit a prayer's licence asks for, shown under it; the full credit is a click away. */
+const shortCredit = q => (q.credit || '').split('\n').find(l => /used with permission|public domain|shared by/i.test(l)) || '';
+const LICENCE_NAMES = { 'public-domain': 'Public domain', 'cc-by-nc-nd': 'CC BY-NC-ND 4.0', own: 'Shared by the writer' };
+function prayerCard(iso, where) {
+  if (state.settings.dailyPrayer === false || hiddenQuoteDays.has('p' + iso)) return null;
+  const btn = (label, fn, cls = 'q-btn') => el('button', { type: 'button', class: cls, onclick: fn }, label);
+  const gone = state.prayerRemoved[iso];
+  if (gone) {
+    return el('figure', { class: 'quote-card prayer ' + where },
+      el('p', { class: 'q-season' }, 'Prayer for today'),
+      el('p', { class: 'q-gone' }, `“${gone.title || gone.text.slice(0, 40) + '…'}” won’t come again.`),
+      el('div', { class: 'q-actions' },
+        btn('Undo', async () => { delete state.prayerRemoved[iso]; await saveQuotes([...state.quotes, gone]); refreshQuote(); }, 'q-btn primary'),
+        btn('Show another', () => { delete state.prayerRemoved[iso]; refreshQuote(); })));
+  }
+  const q = prayerFor(iso);
+  if (!q) return null;
+  const season = seasonOn(iso);
+  const liked = !!q.fav;
+  const credit = shortCredit(q);
+  const long = q.text.split('\n').length > 12 || q.text.length > 700;   // long prayers start folded, so the page stays yours
+  return el('figure', { class: 'quote-card prayer ' + where },
+    el('p', { class: 'q-season' }, 'Prayer for today' + (season ? ` · ${season.name}, day ${season.dayIndex + 1}` : '')),
+    q.title ? el('p', { class: 'q-title' }, q.title) : null,
+    el('blockquote', { class: long ? 'folded' : '' }, q.text),
+    long ? el('button', { type: 'button', class: 'q-btn q-more', onclick: e => { e.target.previousElementSibling.classList.remove('folded'); e.target.remove(); } }, 'Read the whole prayer') : null,
+    el('figcaption', {}, '— ', authorLink(q.author), q.source ? ', ' : '', q.source ? el('cite', {}, q.source) : null),
+    q.credit ? el('details', { class: 'q-credit' }, el('summary', {}, credit || 'Credit'),
+      el('p', {}, ...q.credit.split('\n').flatMap((l, i) => (i ? [el('br'), l] : [l]))),
+      q.licence ? el('p', {}, 'Licence: ' + LICENCE_NAMES[q.licence]) : null) : null,
+    el('div', { class: 'q-actions' },
+      btn('Pray and write', () => writeAboutQuote(q, iso), 'q-btn primary'),
+      el('button', { type: 'button', class: 'q-btn q-like' + (liked ? ' on' : ''), 'aria-pressed': String(liked),
+        title: liked ? 'You like this prayer: it’s in your favourites and in the prayers you can share' : 'Keep this prayer: it goes in your favourites and in the prayers you can share',
+        onclick: async () => { await saveQuotes(state.quotes.map(x => (x.id === q.id ? { ...x, fav: !x.fav } : x))); refreshQuote(); } }, liked ? '♥ You like this' : '♡ I like this'),
+      btn('Not for me', async () => {
+        state.prayerRemoved[iso] = q;
+        await saveQuotes(state.quotes.filter(x => x.id !== q.id));
+        refreshQuote();
+      }),
+      dailyPrayerPool().length > 1 ? btn('Another', () => { state.prayerSkip[iso] = (state.prayerSkip[iso] || 0) + 1; refreshQuote(); }) : null,
+      btn('Hide today', () => { hideQuoteFor('p' + iso); refreshQuote(); }, 'q-btn subtle')));
 }
 
 const hiddenQuoteDays = (() => { try { return new Set(JSON.parse(localStorage.getItem('quoteHidden') || '[]')); } catch { return new Set(); } })();
@@ -1955,6 +2027,7 @@ async function fillDaily(box, iso, where) {
   const cards = [];
   if (choice === 'quote' || choice === 'both') cards.push(quoteCard(iso, where));
   if (choice === 'verse' || choice === 'both') cards.push(verseCard(await getVerse(iso), iso, where));
+  if (choice !== 'none') cards.push(prayerCard(iso, where));   // "Nothing" means nothing
   if (token !== dailyToken) return; // a newer render started meanwhile
   const shown = cards.filter(Boolean);
   box.replaceChildren(...shown);
@@ -1971,6 +2044,8 @@ function renderQuoteSlot() {
   if (q && used.includes(q.text.split('\n')[0].slice(0, 40))) hideQuoteFor(c.date);
   const v = state.verseCache[c.date + ((state.bible && state.bible.state.translation) || 'web')];
   if (v && used.includes(v.text.split('\n')[0].slice(0, 30))) hideQuoteFor('v' + c.date);
+  const pr = state.settings.dailyPrayer !== false && prayerFor(c.date);
+  if (pr && used.includes(pr.text.split('\n')[0].slice(0, 40))) hideQuoteFor('p' + c.date);
   fillDaily(slot, c.date, 'in-sheet');
 }
 
@@ -2031,10 +2106,20 @@ const metaLine = l => {
   const kind = Object.keys(KIND_NAMES).find(k => parts.some(p => p === k || p === KIND_NAMES[k].toLowerCase())) || '';
   return { kind, mine: parts.some(p => /^(mine|my own( writing)?|by me)$/.test(p)) };
 };
-/** Reads the Themes / Title / Kind lines after a quote into one object; null if the line is none of them. */
+/** "Licence: Public domain" → 'public-domain' (the names WellWrite writes, or the short codes). */
+const licenceId = t => {
+  const v = t.trim().toLowerCase();
+  return v.startsWith('public domain') || v === 'public-domain' ? 'public-domain'
+    : /^cc[ -]by[ -]nc[ -]nd/.test(v) ? 'cc-by-nc-nd' : /^(shared by the writer|own)$/.test(v) ? 'own' : '';
+};
+/** Reads the Themes / Title / Kind / Credit / Licence lines after a quote into one object; null if the line is none of them. */
 const quoteMeta = (l, meta) => {
   const th = themesLine(l);
   if (th) { meta.themes = th; return true; }
+  let c = l.match(/^credit:\s*(.+)$/i);
+  if (c) { meta.credit = meta.credit ? meta.credit + '\n' + c[1].trim() : c[1].trim(); return true; }
+  c = l.match(/^licen[cs]e:\s*(.+)$/i);
+  if (c) { meta.licence = licenceId(c[1]); return true; }
   const m = metaLine(l);
   if (m) { Object.assign(meta, m); return true; }
   return false;
@@ -2069,15 +2154,17 @@ function parsePastedQuotes(text, defAuthor = '', defSource = '') {
     if (source && source.length > 40 && /^[^,“”]{3,}:\s/.test(source)) source = source.slice(0, source.indexOf(':')).trim();
     if (source) source = source.replace(/\s*[-–(]\s*(revised|new|expanded|updated|anniversary)[^)]*\)?$/i, '').trim();
     if (t) out.push({ text: trimCutShort(t), author: author || defAuthor, source, themes: meta.themes || [],
-      ...(meta.kind ? { kind: meta.kind } : {}), ...(meta.title ? { title: meta.title } : {}), ...(meta.mine ? { mine: true } : {}), ...(meta.occasion ? { occasion: meta.occasion } : {}) });
+      ...(meta.kind ? { kind: meta.kind } : {}), ...(meta.title ? { title: meta.title } : {}), ...(meta.mine ? { mine: true } : {}), ...(meta.occasion ? { occasion: meta.occasion } : {}),
+      ...(meta.credit ? { credit: meta.credit } : {}), ...(meta.licence ? { licence: meta.licence } : {}) });
   };
   // Blocks with no writer line: one quote per block (an inline "text — Writer" works too).
   const pushBlocks = blockLines => {
     for (const block of blockLines.join('\n').split(/\n\s*\n/)) {
       const ls = block.split('\n').map(l => l.trim()).filter(l => l && !isJunk(l));
       if (!ls.length) continue;
-      const meta = {};
-      while (ls.length > 1 && quoteMeta(ls[ls.length - 1], meta)) ls.pop();
+      const meta = {}, metaLines = [];
+      while (ls.length > 1 && quoteMeta(ls[ls.length - 1], {})) metaLines.unshift(ls.pop());
+      for (const l of metaLines) quoteMeta(l, meta);   // in order, top to bottom
       const m = ls.length === 1 && inlineAttribution(ls[0]);
       if (m) { const [author, source = ''] = splitAttribution(m[1]); push([m[0]], author, source, meta); }
       else push(ls, defAuthor, defSource, meta);
@@ -2308,7 +2395,7 @@ function manageQuotes() {
         el('button', { type: 'button', class: 'theme-chip' + (!quoteThemeFilter ? ' on' : ''), onclick: () => { quoteThemeFilter = ''; draw(); } }, 'All'),
         ...themes.map(([t, n]) => el('button', { type: 'button', class: 'theme-chip' + (quoteThemeFilter === t ? ' on' : ''),
           onclick: () => { quoteThemeFilter = quoteThemeFilter === t ? '' : t; draw(); } }, t, el('small', {}, String(n)))),
-        ...[['wellwrite', 'Chris Gribble’s writing'], ['classics', 'Classics of formation'], ['file', 'From your readings file']].map(([id, label]) => state.quotes.some(q => q.pack === id)
+        ...[['wellwrite', 'Chris Gribble’s writing'], ['classics', 'Classics of formation'], ['prayers', 'Daily prayers'], ['file', 'From your readings file']].map(([id, label]) => state.quotes.some(q => q.pack === id)
           ? el('button', { type: 'button', class: 'theme-chip mine' + (quoteThemeFilter === '\u0000pack:' + id ? ' on' : ''), onclick: () => { quoteThemeFilter = quoteThemeFilter === '\u0000pack:' + id ? '' : '\u0000pack:' + id; draw(); } },
             label, el('small', {}, String(state.quotes.filter(q => q.pack === id).length))) : null),
         state.quotes.some(q => q.mine)
@@ -2409,7 +2496,8 @@ function manageQuotes() {
         el('button', { type: 'button', class: 'btn-ink', onclick: add }, 'Add quote'),
         el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); pasteQuotes(); } }, 'Paste several…'),
         el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); importQuotesFile(); } }, 'Import from a file…'),
-        el('button', { type: 'button', class: 'btn-link', onclick: exportQuotes }, 'Export')),
+        el('button', { type: 'button', class: 'btn-link', onclick: exportQuotes }, 'Export'),
+        el('button', { type: 'button', class: 'btn-link', onclick: () => { done(); sharePrayers(); } }, 'Share prayers…')),
       el('h3', {}, 'Your collection'),
       find, themeBar, summary, list,
       el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-ink', onclick: () => done() }, 'Done')));
@@ -2423,8 +2511,68 @@ function quotesAsText(list) {
     q.title ? 'Title: ' + q.title : null,
     q.kind || q.mine ? 'Kind: ' + [q.kind ? KIND_NAMES[q.kind] : null, q.mine ? 'my own writing' : null].filter(Boolean).join(', ') : null,
     q.occasion && window.WellWriteSeasons ? 'Occasion: ' + window.WellWriteSeasons.OCCASIONS[q.occasion] : null,
-    (q.themes || []).length ? 'Themes: ' + q.themes.join(', ') : null]
+    (q.themes || []).length ? 'Themes: ' + q.themes.join(', ') : null,
+    ...(q.credit || '').split('\n').filter(Boolean).map(l => 'Credit: ' + l),
+    q.licence ? 'Licence: ' + LICENCE_NAMES[q.licence] : null]
     .filter(Boolean).join('\n')).join('\n\n\n') + '\n';
+}
+
+/* --- prayer packs: the prayers you like and your own, in a file anyone can import --- */
+/**
+ * Which prayers may go in a pack, and on what terms. Shared prayers keep their credit and licence:
+ *  - your own prayers go as "shared by the writer", under the name you give
+ *  - public-domain prayers, and prayers shared with you by their writer, go as they are
+ *  - CC BY-NC-ND prayers go only word for word: their licence allows no changes
+ *  - anything else (quotes from books, prayers with no known licence) stays with you
+ */
+function shareable(q, name) {
+  if (q.kind !== 'prayer') return null;
+  if (q.mine) return { ...q, author: name || q.author || 'Anonymous', mine: false, fav: false, licence: 'own',
+    credit: `Shared by ${name || q.author || 'its writer'} through WellWrite.` };
+  if (q.pack === 'wellwrite') return null;   // already in everyone's WellWrite
+  if (q.licence === 'cc-by-nc-nd' && q.pack && readings.originals && !readings.originals.has(q.text)) return null;   // changed
+  if (['public-domain', 'cc-by-nc-nd', 'own'].includes(q.licence)) return { ...q, mine: false, fav: false };
+  return null;
+}
+function sharePrayers() {
+  return openDialog((f, done) => {
+    const own = state.quotes.filter(q => q.kind === 'prayer' && q.mine);
+    const liked = state.quotes.filter(q => q.kind === 'prayer' && q.fav && !q.mine);
+    const name = el('input', { type: 'text', maxlength: 80, value: state.settings.shareName || [...new Set(own.map(q => q.author).filter(Boolean))][0] || '', placeholder: 'Your name, or leave blank' });
+    const box = (label, n, on) => { const c = el('input', { type: 'checkbox' }); c.checked = on && n > 0; c.disabled = !n; return [c, el('label', { class: 'row' }, el('div', {}, label, el('small', {}, `${n} prayer${n === 1 ? '' : 's'}`)), c)]; };
+    const [likedBox, likedRow] = box('Prayers you like', liked.length, true);
+    const [ownBox, ownRow] = box('Your own prayers', own.length, false);
+    const note = el('p', { class: 'muted' });
+    const pick = () => {
+      const who = name.value.trim();
+      const all = [...(likedBox.checked ? liked : []), ...(ownBox.checked ? own : [])];
+      const ok = all.map(q => shareable(q, who)).filter(Boolean);
+      return { ok, left: all.length - ok.length };
+    };
+    const count = () => { const { ok, left } = pick();
+      note.textContent = `${ok.length} prayer${ok.length === 1 ? '' : 's'} will go in the pack, each with its credit.` +
+        (left ? ` ${left} can’t be shared: changed copies of licensed prayers (their licence allows no changes) and prayers with no known licence.` : ''); };
+    for (const c of [likedBox, ownBox]) c.addEventListener('change', count);
+    name.addEventListener('input', count);
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const { ok } = pick();
+      if (!ok.length) { toast('Choose some prayers to share'); return; }
+      await updateSetting({ shareName: name.value.trim() });
+      try {
+        const r = await api.exportQuotes(quotesAsText(ok), 'WellWrite prayers.txt');
+        if (r) { done(); toast(`Saved ${ok.length} prayers. Send the file to a friend: they choose Your quotes → Import from a file.`); }
+      } catch (x) { toast(x.message); }
+    });
+    f.append(el('h2', {}, 'Share prayers'),
+      el('p', {}, 'Make a prayer pack: a file with the prayers you choose, which anyone with WellWrite can add to their own prayers (Your quotes → Import from a file). Every prayer keeps its credit and licence.'),
+      likedRow, ownRow,
+      el('label', { class: 'row' }, el('div', {}, 'Your name', el('small', {}, 'Shown with your own prayers.')), name),
+      note,
+      el('div', { class: 'actions' }, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Cancel'),
+        el('button', { type: 'submit', class: 'btn-ink' }, 'Save the pack')));
+    count();
+  });
 }
 async function exportQuotes() {
   try {
@@ -3516,6 +3664,9 @@ function prayerControls(again) {
 async function pauseForPrayer(key) {
   let p;
   try { p = await api.prayerPause(key || null, null); } catch (x) { toast(x.message); return; }
+  // In the morning, the day's prayer.
+  const today = state.unlocked && p.key === 'morning' && state.settings.dailyPrayer !== false ? prayerFor(todayISO()) : null;
+  if (today) p.prayer = { text: today.text, source: [today.author, shortCredit(today)].filter(Boolean).join(' · ') };
   await openDialog((f, done) => {
     f.classList.add('prayer-pause');
     f.append(
@@ -3631,6 +3782,8 @@ function openSettings(section) {
       panel('readings', 'Quotes & readings', 'The quote and question each day, your own writing for each week, and the week pictures.',
         row('Your quotes', 'Add, edit and theme quotes, and choose whether they follow the Christian year or a theme each month.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageQuotes(); } }, 'Your quotes')),
         row('Above your journal', ANDROID ? 'What appears at the top of each entry.' : 'What appears at the top of each entry. You can also change it with “Above journal” at the top right.', select(dailyChoice(), [['both', 'Quote and verse'], ['quote', 'Quote of the day'], ['verse', 'Verse of the day'], ['none', 'Nothing']], async v => { await updateSetting({ dailyCard: v, showQuote: true }); refreshQuote(); })),
+        row('Prayer for today', 'A prayer for each day under the quote and verse, following the Christian year. Say whether you like each one: the ones you like are kept, the ones that aren’t for you don’t come again.',
+          check(state.settings.dailyPrayer !== false, async v => { await updateSetting({ dailyPrayer: v }); refreshQuote(); })),
         readingsControls(() => openSettings('readings'))),
 
       panel('prayer', 'Prayer bell', 'A gentle bell at the hours you choose, inviting you to stop and pray, as a rhythm through the day. Tap it for a short verse and prayer. It’s set on each device separately.',

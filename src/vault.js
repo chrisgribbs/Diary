@@ -21,6 +21,9 @@ const QUOTE_KINDS = ['', 'poem', 'psalm', 'prayer', 'blessing', 'reflection', 'f
 const OCCASION_IDS = ['ashwednesday', 'palmsunday', 'maundythursday', 'goodfriday', 'holysaturday', 'easterday', 'ascension', 'pentecostday',
   'christmaseve', 'christmasday', 'newyear', 'epiphanyday', 'allsaints', 'anzacday', 'mothersday', 'fathersday',
   'advent', 'christmas', 'epiphany', 'lent', 'holyweek', 'easter', 'pentecost', 'endofyear', 'newbeginnings', 'birthday'];
+// Whether a reading may be shared, and on what terms (shown with it, and kept when it's shared in a prayer pack):
+// 'public-domain'; 'cc-by-nc-nd' (Creative Commons: credit, no changes, non-commercial); 'own' (shared by its writer).
+const LICENCES = ['', 'public-domain', 'cc-by-nc-nd', 'own'];
 const PICTURE_KEY_RE = /^[a-z]{2,20}-\d{1,2}$/;
 const KDF = { N: 1 << 17, r: 8, p: 1, keyLen: 32 };
 const MAXMEM = 512 * 1024 * 1024;
@@ -262,6 +265,8 @@ class Vault {
         mine: !!q.mine,
         pack: /^[a-z0-9]{1,20}$/.test(q.pack || '') ? q.pack : '',
         occasion: OCCASION_IDS.includes(q.occasion) ? q.occasion : '',
+        credit: String(q.credit || '').replace(/\r\n?/g, '\n').trim().slice(0, 600),
+        licence: LICENCES.includes(q.licence) ? q.licence : '',
       });
       if (out.length >= 5000) break;
     }
@@ -359,7 +364,8 @@ class Vault {
       const id = `${packId}-${k}`;
       const cur = byId.get(id);
       const fresh = { text: it.text, author: it.author || '', source: it.source || '', title: it.title || '', kind: it.kind || '',
-        themes: it.themes || [], mine: !!it.mine, pack: packId, id, fav: (cur && cur.fav) || fav.has(k), occasion: it.occasion || '' };
+        themes: it.themes || [], mine: !!it.mine, pack: packId, id, fav: (cur && cur.fav) || fav.has(k), occasion: it.occasion || '',
+        credit: it.credit || '', licence: it.licence || '' };
       if (!cur) {
         if (was[k] && !fav.has(k)) continue;           // you deleted it earlier
         quotes.push(fresh); added++; touched.add(id);

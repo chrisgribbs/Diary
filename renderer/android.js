@@ -176,7 +176,7 @@
       if (f.size > MAX) throw new Error('That file is too large to import');
       return { name: f.name, text: await readText(f) };
     },
-    exportQuotes: async text => { const r = await saved(await engine('quotes:export', text)); return r && r.file; },
+    exportQuotes: async (text, name) => { const r = await saved(await engine('quotes:export', text, name)); return r && r.file; },
     getSettings: () => engine('settings:get'),
     setSettings: s => engine('settings:set', s),
     showDataFolder: async () => true,

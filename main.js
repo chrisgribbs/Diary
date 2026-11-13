@@ -183,9 +183,10 @@ function handle(name, fn) {
 for (const [name, fn] of backend.handlers) handle(name, fn);
 
 handle('wp:open', url => { if (backend.wpLinkOk(url)) shell.openExternal(url); return true; });
-handle('quotes:export', async text => {
+const exportName = n => (/^WellWrite [\w ’'-]{1,40}\.txt$/.test(String(n || '')) ? String(n) : 'WellWrite quotes.txt');
+handle('quotes:export', async (text, name) => {
   const r = await dialog.showSaveDialog(win, {
-    title: 'Save your quotes', defaultPath: path.join(app.getPath('documents'), 'WellWrite quotes.txt'),
+    title: /prayers/.test(name || '') ? 'Save your prayer pack' : 'Save your quotes', defaultPath: path.join(app.getPath('documents'), exportName(name)),
     filters: [{ name: 'Text', extensions: ['txt'] }],
   });
   if (r.canceled || !r.filePath) return null;

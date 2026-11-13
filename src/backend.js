@@ -2,6 +2,9 @@
 // Everything WellWrite does behind the page, shared by the Windows app (main.js) and the Android app
 // (android/node/main.js). Each platform supplies the few things that differ: where the journal lives,
 // how secrets are protected on this device, how to fetch from the web, and how to talk to the page.
+// WellWrite is free. If it is ever sold, set this to true: built-in readings licensed for non-commercial use only
+// (the CC BY-NC-ND daily prayers; see src/readings/PRAYERS-LICENCE.md) then stop loading.
+const COMMERCIAL = false;
 const path = require('path');
 const fs = require('fs');
 const { Vault } = require('./vault');
@@ -19,7 +22,7 @@ const ROOT = path.join(__dirname, '..');
 const APP_VERSION = require('../package.json').version;
 
 const DEFAULT_SETTINGS = {
-  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, classicsReadings: true, readingsFile: '', weekPictures: true, shownBoth: true,
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, classicsReadings: true, prayersReadings: true, dailyPrayer: true, shareName: '', readingsFile: '', weekPictures: true, shownBoth: true,
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
   // the prayer bell (prayer.js), per device
   prayerBell: false, prayerTimes: {}, prayerHoursOn: {}, prayerDays: 'every', prayerSound: 'bell', prayerMutedOn: '', startWithWindows: false, prayerTrayTold: false,
@@ -81,6 +84,7 @@ function createBackend(platform) {
         clean[k] = v; continue;
       }
       if (k === 'prayerMutedOn' && s[k] && !/^\d{4}-\d{2}-\d{2}$/.test(s[k])) continue;
+      if (k === 'shareName') { clean[k] = String(s[k]).replace(/\s+/g, ' ').trim().slice(0, 80); continue; }
       clean[k] = s[k];
     }
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(clean, null, 2));
@@ -328,12 +332,13 @@ function createBackend(platform) {
   // ---------- quotes and readings ----------
   handle('quotes:get', () => vault.getQuotes());
   handle('quotes:set', list => vault.setQuotes(list));
-  // Every built-in collection in src/readings: Chris Gribble's writing, and the classics of Christian formation.
+  // Every built-in collection in src/readings: Chris Gribble's writing, the classics of Christian formation, and the daily prayers.
   handle('readings:builtin', () => {
     const dir = path.join(__dirname, 'readings');
     return fs.readdirSync(dir).filter(f => f.endsWith('.json')).sort().map(f => {
       const p = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
-      return { id: p.id, name: p.name, about: p.about || '', version: p.version, items: p.items, retired: p.retired || [] };
+      const items = (p.items || []).filter(it => !COMMERCIAL || it.licence !== 'cc-by-nc-nd');
+      return { id: p.id, name: p.name, about: p.about || '', version: p.version, items, retired: p.retired || [] };
     }).filter(p => /^[a-z0-9]{1,20}$/.test(p.id || ''));
   });
   // Your readings file: chosen once, read again whenever it changes.
@@ -434,4 +439,4 @@ function stripActive(html) {
     .replace(/(href|src)\s*=\s*(["'])\s*javascript:[^"']*\2/gi, '');
 }
 
-module.exports = { createBackend, stripActive, DEFAULT_SETTINGS, APP_VERSION, ROOT };
+module.exports = { COMMERCIAL, createBackend, stripActive, DEFAULT_SETTINGS, APP_VERSION, ROOT };

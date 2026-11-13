@@ -91,3 +91,45 @@ console.log('reading pack tests passed');
   fs2.rmSync(dir, { recursive: true, force: true });
   console.log('classics pack tests passed:', cl.items.length);
 }
+
+// the daily prayers: 365, one for each day, each with its credit and licence, and the special days covered
+{
+  const fs2 = require('fs'), os2 = require('os'), path2 = require('path');
+  const { Vault: V } = require('../src/vault');
+  const pr = JSON.parse(fs2.readFileSync(path2.join(__dirname, '../src/readings/prayers.json'), 'utf8'));
+  assert.equal(pr.id, 'prayers');
+  assert.equal(pr.items.length, 365);
+  assert.equal(new Set(pr.items.map(it => it.text)).size, 365, 'no prayer twice');
+  for (const it of pr.items) {
+    assert.ok(it.text && it.author && it.kind === 'prayer' && it.themes.includes('Prayer'), it.title);
+    assert.ok(['public-domain', 'cc-by-nc-nd'].includes(it.licence), 'licence named: ' + it.title);
+    assert.ok(/acollectionofprayers\.com/.test(it.credit) && it.credit.length <= 600, 'credit and link: ' + it.title);
+    if (it.licence === 'cc-by-nc-nd') assert.ok(it.credit.includes('Prayer from www.acollectionofprayers.com. Used with permission.'), 'the credit its licence asks for: ' + it.title);
+    assert.ok(!/all rights reserved/i.test(it.text + it.credit), 'nothing marked all rights reserved: ' + it.title);
+    assert.ok(!/https?:/.test(it.source), 'source is a name, not a link: ' + it.title);
+  }
+  for (const day of ['christmaseve', 'christmasday', 'epiphanyday', 'ashwednesday', 'palmsunday', 'maundythursday', 'goodfriday', 'holysaturday', 'easterday', 'pentecostday'])
+    assert.equal(pr.items.filter(it => it.occasion === day).length, 1, 'one prayer for ' + day);
+  // they load, and keep their credit and licence
+  const dir = fs2.mkdtempSync(path2.join(os2.tmpdir(), 'wellwrite-pr-'));
+  const v4 = new V(path2.join(dir, 'j')); v4.create('river-stone');
+  const r4 = v4.syncPack('prayers', pr.items, []);
+  assert.equal(r4.added, 365);
+  const got = v4.getQuotes().filter(q => q.pack === 'prayers');
+  assert.equal(got.length, 365);
+  assert.ok(got.every(q => q.credit && q.licence), 'credit and licence kept');
+  // "I like this" is a favourite; "Not for me" deletes it, and it doesn't come back when the pack updates
+  const [a, b] = got;
+  v4.setQuotes(v4.getQuotes().map(q => (q.id === a.id ? { ...q, fav: true } : q)).filter(q => q.id !== b.id));
+  v4.syncPack('prayers', pr.items, []);
+  assert.ok(v4.getQuotes().find(q => q.id === a.id).fav, 'liked stays liked');
+  assert.ok(!v4.getQuotes().some(q => q.id === b.id), 'not for me stays gone');
+  // a prayer shared with you (imported from a pack) keeps its terms; unknown licences are dropped
+  v4.setQuotes([...v4.getQuotes(), { text: 'A friend’s prayer.', author: 'Sam', kind: 'prayer', licence: 'own', credit: 'Shared by Sam through WellWrite.' },
+    { text: 'Odd.', author: 'X', licence: 'mit' }]);
+  const sam = v4.getQuotes().find(q => q.author === 'Sam');
+  assert.equal(sam.licence, 'own'); assert.equal(sam.credit, 'Shared by Sam through WellWrite.');
+  assert.equal(v4.getQuotes().find(q => q.author === 'X').licence, '');
+  fs2.rmSync(dir, { recursive: true, force: true });
+  console.log('daily prayers pack tests passed:', pr.items.length);
+}

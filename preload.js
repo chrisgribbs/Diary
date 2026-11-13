@@ -60,7 +60,7 @@ contextBridge.exposeInMainWorld('wellwrite', {
   onReadingsChanged: fn => ipcRenderer.on('readings:changed', () => fn()),
   setQuotes: list => call('quotes:set', list),
   pickQuotesFile: () => call('quotes:pickFile'),
-  exportQuotes: text => call('quotes:export', text),
+  exportQuotes: (text, name) => call('quotes:export', text, name),
   getSettings: () => call('settings:get'),
   setSettings: s => call('settings:set', s),
   showDataFolder: () => call('app:showDataFolder'),
