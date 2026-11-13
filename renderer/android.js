@@ -145,6 +145,7 @@
     wpPublish: (entryId, payload) => engine('wp:publish', entryId, payload),
     wpOpen: url => engine('wp:open', url),
     apiBibleStatus: () => engine('apibible:status'),
+    apiBibleSharedDefaults: () => engine('apibible:sharedDefaults'),
     apiBibleSetKey: key => engine('apibible:setKey', key),
     apiBibleForget: () => engine('apibible:forget'),
     apiBibleList: language => engine('apibible:list', language),

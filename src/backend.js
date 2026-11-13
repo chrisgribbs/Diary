@@ -191,7 +191,11 @@ function createBackend(platform) {
   handle('categories:move', (fromId, toId) => vault.recategorize(fromId, toId || ''));
 
   // ---------- Bible versions: WEB and KJV built in; more from API.Bible with your own key ----------
+  // WellWrite's shared Bible relay (relay/worker.mjs): its address is put in at build time (src/relay-config.json).
+  const bibleRelay = platform.bibleRelay !== undefined ? platform.bibleRelay
+    : process.env.WELLWRITE_BIBLE_RELAY || (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'relay-config.json'), 'utf8')).bible || ''; } catch { return ''; } })();
   const apiBible = new ApiBible({
+    relay: /^https:\/\/[\w.-]+(\/[\w./-]*)?$/.test(bibleRelay) || /^http:\/\/127\.0\.0\.1:\d+$/.test(bibleRelay) ? bibleRelay : '',
     ...secretStore('apibible.json'),
     ...(platform.apiBibleBase ? { base: platform.apiBibleBase, fums: platform.apiBibleBase + '/fums' } : {}),
   });
@@ -252,6 +256,7 @@ function createBackend(platform) {
   });
   handle('bible:verses', (refs, translation) => Promise.all((Array.isArray(refs) ? refs.slice(0, 20) : []).map(r => verseIn(String(r), translation))));
   handle('apibible:status', () => apiBible.status());
+  handle('apibible:sharedDefaults', () => apiBible.sharedDefaults());
   handle('apibible:setKey', key => apiBible.setKey(key));
   handle('apibible:forget', () => { const st = vault.isUnlocked() ? vault.getBible() : null; if (st && apiId(st.translation)) vault.setBible({ ...st, translation: 'web' }); return apiBible.forget(); });
   handle('apibible:list', language => apiBible.list(typeof language === 'string' ? language.slice(0, 8) : 'eng'));

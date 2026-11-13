@@ -1,0 +1,6 @@
+# WellWrite's Bible relay. Put online by .github/workflows/release.yml (needs the CLOUDFLARE_API_TOKEN,
+# CLOUDFLARE_ACCOUNT_ID and APIBIBLE_KEY repository secrets).
+name = "wellwrite-bible"
+main = "worker.mjs"
+compatibility_date = "2026-06-01"
+workers_dev = true

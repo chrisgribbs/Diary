@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node test/vault.test.js && node test/backup.test.js && node test/migrate.test.js && node test/bible.test.js && node test/trust.test.js && node test/seasons.test.js && node test/packs.test.js && node test/apibible.test.js && node test/android.test.js && node test/changelog.test.js && node test/sync.test.js && node test/sync-drive.test.js && node test/sync-quotes.test.js && node test/prayer.test.js",
+    "test": "node test/vault.test.js && node test/backup.test.js && node test/migrate.test.js && node test/bible.test.js && node test/trust.test.js && node test/seasons.test.js && node test/packs.test.js && node test/apibible.test.js && node test/android.test.js && node test/changelog.test.js && node test/sync.test.js && node test/sync-drive.test.js && node test/sync-quotes.test.js && node test/prayer.test.js && node test/relay.test.js",
     "assets": "node -e \"const f=require('fs');f.copyFileSync('node_modules/dompurify/dist/purify.min.js','renderer/purify.min.js')\"",
     "dist": "electron-builder --win nsis --x64 --publish never",
     "dist:portable": "electron-builder --win portable --x64 --publish never",

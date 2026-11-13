@@ -78,8 +78,9 @@ class ApiBible {
    * file: where the (encrypted) key, chosen versions and device id live.
    * protect/unprotect: string encryption (safeStorage); fetch: (url, opts) → Response.
    */
-  constructor({ file, protect, unprotect, fetch, available = () => true, base = BASE, fums = FUMS }) {
-    Object.assign(this, { file, protect, unprotect, fetchImpl: fetch, available, base, fumsUrl: fums });
+  constructor({ file, protect, unprotect, fetch, available = () => true, base = BASE, fums = FUMS, relay = '' }) {
+    // relay: WellWrite's shared Bible relay (relay/worker.mjs), used when you haven't added a key of your own.
+    Object.assign(this, { file, protect, unprotect, fetchImpl: fetch, available, base, fumsUrl: fums, relay: String(relay || '').replace(/\/+$/, '') });
     this.cache = new Map();
     this.session = crypto.randomBytes(8).toString('hex');
   }
@@ -91,12 +92,19 @@ class ApiBible {
     if (!d.device) { d.device = crypto.randomBytes(8).toString('hex'); this._write(d); }
     return d.device;
   }
-  status() { const d = this._read(); return { connected: !!d.key, available: this.available(), versions: d.versions || [] }; }
+  status() { const d = this._read(); return { connected: !!d.key, shared: !d.key && !!this.relay, available: this.available(), versions: d.versions || [] }; }
+  /** Your own key, or else WellWrite's shared versions. */
+  usable() { return !!this._key() || !!this.relay; }
   versions() { return this._read().versions || []; }
 
   async _get(path, key = this._key()) {
-    if (!key) throw new Error('Add your API.Bible key in Settings first');
-    const res = await this.fetchImpl(this.base + path, { headers: { 'api-key': key, accept: 'application/json' } });
+    let res;
+    if (key) res = await this.fetchImpl(this.base + path, { headers: { 'api-key': key, accept: 'application/json' } });
+    else if (this.relay) {
+      res = await this.fetchImpl(this.relay + '/v1' + path, { headers: { 'x-wellwrite-device': this.device(), accept: 'application/json' } });
+      if (res.status === 429) { let m = ''; try { m = (await res.json()).message; } catch {} throw new Error(m || 'The shared Bible versions are resting until tomorrow'); }
+      if (res.status === 503 || res.status === 403) throw new Error('The shared Bible versions aren’t available right now');
+    } else throw new Error('Add your API.Bible key in Settings first');
     if (res.status === 401 || res.status === 403) throw new Error('API.Bible didn’t accept that key');
     if (res.status === 404) throw new Error('Not found in this Bible version');
     if (!res.ok) throw new Error('API.Bible error ' + res.status);
@@ -105,7 +113,8 @@ class ApiBible {
   _fums(meta) {
     const t = meta && meta.fumsToken;
     if (!t) return;
-    const url = `${this.fumsUrl}?t=${encodeURIComponent(t)}&dId=${this.device()}&sId=${this.session}`;
+    const q = `?t=${encodeURIComponent(t)}&dId=${this.device()}&sId=${this.session}`;
+    const url = !this._key() && this.relay ? this.relay + '/fums' + q : this.fumsUrl + q;
     Promise.resolve().then(() => this.fetchImpl(url)).catch(() => {});   // best effort; never blocks reading
   }
 
@@ -118,7 +127,19 @@ class ApiBible {
     this.cache.clear();
     return this.status();
   }
-  forget() { const d = this._read(); delete d.key; d.versions = []; this._write(d); this.cache.clear(); return this.status(); }
+  forget() { const d = this._read(); delete d.key; d.versions = []; d.sharedPicked = false; this._write(d); this.cache.clear(); return this.status(); }
+
+  /** With the shared versions and none chosen yet: start with the popular English ones (once). */
+  async sharedDefaults() {
+    const d = this._read();
+    if (d.key || !this.relay || d.sharedPicked || (d.versions || []).length) return this.status();
+    const list = await this.list('eng');
+    const want = ['NIV', 'ESV', 'NLT', 'NKJV', 'NASB', 'CSB', 'BSB', 'NRSV', 'MSG', 'AMP', 'ASV', 'LSV', 'FBV'];
+    const picks = want.map(a => list.find(b => (b.abbr || '').toUpperCase().replace(/\d+$/, '') === a)).filter(Boolean).slice(0, 8);
+    this.setVersions(picks.length ? picks : list.slice(0, 6));
+    const e = this._read(); e.sharedPicked = true; this._write(e);
+    return this.status();
+  }
 
   /** Bibles your key can use, optionally in one language (ISO 639-3, e.g. "eng"). */
   async list(language = 'eng') {

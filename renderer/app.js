@@ -333,6 +333,8 @@ async function enterApp() {
   renderSidebar();
   refreshBackupInfo();
   setMode(state.mode);
+  // WellWrite's shared Bible versions: the popular English ones are ready the first time (once).
+  if (api.apiBibleSharedDefaults) api.apiBibleStatus().then(st => st.shared && !st.versions.length ? api.apiBibleSharedDefaults().then(async () => { try { state.bible = await api.bibleInfo(); } catch {} }) : null).catch(() => {});
   // Something waiting for the journal to be open (turning on sync after signing in to Google).
   const next = state.afterUnlock; state.afterUnlock = null;
   if (next) setTimeout(next, 300);
@@ -1561,6 +1563,13 @@ function bibleVersionControls(redraw) {
       ...Object.entries((b && b.translations) || {}).map(([id, name]) => el('option', { value: id }, name)));
     tr.value = (b && b.state.translation) || 'web';
     const rows = [el('div', { class: 'row' }, el('div', {}, 'Bible version', el('small', {}, 'Used for the verse of the day, the weekly pages and reading plans.')), tr)];
+    if (st.shared) {
+      // WellWrite's shared versions (no key needed); your own key can still be added.
+      rows.push(el('div', { class: 'row' }, el('div', {}, 'More versions',
+        el('small', {}, (st.versions.length ? 'Added: ' + st.versions.map(v => v.abbr || v.name).join(', ') + '. ' : '') + 'Shared by WellWrite, no key needed. Text is fetched as you read, so these need the internet.')),
+        el('div', { class: 'readings-btns' },
+          el('button', { type: 'button', class: 'btn-plain', id: 'apiBibleChoose', onclick: () => chooseBibleVersions(redraw) }, 'Choose versions…'))));
+    }
     if (!st.connected) {
       const key = el('input', { type: 'password', id: 'apiBibleKey', placeholder: 'Your API.Bible key', autocomplete: 'off', spellcheck: 'false' });
       const go = el('button', { type: 'button', class: 'btn-plain', id: 'apiBibleConnect', onclick: async () => {
@@ -1578,8 +1587,8 @@ function bibleVersionControls(redraw) {
         }
         catch (e) { toast(e.message); go.disabled = false; go.textContent = 'Connect'; }
       } }, 'Connect');
-      rows.push(el('div', { class: 'row' }, el('div', {}, 'More versions from API.Bible',
-        el('small', {}, 'Paste your free API.Bible key to add other translations (open translations, plus up to three copyrighted ones on the free plan). The key is kept encrypted on ' + HERE + '.')),
+      rows.push(el('div', { class: 'row' }, el('div', {}, st.shared ? 'Your own API.Bible key (optional)' : 'More versions from API.Bible',
+        el('small', {}, (st.shared ? 'Only if you want versions WellWrite doesn’t share, or more reading than the shared daily limit. ' : '') + 'Paste your free API.Bible key to add other translations (open translations, plus up to three copyrighted ones on the free plan). The key is kept encrypted on ' + HERE + '.')),
         el('div', { class: 'readings-btns' }, key, go)));
     } else {
       rows.push(el('div', { class: 'row' }, el('div', {}, 'API.Bible',

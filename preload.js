@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('wellwrite', {
   wpPublish: (entryId, payload) => call('wp:publish', entryId, payload),
   wpOpen: url => call('wp:open', url),
   apiBibleStatus: () => call('apibible:status'),
+  apiBibleSharedDefaults: () => call('apibible:sharedDefaults'),
   apiBibleSetKey: key => call('apibible:setKey', key),
   apiBibleForget: () => call('apibible:forget'),
   apiBibleList: language => call('apibible:list', language),
