@@ -229,10 +229,15 @@ function showLock(exists, trust) {
   $('#unlockPw').value = $('#setupPw').value = $('#setupPw2').value = '';
   hideAllPasswords($('#lock'));
   if (remembered) {
-    $('#trustText').textContent = trust.mode === 'hour'
-      ? `No password needed until ${new Date(trust.until).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}.`
+    const until = new Date(trust.until), soon = trust.until - Date.now() < 20 * 3600e3;
+    $('#trustText').textContent = trust.until
+      ? `No password needed until ${soon ? until.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : until.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }) + ', ' + until.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}.`
       : (ANDROID ? 'This phone is trusted' : 'This computer is trusted') + ', so no password is needed.';
   }
+  // Offer "don't ask for a week" when this device can keep it safely and nothing longer is set.
+  $('#trustWeekRow').hidden = !(trust && trust.available) || (trust && trust.mode === 'trust');
+  $('#trustWeek').checked = !!(trust && (trust.mode === 'week' || trust.mode === 'day'));
+  state.lockTrustMode = trust ? trust.mode : 'ask';
   setTimeout(() => (remembered ? $('#trustOpen') : exists ? $('#unlockPw') : $('#setupPw')).focus(), 50);
 }
 
@@ -252,7 +257,18 @@ $('#unlockForm').addEventListener('submit', async e => {
   if (!pw) return;
   btn.disabled = true; btn.textContent = 'Opening…';
   try {
-    if (await api.unlock(pw)) { $('#unlockPw').value = ''; await enterApp(); }
+    if (await api.unlock(pw)) {
+      $('#unlockPw').value = '';
+      // "Don't ask again for a week"
+      if (!$('#trustWeekRow').hidden) {
+        const had = state.lockTrustMode;
+        try {
+          if ($('#trustWeek').checked && had !== 'week') await api.setTrust('week');
+          else if (!$('#trustWeek').checked && (had === 'week' || had === 'day')) await api.setTrust('ask');
+        } catch {}
+      }
+      await enterApp();
+    }
     else {
       $('#unlockErr').textContent = 'That password is not right. Try again.';
       $('.lock-card').classList.remove('shake'); void $('.lock-card').offsetWidth; $('.lock-card').classList.add('shake');
@@ -3681,10 +3697,12 @@ function trustSelect() {
   const sel = el('select', { 'aria-label': 'Remember my password' },
     el('option', { value: 'ask' }, 'No, ask every time'),
     el('option', { value: 'hour' }, 'For an hour after I type it'),
+    el('option', { value: 'day' }, 'For a day after I type it'),
+    el('option', { value: 'week' }, 'For a week after I type it'),
     el('option', { value: 'trust' }, 'Always, on ' + HERE));
   api.status().then(st => {
     const t = st.trust || { mode: 'ask' };
-    sel.value = t.active || t.mode === 'hour' ? t.mode : 'ask';
+    sel.value = t.active || t.expired ? t.mode : 'ask';
     if (!t.available) { sel.disabled = true; sel.title = ANDROID ? 'This phone can’t protect a saved password' : 'Windows can’t protect a saved password on this computer'; }
   }).catch(() => {});
   sel.addEventListener('change', async () => {
@@ -3701,7 +3719,7 @@ function trustSelect() {
     }
     try {
       await api.setTrust(mode);
-      toast({ ask: 'WellWrite will ask for your password every time', hour: 'No password needed for the next hour', trust: ANDROID ? 'This phone is trusted' : 'This computer is trusted' }[mode]);
+      toast({ ask: 'WellWrite will ask for your password every time', hour: 'No password needed for the next hour', day: 'No password needed for the next day', week: 'No password needed for the next week', trust: ANDROID ? 'This phone is trusted' : 'This computer is trusted' }[mode]);
     } catch (x) { toast(x.message); }
     if (mode === 'trust') openSettings();
   });

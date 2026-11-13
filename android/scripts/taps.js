@@ -235,7 +235,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   log('scheduled:', JSON.stringify(sched));
   await device.shell('input keyevent 3');   // Home: WellWrite in the background
   await wait(40000);
-  const notes = String(await device.shell('dumpsys notification --noredact | grep -A3 -i "prayer_bell_3\|Midday prayer" | head -20'));
+  const notes = String(await device.shell("dumpsys notification --noredact | grep -iE 'prayer_bell_3|Midday prayer' | head -10"));
   log('notifications:', notes.replace(/\s+/g, ' ').slice(0, 400));
   check(/Midday prayer|prayer_bell_3/.test(notes), 'the bell rings from the alarm clock with WellWrite in the background');
   await device.shell('cmd statusbar expand-notifications'); await wait(1500); await shot('bell-notification');

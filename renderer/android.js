@@ -84,7 +84,9 @@
     const away = Date.now() - hiddenAt; hiddenAt = 0;
     engine('settings:get').then(s => {
       const m = +s.autoLockMinutes || 0;
-      if (s.lockOnMinimize || (m > 0 && away > m * 60000)) emit('app:lock');
+      if (m > 0 && away > m * 60000) { emit('app:lock'); return; }
+      // A trusted phone (Remember my password) doesn't lock just for switching apps.
+      if (s.lockOnMinimize) engine('vault:status').then(st => { if (!(st.trust && st.trust.active)) emit('app:lock'); }).catch(() => emit('app:lock'));
     }).catch(() => {});
   });
 

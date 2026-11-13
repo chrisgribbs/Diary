@@ -74,6 +74,22 @@ app.whenReady().then(async () => {
   assert(await visible('#unlockForm') && !(await visible('#trustForm')), 'asks for the password again');
   assert(!fs.existsSync(path.join(process.env.WELLWRITE_DATA_DIR, 'trusted.json')), 'saved key removed');
 
+  // "Don't ask again for a week" on the password screen
+  assert(await visible('#trustWeekRow'), 'the week box is offered');
+  await shot('t4-week-box');
+  await js(`document.querySelector('#trustWeek').checked = true; document.querySelector('#unlockPw').value = 'river-stone'; document.querySelector('#unlockForm').requestSubmit();`); await wait(1800);
+  st = await js(`return (await window.wellwrite.status()).trust`);
+  assert.equal(st.mode, 'week'); assert(st.active);
+  assert(st.until - Date.now() > 6.9 * 24 * 3600e3, 'a week');
+  // minimising doesn't lock a trusted computer, even with "Lock when minimised" on
+  await js(`await updateSetting({ lockOnMinimize: true });`);
+  win.minimize(); await wait(800); win.restore(); await wait(600);
+  assert(await js(`return state.unlocked`), 'still open after minimising');
+  await js(`document.querySelector('#lockBtn').click();`); await wait(700);
+  assert(await visible('#trustForm'), 'one click to open for the week');
+  assert.match(await js(`return document.querySelector('#trustText').textContent`), /No password needed until/);
+  await shot('t5-week-lock');
+
   console.log('trust e2e passed; shots in', OUT);
   fs.rmSync(process.env.WELLWRITE_DATA_DIR, { recursive: true, force: true });
   app.exit(0);

@@ -38,6 +38,18 @@ fs.writeFileSync(path.join(tmp, 'trusted.json'), JSON.stringify({ ...JSON.parse(
 assert.equal(t.key(), null, 'mismatched key rejected');
 assert.equal(t.status().active, false, 'and forgotten');
 
+// for a week: no password for seven days, then it's asked for again; typing it starts another week
+t.save('week', key);
+clock += 6 * 24 * HOUR;
+assert.equal(t.status().active, true, 'still trusted after 6 days');
+assert.ok(t.key() && t.key().equals(key));
+clock += 25 * HOUR;
+assert.equal(t.status().active, false, 'asks again after a week');
+assert.equal(t.status().mode, 'week');
+t.refresh(key);
+assert.equal(t.status().active, true, 'password typed: another week');
+t.save('day', key); clock += 23 * HOUR; assert.equal(t.status().active, true); clock += 2 * HOUR; assert.equal(t.status().active, false, 'a day');
+
 // turning it off, and when Windows can't protect keys
 t.save('trust', key); t.save('ask', key);
 assert.equal(t.status().active, false); assert(!fs.existsSync(path.join(tmp, 'trusted.json')));

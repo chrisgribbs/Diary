@@ -166,7 +166,8 @@ function createWindow() {
   });
 
   win.on('minimize', () => {
-    if (readSettings().lockOnMinimize && vault.isUnlocked()) win.webContents.send('app:lock');
+    // A trusted computer (Remember my password) doesn't lock just for minimising.
+    if (readSettings().lockOnMinimize && vault.isUnlocked() && !backend.trust.status().active) win.webContents.send('app:lock');
   });
 }
 

@@ -4,6 +4,7 @@
  * via Electron's safeStorage), so WellWrite can open without the password.
  *
  *  - mode 'hour':  for one hour after the password was last typed
+ *  - mode 'day', 'week': the same, for a day or a week
  *  - mode 'trust': on this computer, until turned off
  *
  * The key only works for this Windows user on this computer; copied elsewhere it is useless.
@@ -13,6 +14,8 @@ const fs = require('fs');
 const { _internal: { seal, open } } = require('./vault');
 
 const HOUR = 60 * 60 * 1000;
+/** How long each timed mode lasts after the password is typed. */
+const TIMED = { hour: HOUR, day: 24 * HOUR, week: 7 * 24 * HOUR };
 const CHECK = Buffer.from('wellwrite-trust-check');
 
 class Trust {
@@ -29,18 +32,18 @@ class Trust {
     const available = !!this.available();
     const d = this._read();
     if (!d || !available) return { mode: 'ask', active: false, available };
-    if (d.mode === 'hour' && !(d.until > this.now())) return { mode: 'hour', active: false, available, expired: true };
-    return { mode: d.mode, active: true, until: d.mode === 'hour' ? d.until : null, available };
+    if (TIMED[d.mode] && !(d.until > this.now())) return { mode: d.mode, active: false, available, expired: true };
+    return { mode: d.mode, active: true, until: TIMED[d.mode] ? d.until : null, available };
   }
 
   /** Remember the key (mode 'hour' or 'trust'), or forget it ('ask'). */
   save(mode, key) {
-    if (mode !== 'hour' && mode !== 'trust') { this.clear(); return this.status(); }
+    if (!TIMED[mode] && mode !== 'trust') { this.clear(); return this.status(); }
     if (!this.available()) throw new Error('Windows can’t protect a saved password on this computer');
     if (!key) throw new Error('Open the journal first');
     this._write({
       mode,
-      until: mode === 'hour' ? this.now() + HOUR : null,
+      until: TIMED[mode] ? this.now() + TIMED[mode] : null,
       key: this.protect(Buffer.from(key).toString('base64')),
       check: seal(key, CHECK).toString('base64'),
     });
@@ -50,7 +53,7 @@ class Trust {
   /** After the password is typed: restart the hour (keeps the setting for next time). */
   refresh(key) {
     const d = this._read();
-    if (d && d.mode === 'hour') this.save('hour', key);
+    if (d && TIMED[d.mode]) this.save(d.mode, key);
   }
 
   /** The remembered key, if it's still valid and matches the journal; otherwise null. */

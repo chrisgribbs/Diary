@@ -5,6 +5,20 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.27.0', date: '2026-11-14', title: 'The prayer bell, and a week without your password',
+    new: [
+      'The prayer bell (Settings → Prayer bell): three soft strikes of a bell at the hours you choose (morning, midday, afternoon, evening, night), inviting you to stop and pray. It’s off until you turn it on, and set on each device separately.',
+      'Each bell carries a line of Scripture for that hour. Tap it for “Pause for prayer”: a verse, a prayer from the Daily Office (and sometimes one of your own), then Amen, or Write a line in today’s entry.',
+      'Easy to quiet: Mute today on every notification, in the menu and in Settings; weekdays only; or a silent notification instead of the bell.',
+      'On Windows the bell rings while WellWrite runs, so with the bell on, closing the window keeps WellWrite in the tray (by the clock), with Open, Mute today and Quit. It can start with Windows.',
+      'On Android it rings even when WellWrite is closed, and after the phone restarts.',
+      'Remember my password can now last a day or a week, and the password screen has “Don’t ask again on this computer for a week”.',
+    ],
+    improved: [
+      'A trusted computer or phone no longer locks just because you minimised WellWrite or switched apps. It still locks after the inactivity time, and opens again with one click.',
+    ],
+  },
+  {
     v: '1.26.1', date: '2026-11-13', title: 'Less empty space at the top',
     fixed: [
       'The big gap above the quote and verse, before you start today’s entry, is gone, and an entry’s page starts a little higher too.',

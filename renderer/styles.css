@@ -1133,3 +1133,5 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .prayer-pause .pp-prayer p { margin: 0; line-height: 1.6; }
 .prayer-pause .actions { justify-content: center; flex-wrap: wrap; }
 #bellBtn.muted { opacity: .45; }
+.lock-remember { display: flex; align-items: center; gap: 8px; margin: 2px 0 12px; font-size: 13.5px; color: rgba(255,255,255,.75); cursor: pointer; }
+.lock-remember input { width: 16px; height: 16px; accent-color: var(--foil, #d6b263); }
