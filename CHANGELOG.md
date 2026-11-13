@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.28.0 — More Bible versions for everyone
+_14 November 2026_
+
+**New**
+
+- More Bible versions, shared by WellWrite: choose them in Settings → Bible with no API key of your own. Your own key still works, and is used first if you add one.
+
 ## 1.27.0 — The prayer bell, and a week without your password
 _14 November 2026_
 

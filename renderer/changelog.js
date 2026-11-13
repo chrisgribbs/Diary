@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.28.0', date: '2026-11-14', title: 'More Bible versions for everyone',
+    new: [
+      'More Bible versions, shared by WellWrite: choose them in Settings → Bible with no API key of your own. Your own key still works, and is used first if you add one.',
+    ],
+  },
+  {
     v: '1.27.0', date: '2026-11-14', title: 'The prayer bell, and a week without your password',
     new: [
       'The prayer bell (Settings → Prayer bell): three soft strikes of a bell at the hours you choose (morning, midday, afternoon, evening, night), inviting you to stop and pray. It’s off until you turn it on, and set on each device separately.',
