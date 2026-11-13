@@ -69,7 +69,7 @@ const state = {
   trail: [],            // entries visited by following links, for "Back"
   quotes: [],           // [{ id, text, author, source, fav }]
   quoteSkip: {},        // date -> how many times "Another" was pressed today
-  prayerSkip: {},       // date -> how many times "Another" was pressed on today's prayer
+  prayerSkip: {},       // 'date|part' -> how many times "Another" was pressed on that prayer
   prayerRemoved: {},    // date -> the prayer you just said was "Not for me" (so it can be undone)
   promptSkip: {},       // date -> how many times "Another question" was pressed
   mode: (() => { try { return localStorage.getItem('mode') || 'journal'; } catch { return 'journal'; } })(),
@@ -135,6 +135,11 @@ function openDialog(build) {
     const done = v => {
       resolve(v); try { dlg.close(); } catch (x) { diag('dialog close failed: ' + x.message); }
       if (dlg.open) { dlg.removeAttribute('open'); diag('dialog needed forcing shut'); }
+      // Belt and braces: if it's still showing a moment later, hide it outright.
+      setTimeout(() => {
+        if ($('#dlgForm') !== form || dlg.open) return;
+        if (getComputedStyle(dlg).display !== 'none') { dlg.style.display = 'none'; diag('dialog still showing after closing; hidden'); }
+      }, 300);
       const was = form;
       setTimeout(() => { if (dlg.open && $('#dlgForm') !== was && form.classList.contains('settings-page')) diag('settings reopened straight after closing'); }, 400);
     };
@@ -143,6 +148,7 @@ function openDialog(build) {
     dlg.classList.toggle('page', form.classList.contains('page') || form.classList.contains('wide'));
     // The close event is async; ignore a stale one that lands after a new dialog opened.
     dlg.onclose = () => { if (!dlg.open) resolve(undefined); };
+    dlg.style.display = '';
     dlg.showModal();
     const f = form.querySelector('[autofocus]');
     if (f && (!TOUCH || f.tagName === 'BUTTON' || f.type === 'password')) f.focus();
@@ -1847,16 +1853,50 @@ function yearPlan(year) {
   const nextReflection = roundRobin(longs.length ? longs : state.quotes.filter(q => ownish(q) && ['', 'reflection', 'fieldnote', 'psalm', 'poem'].includes(q.kind || '')), 'r' + year);
   const weekSeasons = new Map();   // week key → { season, occasions, number }
   const recent = [];
-  const prayers = new Map(), recentPrayers = [];
-  const nextPrayer = roundRobin(dailyPrayerPool(), 'p' + year);
+  // The day's prayers: one for the morning, one for the day, one for the evening (see prayer-times.js).
+  const prayers = new Map();
+  const T = window.WellWritePrayerTimes, DAY_OCC = window.WellWriteSeasons.DAY_OCCASIONS;
+  const prPool = dailyPrayerPool();
+  const dayOwnPrayer = q => !!q.occasion && DAY_OCC.has(q.occasion);   // a feast day's own prayer: only on its day
+  const general = prPool.filter(q => !dayOwnPrayer(q));
+  const timed = { morning: general.filter(q => T.prayerTime(q) === 'morning'), evening: general.filter(q => T.prayerTime(q) === 'evening') };
+  const nextPr = {
+    any: roundRobin(general.filter(q => !T.prayerTime(q)), 'p' + year),
+    morning: roundRobin(timed.morning, 'pm' + year),
+    evening: roundRobin(timed.evening, 'pe' + year),
+  };
+  const recentPr = { any: [], morning: [], evening: [] };
+  const prayersFor = (d, s, occ) => {
+    const slots = { morning: null, day: null, evening: null };
+    // A feast day's own prayers first, each at its own hour (one for any hour, from the morning).
+    for (const q of prPool.filter(x => dayOwnPrayer(x) && occ.has(x.occasion))) {
+      const want = T.prayerTime(q) || 'morning';
+      const slot = !slots[want] ? want : T.PARTS.find(x => !slots[x]);
+      if (slot) slots[slot] = q;
+    }
+    const taken = () => new Set(Object.values(slots).filter(Boolean).map(q => q.id));
+    const from = kind => {
+      const recent = recentPr[kind], have = taken();
+      const q = nextPr[kind](s, x => (have.has(x.id) ? 1e6 : x.author === recent[recent.length - 1] ? 200 : recent.includes(x.author) ? 30 : 0), occ);
+      if (!q || have.has(q.id)) return null;
+      recent.push(q.author); if (recent.length > 3) recent.shift();
+      return q;
+    };
+    // Mornings and evenings take turns to have a prayer written for that hour (there are fewer of them,
+    // so they come round every few weeks rather than every few days); otherwise a prayer for any hour.
+    const n = dayNumber(d);
+    if (!slots.morning) slots.morning = (n % 2 === 0 && from('morning')) || from('any');
+    if (!slots.evening) slots.evening = (n % 2 === 1 && from('evening')) || from('any');
+    if (!slots.day) slots.day = from('any');
+    return slots;
+  };
   for (let d = `${year}-01-01`; d.startsWith(String(year)); d = addDays(d, 1)) {
     const s = seasonOn(d);
     if (!s) break;
     const occ = occasionsOn(d);
     const q = nextQuote(s, x => (x.author === recent[recent.length - 1] ? 200 : recent.includes(x.author) ? 30 : 0), occ);
     if (q) { quotes.set(d, q); recent.push(q.author); if (recent.length > 3) recent.shift(); }
-    const pr = nextPrayer(s, x => (x.author === recentPrayers[recentPrayers.length - 1] ? 200 : recentPrayers.includes(x.author) ? 30 : 0), occ);
-    if (pr) { prayers.set(d, pr); recentPrayers.push(pr.author); if (recentPrayers.length > 3) recentPrayers.shift(); }
+    prayers.set(d, prayersFor(d, s, occ));
     const wk = window.WellWriteWeeks && window.WellWriteWeeks.weekOf(s);
     const wkKey = wk && `${s.id}|${wk.index}`;
     if (wk && !weeks.has(wkKey)) {
@@ -1906,23 +1946,45 @@ function quoteFor(iso) {
 /** Your own prayers have their week on the weekly page; every other prayer can be a day's prayer. */
 const isDailyPrayer = q => q.kind === 'prayer' && !ownish(q);
 const dailyPrayerPool = () => state.quotes.filter(isDailyPrayer);
-function prayerFor(iso) {
-  const pool = dailyPrayerPool();
-  if (!pool.length) return null;
-  const skip = state.prayerSkip[iso] || 0;
+/** The part of the day whose prayer shows for a date: now's, for today; the morning's, for any other day. */
+const prayerPart = iso => (iso === todayISO() ? window.WellWritePrayerTimes.partOfDay() : 'morning');
+/** The day's prayer for the morning, the day or the evening (by default, the one for now). */
+function prayerFor(iso, part = prayerPart(iso)) {
+  const all = dailyPrayerPool();
+  if (!all.length) return null;
+  const T = window.WellWritePrayerTimes;
+  // A morning prayer never comes in the evening, nor an evening one in the morning; the day has prayers for any hour.
+  const suits = q => { const t = T.prayerTime(q); return !t || t === part; };
+  const pool = all.filter(suits).length ? all.filter(suits) : all;
+  const key = iso + '|' + part;
+  const skip = state.prayerSkip[key] || 0;
   const season = seasonOn(iso);
   if (season) {
-    const planned = yearPlan(+iso.slice(0, 4)).prayers.get(iso);
+    const day = yearPlan(+iso.slice(0, 4)).prayers.get(iso);
+    const planned = day && day[part];
     if (!skip && planned) return planned;
-    // "Another": the prayers that suit the day, in turn
+    // "Another": the prayers that suit the day and the hour, in turn
     const occ = occasionsOn(iso);
     const fit = pool.filter(q => q !== planned && fitsOccasion(q, occ)).sort((a, b) => strHash(a.id) - strHash(b.id));
-    if (fit.length) return fit[(season.dayIndex + skip - 1 + fit.length) % fit.length];
+    if (fit.length) return fit[(season.dayIndex * 3 + T.PARTS.indexOf(part) + skip - 1 + fit.length) % fit.length];
   }
   const sorted = [...pool].sort((a, b) => strHash(a.id) - strHash(b.id));
-  const n = dayNumber(iso) + skip;
+  const n = dayNumber(iso) * 3 + T.PARTS.indexOf(part) + skip;
   return sorted[((n % sorted.length) + sorted.length) % sorted.length];
 }
+/** "Prayer for this morning", "Prayer for today", "Prayer for this evening". */
+const prayerHeading = iso => {
+  if (iso !== todayISO()) return 'Prayer for the day';
+  return { morning: 'Prayer for this morning', day: 'Prayer for today', evening: 'Prayer for this evening' }[prayerPart(iso)];
+};
+// When the morning becomes the day, or the day the evening, the prayer on the page changes with it.
+let shownPart = window.WellWritePrayerTimes.partOfDay();
+setInterval(() => {
+  const p = window.WellWritePrayerTimes.partOfDay();
+  if (p === shownPart) return;
+  shownPart = p;
+  if (state.unlocked && state.settings.dailyPrayer !== false) refreshQuote();
+}, 60000);
 /** The short credit a prayer's licence asks for, shown under it; the full credit is a click away. */
 const shortCredit = q => (q.credit || '').split('\n').find(l => /used with permission|public domain|shared by/i.test(l)) || '';
 const LICENCE_NAMES = { 'public-domain': 'Public domain', 'cc-by-nc-nd': 'CC BY-NC-ND 4.0', own: 'Shared by the writer' };
@@ -1932,7 +1994,7 @@ function prayerCard(iso, where) {
   const gone = state.prayerRemoved[iso];
   if (gone) {
     return el('figure', { class: 'quote-card prayer ' + where },
-      el('p', { class: 'q-season' }, 'Prayer for today'),
+      el('p', { class: 'q-season' }, prayerHeading(iso)),
       el('p', { class: 'q-gone' }, `“${gone.title || gone.text.slice(0, 40) + '…'}” won’t come again.`),
       el('div', { class: 'q-actions' },
         btn('Undo', async () => { delete state.prayerRemoved[iso]; await saveQuotes([...state.quotes, gone]); refreshQuote(); }, 'q-btn primary'),
@@ -1945,7 +2007,7 @@ function prayerCard(iso, where) {
   const credit = shortCredit(q);
   const long = q.text.split('\n').length > 12 || q.text.length > 700;   // long prayers start folded, so the page stays yours
   return el('figure', { class: 'quote-card prayer ' + where },
-    el('p', { class: 'q-season' }, 'Prayer for today' + (season ? ` · ${season.name}, day ${season.dayIndex + 1}` : '')),
+    el('p', { class: 'q-season' }, prayerHeading(iso) + (season ? ` · ${season.name}, day ${season.dayIndex + 1}` : '')),
     q.title ? el('p', { class: 'q-title' }, q.title) : null,
     el('blockquote', { class: long ? 'folded' : '' }, q.text),
     long ? el('button', { type: 'button', class: 'q-btn q-more', onclick: e => { e.target.previousElementSibling.classList.remove('folded'); e.target.remove(); } }, 'Read the whole prayer') : null,
@@ -1963,7 +2025,7 @@ function prayerCard(iso, where) {
         await saveQuotes(state.quotes.filter(x => x.id !== q.id));
         refreshQuote();
       }),
-      dailyPrayerPool().length > 1 ? btn('Another', () => { state.prayerSkip[iso] = (state.prayerSkip[iso] || 0) + 1; refreshQuote(); }) : null,
+      dailyPrayerPool().length > 1 ? btn('Another', () => { const k = iso + '|' + prayerPart(iso); state.prayerSkip[k] = (state.prayerSkip[k] || 0) + 1; refreshQuote(); }) : null,
       btn('Hide today', () => { hideQuoteFor('p' + iso); refreshQuote(); }, 'q-btn subtle')));
 }
 
@@ -3645,7 +3707,7 @@ function prayerControls(again) {
     toggle.checked = c.on;
     const select = (val, opts, on) => { const x = el('select', { onchange: e => on(e.target.value) }, ...opts.map(([v, l]) => el('option', { value: v }, l))); x.value = val; return x; };
     const row = (label, help, control) => el('div', { class: 'row' }, el('div', {}, label, help ? el('small', {}, help) : null), control);
-    box.replaceChildren(
+    box.replaceChildren(...[
       row('Prayer bell', c.on ? (mutedToday() ? 'Quiet for the rest of today.' : 'On. It rings at the hours ticked below.') : 'Off.', toggle),
       c.on ? el('div', { class: 'ph-hours' }, ...c.hours.map(hourRow)) : null,
       c.on ? row('Days', null, select(c.days, [['every', 'Every day'], ['weekdays', 'Weekdays only']], v => set({ prayerDays: v }))) : null,
@@ -3656,7 +3718,7 @@ function prayerControls(again) {
         (() => { const x = el('input', { type: 'checkbox', onchange: e => set({ startWithWindows: e.target.checked }) }); x.checked = !!s.startWithWindows; return x; })()) : null,
       el('div', { class: 'btns', style: 'margin-top:14px' },
         el('button', { type: 'button', class: 'btn-plain', onclick: () => { $('#dlg').close(); pauseForPrayer(); } }, 'Pause for prayer now'),
-        c.on ? el('button', { type: 'button', class: 'btn-link', onclick: () => api.prayerTest().then(() => toast(ANDROID ? 'Look for the notification' : 'That’s the bell')).catch(x => toast(x.message)) }, 'Try the bell') : null));
+        c.on ? el('button', { type: 'button', class: 'btn-link', onclick: () => api.prayerTest().then(() => toast(ANDROID ? 'Look for the notification' : 'That’s the bell')).catch(x => toast(x.message)) }, 'Try the bell') : null)].filter(Boolean));
   });
   return box;
 }
@@ -3664,8 +3726,9 @@ function prayerControls(again) {
 async function pauseForPrayer(key) {
   let p;
   try { p = await api.prayerPause(key || null, null); } catch (x) { toast(x.message); return; }
-  // In the morning, the day's prayer.
-  const today = state.unlocked && p.key === 'morning' && state.settings.dailyPrayer !== false ? prayerFor(todayISO()) : null;
+  // In the morning and the evening, the day's prayer for that hour.
+  const hour = { morning: 'morning', evening: 'evening', night: 'evening' }[p.key];
+  const today = state.unlocked && hour && state.settings.dailyPrayer !== false ? prayerFor(todayISO(), hour) : null;
   if (today) p.prayer = { text: today.text, source: [today.author, shortCredit(today)].filter(Boolean).join(' · ') };
   await openDialog((f, done) => {
     f.classList.add('prayer-pause');

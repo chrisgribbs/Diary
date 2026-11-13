@@ -2,6 +2,22 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.30.0 — A prayer for the morning, the day and the evening
+_14 November 2026_
+
+**New**
+
+- The prayer for today now changes through the day: a prayer for the morning until noon, another for the day until six, and one for the evening after that. The page changes by itself when the hour turns.
+- Prayers written for an hour come at that hour: I Arise Today and the morning collects in the morning; Compline, Evensong and “I lie down tonight” in the evening. Mornings and evenings take turns to have one; the rest of the time it’s one of the prayers that suit any hour.
+- Feast days keep their own prayers, at their own hour: Easter Day’s in the morning.
+- Pause for prayer at the morning bell prays the morning’s prayer, and at the evening and night bells, the evening’s.
+
+**Fixed**
+
+- With the prayer bell on, WellWrite no longer holds up Windows shutting down, restarting or signing out: it saves and closes straight away.
+- Settings → Prayer bell no longer shows “nullnullnull” when the bell is off.
+- If Settings (or any window inside WellWrite) is ever still showing after you close it, it’s now hidden anyway, and the problems log notes it.
+
 ## 1.29.0 — A prayer for each day
 _14 November 2026_
 

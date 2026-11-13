@@ -33,7 +33,35 @@ app.whenReady().then(async () => {
   await js(`await newEntry(todayISO());`); await wait(1500);
   assert(await js(`return !!${card}`), 'a prayer card above the entry');
   const first = await js(`return prayerFor(todayISO()).id`);
-  assert.match(await js(`return ${card}.querySelector('.q-season').textContent`), /^Prayer for today/);
+  assert.match(await js(`return ${card}.querySelector('.q-season').textContent`), /^Prayer for (this morning|today|this evening)/);
+  assert.equal(await js(`return ${card}.querySelector('.q-season').textContent.split(' · ')[0]`),
+    await js(`return ({ morning: 'Prayer for this morning', day: 'Prayer for today', evening: 'Prayer for this evening' })[WellWritePrayerTimes.partOfDay()]`));
+
+  // Three prayers a day: morning, day and evening, all different; a morning prayer never in the evening, nor the reverse.
+  const year = await js(`
+    const T = WellWritePrayerTimes, y = new Date().getFullYear(), out = { days: 0, same: 0, wrong: 0, timedMorning: 0, timedEvening: 0, missing: 0 };
+    const plan = yearPlan(y);
+    for (const [d, p] of plan.prayers) {
+      out.days++;
+      if (!p.morning || !p.day || !p.evening) { out.missing++; continue; }
+      if (new Set([p.morning.id, p.day.id, p.evening.id]).size < 3) out.same++;
+      if (T.prayerTime(p.morning) === 'evening' || T.prayerTime(p.evening) === 'morning' || T.prayerTime(p.day)) out.wrong++;
+      if (T.prayerTime(p.morning) === 'morning') out.timedMorning++;
+      if (T.prayerTime(p.evening) === 'evening') out.timedEvening++;
+    }
+    // Easter Day's own prayer, in the morning
+    const ed = WellWriteSeasons.easter(y), e = plan.prayers.get(ed);
+    out.easter = e && e.morning && e.morning.occasion;
+    out.ids = ['morning', 'day', 'evening'].map(k => prayerFor(todayISO(), k).id);
+    return out;`);
+  console.log('  year of prayers:', JSON.stringify({ ...year, ids: undefined }));
+  assert(year.days >= 365, 'a plan for every day');
+  assert.equal(year.missing, 0, 'three prayers every day');
+  assert.equal(year.same, 0, 'never the same prayer twice in a day');
+  assert.equal(year.wrong, 0, 'each prayer at its own hour');
+  assert(year.timedMorning > 100 && year.timedEvening > 100, 'morning and evening prayers come often');
+  assert(year.easter, 'Easter Day has its own prayer in the morning');
+  assert.equal(new Set(year.ids).size, 3, "today's three prayers differ");
   assert(await js(`return ${card}.querySelector('blockquote').textContent.length > 30`));
   assert.match(await js(`return ${card}.querySelector('.q-credit summary').textContent`), /Used with permission|Public domain/);
   await shot('d1-card');

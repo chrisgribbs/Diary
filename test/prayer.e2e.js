@@ -28,6 +28,7 @@ app.whenReady().then(async () => {
   assert(await js(`return document.querySelector('#bellBtn').hidden`));
   await js(`openSettings('prayer');`); await wait(700);
   await shot('p1-off');
+  assert(!/null/.test(await js(`return document.querySelector('#set-prayer').textContent`)), 'no stray "null" on the page');
   await js(`document.querySelector('#set-prayer .row input[type=checkbox]').click();`); await wait(900);
   assert.equal(await js(`return state.settings.prayerBell`), true, 'turned on');
   assert.equal(await js(`return document.querySelectorAll('#set-prayer .ph-row').length`), 5, 'five hours listed');

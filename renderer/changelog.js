@@ -5,6 +5,20 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.30.0', date: '2026-11-14', title: 'A prayer for the morning, the day and the evening',
+    new: [
+      'The prayer for today now changes through the day: a prayer for the morning until noon, another for the day until six, and one for the evening after that. The page changes by itself when the hour turns.',
+      'Prayers written for an hour come at that hour: I Arise Today and the morning collects in the morning; Compline, Evensong and “I lie down tonight” in the evening. Mornings and evenings take turns to have one; the rest of the time it’s one of the prayers that suit any hour.',
+      'Feast days keep their own prayers, at their own hour: Easter Day’s in the morning.',
+      'Pause for prayer at the morning bell prays the morning’s prayer, and at the evening and night bells, the evening’s.',
+    ],
+    fixed: [
+      'With the prayer bell on, WellWrite no longer holds up Windows shutting down, restarting or signing out: it saves and closes straight away.',
+      'Settings → Prayer bell no longer shows “nullnullnull” when the bell is off.',
+      'If Settings (or any window inside WellWrite) is ever still showing after you close it, it’s now hidden anyway, and the problems log notes it.',
+    ],
+  },
+  {
     v: '1.29.0', date: '2026-11-14', title: 'A prayer for each day',
     new: [
       'Prayer for today: a prayer under the quote and verse each day, following the Christian year, with its own prayer on Ash Wednesday, through Holy Week, on Easter Day, Pentecost, Christmas Eve and Christmas Day. Turn it off in Settings → Quotes & readings.',

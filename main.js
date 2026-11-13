@@ -128,8 +128,19 @@ function createWindow() {
     if (items.length) Menu.buildFromTemplate(items).popup({ window: win });
   });
 
+  // Windows is shutting down, restarting or signing out: save, and let it go (never hold it up for the tray).
+  const sessionEnding = () => {
+    if (endingSession) return;
+    endingSession = true; reallyQuitting = true;
+    try { win.webContents.send('app:flush'); } catch {}
+    logLine('Windows is shutting down');
+  };
+  win.on('query-session-end', sessionEnding);
+  win.on('session-end', () => { sessionEnding(); quitting = true; try { vault.lock(); } catch {} });
+
   // Ask the page to save before the window closes.
   win.on('close', e => {
+    if (endingSession) { quitting = true; try { vault.lock(); } catch {} return; }
     // With the prayer bell on, closing the window keeps WellWrite in the tray, locked, so the bell can still ring.
     if (!quitting && !reallyQuitting && bellKeepsRunning()) {
       e.preventDefault();
@@ -303,7 +314,7 @@ handle('shell:openExternal', url => {
 
 // ---------- the prayer bell (src/prayer.js) ----------
 // Windows can only ring it while WellWrite runs, so with the bell on WellWrite lives on in the tray.
-let reallyQuitting = false, tray = null, bellTimer = null;
+let reallyQuitting = false, endingSession = false, tray = null, bellTimer = null;
 const rung = new Set();
 const bellKeepsRunning = () => !!readSettings().prayerBell;
 function showWindow() {
