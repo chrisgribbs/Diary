@@ -241,8 +241,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await device.shell('cmd statusbar expand-notifications'); await wait(1500); await shot('bell-notification');
   // Tap it: WellWrite opens at Pause for prayer.
   const xml = String(await device.shell('uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; cat /sdcard/ui.xml'));
-  const n = [...xml.matchAll(/<node [^>]*>/g)].map(m => m[0]).find(x => /text="Midday prayer"/.test(x));
-  if (n) { const [, x1, y1, x2, y2] = n.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/).map(Number); await device.shell(`input tap ${(x1 + x2) >> 1} ${(y1 + y2) >> 1}`); }
+  const bellNode = [...xml.matchAll(/<node [^>]*>/g)].map(m => m[0]).find(x => /text="Midday prayer"/.test(x));
+  if (bellNode) { const [, x1, y1, x2, y2] = bellNode.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/).map(Number); await device.shell(`input tap ${(x1 + x2) >> 1} ${(y1 + y2) >> 1}`); }
   else await device.shell('cmd statusbar collapse');
   await wait(4000);
   check(await is(() => !!document.querySelector('.prayer-pause')), 'tapping the bell opens Pause for prayer');
