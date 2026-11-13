@@ -1,0 +1,32 @@
+20:53:35 console error Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+20:53:36 PASS page talks to the Android app
+20:53:37 shot 2-lock
+20:53:44 shot 3-home
+20:53:44 PASS journal created and open: {"dataDir":"/data/user/0/com.chrisgribble.wellwrite/files/journal","trust":{"mode":"ask","active":false,"available":true}}
+20:53:44 PASS this phone can keep a remembered password (keystore)
+20:53:44 PASS an entry with emoji and accents saves and reads back exactly
+20:53:45 console error Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+20:53:51 PASS the entry is still there after reopening
+20:53:53 shot 4-journal
+20:53:54 shot 5-drawer
+20:53:54 PASS the menu button opens the sidebar
+20:53:55 PASS Back closes the sidebar
+20:54:00 shot 6-week
+20:54:03 shot 7-bible
+20:54:03 PASS the camera button is showing
+20:54:04 console error Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+20:54:14 shot 7b-photos
+20:54:14 PASS the Photos view shows the photo
+20:54:15 PASS Bible search works (30 results)
+20:54:15 PASS remember-my-password can be switched on
+20:54:15 PASS version 1.27.0
+20:54:18 shot 8-settings
+20:54:25 focus:  mCurrentFocus=Window{e87889d u0 com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} mFocusedApp=ActivityRecord{210ef28 u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t7} Failed to write while dumping service window: Broken pipe 
+20:54:25 PASS the camera button opens the camera
+20:54:26 shot 10-camera
+20:54:30 no button matching /(Next|Got it|Allow|While using|Only this time|NEXT|ALLOW)/i ; ids: android:id/decor_content_parent android:id/content com.android.camera2:id/activity_root_view com.android.camera2:id/camera_app_root com.android.camera2:id/preview_content com.android.camera2:id/focus_ring com.android.camera2:id/preview_overlay com.android.camera2:id/face_view com.android.camera2:id/module_layout com.android.camera2:id/progress_overlay com.android.camera2:id/sticky_bottom_capture_layout com.android.camera2:id/mode_options_overlay com.android.camera2:id/mode_options_toggle com.android.camera2:id/three_dots com.android.camera2:id/bottom_bar com.android.camera2:id/bottombar_captur
+20:54:38 shot 11-taken
+20:54:47 shot 12-back
+20:54:47 photos before 1 after 2 in open entry 1
+20:54:47 PASS a photo from the camera lands in today’s entry
+20:54:47 ALL PASSED

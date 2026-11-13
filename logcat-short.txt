@@ -1,0 +1,200 @@
+11-13 20:53:50.706  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name locations
+11-13 20:53:50.767  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:53:50.767  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-13 20:53:50.767  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-13 20:53:50.804  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:50.804  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:53:50.883  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:50.884  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:53:50.977  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:53:50.977  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-13 20:53:50.977  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-13 20:53:53.067  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:53.067  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:53:53.174  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:53.174  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name coverage
+11-13 20:53:53.174  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name color
+11-13 20:53:53.174  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name localCoord
+11-13 20:53:53.347  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name radii_selector
+11-13 20:53:53.347  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name corner_and_radius_outsets
+11-13 20:53:53.347  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name aa_bloat_and_coverage
+11-13 20:53:53.347  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name radii_x
+11-13 20:53:53.347  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 4 name radii_y
+11-13 20:53:53.347  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 5 name skew
+11-13 20:53:53.347  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 6 name translate_and_localrotate
+11-13 20:53:53.347  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 7 name color
+11-13 20:53:53.940  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:53.941  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:53:53.941  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:53:54.099  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:53:54.099  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-13 20:53:54.099  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inQuadEdge
+11-13 20:53:55.620  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:55.621  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:53:55.621  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:53:55.705  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:55.705  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:53:56.935  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:53:56.935  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-13 20:53:56.935  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-13 20:53:56.999  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:56.999  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-13 20:53:57.086  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:57.086  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:53:57.176  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:57.176  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-13 20:53:57.290  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:57.290  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-13 20:53:57.413  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:53:57.413  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:53:57.413  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:54:03.519  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name _uinColor
+11-13 20:54:03.521  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name _uinPosition
+11-13 20:54:03.521  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name _uinQuadEdge
+11-13 20:54:03.624  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name _ulocalCoord
+11-13 20:54:03.624  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name _uposition
+11-13 20:54:03.713  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name _ulocalCoord
+11-13 20:54:03.713  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name _uposition
+11-13 20:54:03.779  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name _ulocalCoord
+11-13 20:54:03.779  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name _uposition
+11-13 20:54:09.989  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name pts01Attr
+11-13 20:54:09.989  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name pts23Attr
+11-13 20:54:09.989  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name argsAttr
+11-13 20:54:10.508  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:54:10.633  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:54:10.806  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name _ucolor
+11-13 20:54:10.806  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name _ulocalCoord
+11-13 20:54:10.806  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name _uposition
+11-13 20:54:11.016  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:54:11.016  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:54:11.017  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:54:26.427  6200  6200 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-13 20:54:26.549  6200  6200 I AndroidRuntime: Using default boot image
+11-13 20:54:26.549  6200  6200 I AndroidRuntime: Leaving lock profiling enabled
+11-13 20:54:27.187  6200  6200 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-13 20:54:27.630  6200  6200 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-13 20:54:29.128  6200  6200 D AndroidRuntime: Shutting down VM
+11-13 20:54:30.341  6256  6256 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-13 20:54:30.346  6256  6256 I AndroidRuntime: Using default boot image
+11-13 20:54:30.357  6256  6256 I AndroidRuntime: Leaving lock profiling enabled
+11-13 20:54:30.495  6256  6256 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-13 20:54:30.547  6256  6256 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-13 20:54:31.831  6256  6256 D AndroidRuntime: Shutting down VM
+11-13 20:54:38.003  6360  6360 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-13 20:54:38.007  6360  6360 I AndroidRuntime: Using default boot image
+11-13 20:54:38.007  6360  6360 I AndroidRuntime: Leaving lock profiling enabled
+11-13 20:54:38.195  6360  6360 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-13 20:54:38.316  6360  6360 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-13 20:54:39.390  6360  6360 D AndroidRuntime: Shutting down VM
+11-13 20:54:40.758  3683  3683 V CAM_StateSavePic: saved result to URI: Optional.of(content://com.chrisgribble.wellwrite.files/camera/WellWrite%20photo%202026-11-13%20205418.jpg)
+11-13 20:54:41.014  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:54:41.015  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:54:41.680  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name _ulocalCoord
+11-13 20:54:41.680  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name _uposition
+11-13 20:54:41.868  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:54:41.868  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-13 20:54:41.868  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-13 20:54:42.050  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:54:42.050  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:54:42.050  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:54:42.221  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:54:42.222  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:54:42.222  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:54:42.222  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name texSubset
+11-13 20:54:49.061  6517  6517 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-13 20:54:49.064  6517  6517 I AndroidRuntime: Using default boot image
+11-13 20:54:49.064  6517  6517 I AndroidRuntime: Leaving lock profiling enabled
+11-13 20:54:49.109  6517  6517 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-13 20:54:49.136  6517  6517 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-13 20:54:50.188  6517  6517 D AndroidRuntime: Shutting down VM
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: FATAL EXCEPTION: UiAutomation
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: PID: 6517
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: java.lang.RuntimeException: Bad file descriptor
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.BinderProxy.transactNative(Native Method)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.BinderProxy.transact(BinderProxy.java:584)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.accessibilityservice.IAccessibilityServiceConnection$Stub$Proxy.findAccessibilityNodeInfoByAccessibilityId(IAccessibilityServiceConnection.java:1161)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.view.accessibility.AccessibilityInteractionClient.findAccessibilityNodeInfoByAccessibilityId(AccessibilityInteractionClient.java:665)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.view.accessibility.AccessibilityNodeInfo.refresh(AccessibilityNodeInfo.java:1120)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.view.accessibility.AccessibilityCache$AccessibilityNodeRefresher.refreshNode(AccessibilityCache.java:888)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.view.accessibility.AccessibilityCache.onAccessibilityEvent(AccessibilityCache.java:294)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.view.accessibility.AccessibilityInteractionClient.onAccessibilityEvent(AccessibilityInteractionClient.java:1158)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.accessibilityservice.AccessibilityService$IAccessibilityServiceClientWrapper.lambda$onAccessibilityEvent$2(AccessibilityService.java:2925)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.accessibilityservice.AccessibilityService$IAccessibilityServiceClientWrapper.$r8$lambda$09cnCCQeC7txVafv5NeCrjYkmcY(Unknown Source:0)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.accessibilityservice.AccessibilityService$IAccessibilityServiceClientWrapper$$ExternalSyntheticLambda8.run(Unknown Source:6)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:958)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:205)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:294)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: Error reporting crash
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: java.lang.RuntimeException: Bad file descriptor
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.BinderProxy.transactNative(Native Method)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.BinderProxy.transact(BinderProxy.java:584)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.IServiceManager$Stub$Proxy.checkService(IServiceManager.java:443)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.ServiceManagerProxy.getService(ServiceManagerNative.java:63)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.ServiceManager.rawGetService(ServiceManager.java:378)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.os.ServiceManager.getService(ServiceManager.java:147)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.app.ActivityManager$3.create(ActivityManager.java:5214)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.app.ActivityManager$3.create(ActivityManager.java:5211)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.util.Singleton.get(Singleton.java:43)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at android.app.ActivityManager.getService(ActivityManager.java:5202)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$KillApplicationHandler.uncaughtException(RuntimeInit.java:160)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at java.lang.ThreadGroup.uncaughtException(ThreadGroup.java:1071)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at java.lang.ThreadGroup.uncaughtException(ThreadGroup.java:1066)
+11-13 20:54:50.189  6517  6530 E AndroidRuntime: 	at java.lang.Thread.dispatchUncaughtException(Thread.java:2306)
+11-13 20:54:55.924  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:54:55.924  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:54:55.924  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:55:14.594  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:55:14.594  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-13 20:55:14.594  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-13 20:55:30.940  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:55:30.940  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inCoverage
+11-13 20:55:30.975  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:55:30.975  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inDashParams
+11-13 20:55:30.975  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleParams
+11-13 20:55:31.030  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:55:31.030  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inDashParams
+11-13 20:55:31.030  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleParams
+11-13 20:55:31.083  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:55:31.083  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inDashParams
+11-13 20:55:31.083  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleParams
+11-13 20:55:33.809  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:55:33.810  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:55:33.898  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:55:33.898  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:55:46.868  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:55:46.868  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:55:46.868  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:55:47.036  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:55:47.036  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:55:47.036  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:55:56.634  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:55:56.634  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:56:17.106  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:56:17.106  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inDashParams
+11-13 20:56:17.106  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inRect
+11-13 20:56:17.476  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:56:17.476  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:56:17.476  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-13 20:56:17.476  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name texSubset
+11-13 20:56:18.663  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:56:18.663  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-13 20:56:18.727  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-13 20:56:18.727  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-13 20:56:18.727  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-13 20:56:40.722  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-13 20:56:40.722  3759  3899 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-13 20:57:30.924  1745  2430 E cr_CronetUrlRequestContext: 	at org.chromium.net.impl.r.run(PG:5)
+11-13 20:57:33.629  8840  8840 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-13 20:57:33.634  8840  8840 I AndroidRuntime: Using default boot image
+11-13 20:57:33.634  8840  8840 I AndroidRuntime: Leaving lock profiling enabled
+11-13 20:57:33.730  8840  8840 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-13 20:57:33.767  8840  8840 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-13 20:57:34.811  8840  8840 D AndroidRuntime: Shutting down VM
+11-13 20:57:43.593  8991  8991 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-13 20:57:43.596  8991  8991 I AndroidRuntime: Using default boot image
+11-13 20:57:43.596  8991  8991 I AndroidRuntime: Leaving lock profiling enabled
+11-13 20:57:43.642  8991  8991 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-13 20:57:43.667  8991  8991 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-13 20:57:44.723  8991  8991 D AndroidRuntime: Shutting down VM
