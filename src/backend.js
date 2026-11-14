@@ -240,6 +240,14 @@ function createBackend(platform) {
     return verseIn(bible.VERSES[i], translation);
   });
   handle('bible:books', () => bible.books());
+  // The Bible read aloud: the World English Bible, read by Winfred Henson, streamed a chapter at a time from eBible.org.
+  handle('bible:audio', (bookIndex, chapterNumber) => {
+    const a = require('./audio/web-henson.json');
+    const b = +bookIndex, c = +chapterNumber;
+    const f = Number.isInteger(b) && Number.isInteger(c) && a.files[b] && a.files[b][c - 1];
+    if (!f) return null;
+    return { url: a.base + f, name: a.name, credit: a.credit };
+  });
   handle('bible:parseRef', text => bible.parseRef(String(text || '').slice(0, 60)));
   handle('bible:chapter', async (translation, bookIndex, chapterNumber) => {
     const id = apiId(translation), b = +bookIndex, c = +chapterNumber;

@@ -369,6 +369,7 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 
 @media (max-width: 1000px) {
   .app { grid-template-columns: 280px 1fr; }
+  .listen-bar { --side: 280px; }
   .sheet { padding: 40px 32px 100px; }
   .stamp-day { font-size: 84px; }
 }
@@ -1161,3 +1162,38 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 @media (pointer: coarse) { .q-attr-btn { padding: 10px 0 10px 12px; margin: -10px 0; } }
 /* Locked when the bell was tapped: "Morning prayer: unlock to pray" */
 .lock-prayer { margin: -4px 0 14px; font-size: 14px; font-weight: 600; color: var(--ribbon); text-align: center; }
+
+/* Listen: the Bible read aloud */
+.rd-listen { display: inline-flex; align-items: center; gap: 5px; }
+.rd-listen .ic { width: 17px; height: 17px; }
+.rd-listen.on { color: var(--ribbon); }
+.listen-bar {
+  --side: 320px;
+  position: fixed; left: calc(50% + var(--side) / 2); transform: translateX(-50%); bottom: 14px; z-index: 40;   /* centred on the page, beside the sidebar */
+  width: min(640px, calc(100vw - var(--side) - 24px)); padding: 8px 10px; border-radius: 14px;
+  background: var(--paper); border: 1px solid var(--rule); box-shadow: 0 8px 28px rgba(0,0,0,.18);
+}
+.listen-bar[hidden] { display: none; }
+.ls-row { display: flex; align-items: center; gap: 6px; }
+.ls-mid { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.ls-top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.ls-title { font-weight: 700; font-size: 14px; color: var(--ink); padding: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ls-time { margin-left: auto; font-size: 12px; color: var(--pencil); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ls-seek { width: 100%; accent-color: var(--ribbon); margin: 0; height: 18px; }
+.ls-note { font-size: 12px; color: var(--pencil); }
+.ls-note:empty { display: none; }
+.ls-play { width: 40px; height: 40px; border-radius: 50%; background: var(--ribbon); color: #fff; font-size: 14px; flex: none; display: grid; place-items: center; }
+.ls-skip, .ls-rate, .ls-close { flex: none; min-width: 36px; height: 36px; font-size: 12.5px; color: var(--pencil); border-radius: 8px; }
+.ls-skip:hover, .ls-rate:hover, .ls-close:hover { color: var(--ink); background: color-mix(in srgb, var(--pencil) 12%, transparent); }
+body.listening .readview { padding-bottom: 96px; }
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1024px) {
+  .listen-bar { --side: 0px; left: 50%; bottom: calc(70px + env(safe-area-inset-bottom)); width: calc(100vw - 16px); padding: 6px 8px; }
+  body.keyboard .listen-bar, body.writing .listen-bar { display: none; }
+  .rd-listen-t { display: none; }
+  .ls-rate { min-width: 40px; }
+  .ls-skip { min-width: 40px; height: 44px; }
+  .ls-close { min-width: 40px; height: 44px; }
+  body.listening .toast { bottom: calc(150px + env(safe-area-inset-bottom)); }
+}
+/* Locked: the player keeps playing but isn't shown over the lock screen */
+#lock:not([hidden]) ~ .listen-bar { display: none; }

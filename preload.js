@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('wellwrite', {
   bibleBooks: () => call('bible:books'),
   bibleParseRef: text => call('bible:parseRef', text),
   bibleChapter: (translation, book, chapter) => call('bible:chapter', translation, book, chapter),
+  bibleAudio: (book, chapter) => call('bible:audio', book, chapter),
   bibleSearch: (translation, query, offset) => call('bible:search', translation, query, offset),
   wpStatus: () => call('wp:status'),
   wpConnect: (site, user, password) => call('wp:connect', site, user, password),

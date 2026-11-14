@@ -2860,6 +2860,8 @@ async function renderReader(body, { verse = 0, to = 0 } = {}) {
       el('button', { type: 'button', class: 'rd-ref', id: 'rdRef', onclick: () => bookPicker(pos, go) }, label(pos), el('span', { class: 'chev' }, ' ▾')),
       el('button', { type: 'button', class: 'rd-arrow', title: next ? label(next) : '', disabled: !next, onclick: () => next && go(next) }, '›'),
       el('span', { class: 'rd-gap' }),
+      el('button', { type: 'button', class: 'btn-plain rd-listen' + (listen.pos && listen.pos.b === pos.b && listen.pos.c === pos.c ? ' on' : ''), title: 'Listen to this chapter (World English Bible, read aloud)', 'aria-label': 'Listen to ' + label(pos), onclick: () => listenTo(pos) },
+        headphones(), el('span', { class: 'rd-listen-t' }, 'Listen')),
       versionButton(ch.translation),
       el('button', { type: 'button', class: 'btn-plain rd-find', onclick: () => { state.bibleTab = 'search'; renderBibleView(); } }, 'Search')),
     ch.fallback ? el('p', { class: 'rv-note warn' }, `Couldn’t reach API.Bible (${ch.fallback}), so this is the World English Bible.`) : null,
@@ -2876,6 +2878,104 @@ async function renderReader(body, { verse = 0, to = 0 } = {}) {
     const n = text.querySelector(`.rd-v[data-v="${verse}"]`);
     if (n) requestAnimationFrame(() => { n.scrollIntoView({ block: 'center' }); n.classList.add('flash'); });
   }
+}
+
+// --- Listen: the World English Bible read aloud (Winfred Henson, streamed a chapter at a time from eBible.org).
+// One player for the whole app: it keeps going when you leave the Bible, lock the journal, or (on Android) turn the
+// screen off, and goes on to the next chapter by itself. The reader follows along if it's showing the chapter.
+const listen = { audio: null, pos: null, bar: null, rate: 1, info: null };
+const RATES = [1, 1.25, 1.5, 0.75];
+function headphones() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('class', 'ic');
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', 'M4 15v-3a8 8 0 0 1 16 0v3M4 15h2.5a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1zM20 15h-2.5a1 1 0 0 0-1 1v3.5a1 1 0 0 0 1 1H19a1 1 0 0 0 1-1z');
+  path.setAttribute('fill', 'none'); path.setAttribute('stroke', 'currentColor'); path.setAttribute('stroke-width', '1.8'); path.setAttribute('stroke-linejoin', 'round');
+  svg.append(path);
+  return svg;
+}
+const fmtTime = t => !isFinite(t) || t < 0 ? '–:––' : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+function listenTitle(p) { const b = (bibleBooksList || [])[p.b]; return b ? `${bookShort(b.name)} ${p.c}` : ''; }
+function listenBar() {
+  if (listen.bar) return listen.bar;
+  const a = listen.audio = new Audio();
+  a.preload = 'auto';
+  const play = el('button', { type: 'button', class: 'ls-play', 'aria-label': 'Play', onclick: () => (a.paused ? a.play().catch(listenFailed) : a.pause()) }, '▶');
+  const back = el('button', { type: 'button', class: 'ls-skip', title: 'Back 15 seconds', 'aria-label': 'Back 15 seconds', onclick: () => { a.currentTime = Math.max(0, a.currentTime - 15); } }, '↺15');
+  const fwd = el('button', { type: 'button', class: 'ls-skip', title: 'Forward 15 seconds', 'aria-label': 'Forward 15 seconds', onclick: () => { if (isFinite(a.duration)) a.currentTime = Math.min(a.duration - 1, a.currentTime + 15); } }, '15↻');
+  const title = el('button', { type: 'button', class: 'ls-title', title: 'Show this chapter', onclick: () => { if (!listen.pos) return; setReaderPos(listen.pos.b, listen.pos.c); state.bibleTab = 'read'; setMode('bible'); } });
+  const time = el('span', { class: 'ls-time' }, '');
+  const seek = el('input', { type: 'range', class: 'ls-seek', min: 0, max: 1000, value: 0, 'aria-label': 'Position in the chapter' });
+  seek.addEventListener('input', () => { if (isFinite(a.duration)) a.currentTime = (seek.value / 1000) * a.duration; });
+  const rate = el('button', { type: 'button', class: 'ls-rate', title: 'Reading speed', onclick: () => { listen.rate = RATES[(RATES.indexOf(listen.rate) + 1) % RATES.length]; a.playbackRate = listen.rate; rate.textContent = listen.rate + '×'; } }, '1×');
+  const close = el('button', { type: 'button', class: 'ls-close', title: 'Stop listening', 'aria-label': 'Stop listening', onclick: () => stopListening() }, '✕');
+  const note = el('span', { class: 'ls-note' });
+  const bar = listen.bar = el('div', { class: 'listen-bar', id: 'listenBar', hidden: true, role: 'region', 'aria-label': 'Listening' },
+    el('div', { class: 'ls-row' }, back, play, fwd, el('div', { class: 'ls-mid' }, el('div', { class: 'ls-top' }, title, time), seek, note), rate, close));
+  document.body.append(bar);
+  const sync = () => {
+    play.textContent = a.paused ? '▶' : '❚❚'; play.setAttribute('aria-label', a.paused ? 'Play' : 'Pause');
+    time.textContent = `${fmtTime(a.currentTime)} / ${fmtTime(a.duration)}`;
+    if (isFinite(a.duration) && document.activeElement !== seek) seek.value = Math.round((a.currentTime / a.duration) * 1000);
+    bar.classList.toggle('playing', !a.paused);
+  };
+  for (const ev of ['play', 'pause', 'timeupdate', 'durationchange', 'loadedmetadata']) a.addEventListener(ev, sync);
+  a.addEventListener('play', () => { note.textContent = ''; tellAndroid(); });
+  a.addEventListener('pause', tellAndroid);
+  a.addEventListener('waiting', () => { note.textContent = 'Loading…'; });
+  a.addEventListener('playing', () => { note.textContent = ''; });
+  a.addEventListener('error', () => listenFailed());
+  // The end of a chapter: on to the next, and the reader with it if it was showing this one.
+  a.addEventListener('ended', () => {
+    const p = listen.pos, books = bibleBooksList || [];
+    if (!p || !books[p.b]) return;
+    const next = p.c < books[p.b].chapters ? { b: p.b, c: p.c + 1 } : p.b < books.length - 1 ? { b: p.b + 1, c: 1 } : null;
+    if (!next) { stopListening(); return; }
+    const following = state.mode === 'bible' && state.bibleTab === 'read' && state.readerPos && state.readerPos.b === p.b && state.readerPos.c === p.c;
+    listenTo(next);
+    if (following) { setReaderPos(next.b, next.c); renderBibleView(); $('#bibleView').scrollTop = 0; $('#sheetScroll').scrollTop = 0; }
+  });
+  if (api.onListenControl) api.onListenControl(cmd => {
+    if (cmd === 'pause') a.pause(); else if (cmd === 'play') a.play().catch(listenFailed); else if (cmd === 'stop') stopListening();
+  });
+  listen.sync = sync; listen.note = note; listen.title = title;
+  return bar;
+}
+function tellAndroid() {
+  if (!api.listening || !listen.pos) return;
+  api.listening({ on: true, playing: !listen.audio.paused, title: listenTitle(listen.pos), text: listen.info ? listen.info.name : '' }).catch(() => {});
+}
+function listenFailed() {
+  if (!listen.note) return;
+  try { listen.audio.pause(); } catch {}
+  listen.note.textContent = navigator.onLine === false ? 'Offline: listening needs the internet.' : 'Couldn’t play. Check your connection.';
+  listen.sync && listen.sync();
+}
+async function listenTo(p) {
+  const bar = listenBar(), a = listen.audio;
+  if (listen.pos && listen.pos.b === p.b && listen.pos.c === p.c && a.src) { bar.hidden = false; document.body.classList.add('listening'); if (a.paused) a.play().catch(listenFailed); return; }
+  if (!bibleBooksList) { try { bibleBooksList = await api.bibleBooks(); } catch {} }
+  let info = null;
+  try { info = await api.bibleAudio(p.b, p.c); } catch {}
+  bar.hidden = false; document.body.classList.add('listening');
+  listen.pos = { b: p.b, c: p.c };
+  listen.title.textContent = listenTitle(p);
+  listen.title.title = info ? `${info.name}. ${info.credit}` : '';
+  listen.info = info;
+  document.querySelectorAll('.rd-listen').forEach(b => b.classList.toggle('on', state.readerPos && state.readerPos.b === p.b && state.readerPos.c === p.c));
+  if (!info) { listen.note.textContent = 'There’s no recording of this chapter.'; return; }
+  a.src = info.url; a.playbackRate = listen.rate;
+  listen.note.textContent = 'Loading…';
+  a.play().catch(e => { if (e && e.name !== 'AbortError') listenFailed(); });
+}
+function stopListening() {
+  if (!listen.audio) return;
+  listen.audio.pause(); listen.audio.removeAttribute('src'); listen.audio.load();
+  listen.pos = null; listen.info = null;
+  listen.bar.hidden = true; document.body.classList.remove('listening');
+  document.querySelectorAll('.rd-listen.on').forEach(b => b.classList.remove('on'));
+  if (api.listening) api.listening({ on: false }).catch(() => {});
 }
 
 /** Choose a book, then a chapter. */
