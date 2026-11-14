@@ -5,6 +5,13 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.30.2', date: '2026-11-14', title: 'The prayer stays when you tap the bell',
+    fixed: [
+      'Tapping the prayer bell’s notification when WellWrite had been away for a while showed the prayer, then the journal locked and the prayer vanished. Now the lock screen says “Morning prayer: unlock to pray”, and the prayer opens as soon as you unlock.',
+      'Pause for prayer opens at the top, with the hour and the verse, rather than scrolled down to Amen; prayers keep their line breaks.',
+    ],
+  },
+  {
     v: '1.30.1', date: '2026-11-14', title: 'Shorter credits',
     improved: [
       'Who wrote a quote or prayer now takes one line under it. Tap the line, or Credit, to see the full source, credit and licence; tap again to fold it away. On a phone this saves several lines on every prayer.',

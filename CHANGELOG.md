@@ -2,6 +2,14 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.30.2 — The prayer stays when you tap the bell
+_14 November 2026_
+
+**Fixed**
+
+- Tapping the prayer bell’s notification when WellWrite had been away for a while showed the prayer, then the journal locked and the prayer vanished. Now the lock screen says “Morning prayer: unlock to pray”, and the prayer opens as soon as you unlock.
+- Pause for prayer opens at the top, with the hour and the verse, rather than scrolled down to Amen; prayers keep their line breaks.
+
 ## 1.30.1 — Shorter credits
 _14 November 2026_
 

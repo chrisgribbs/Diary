@@ -1152,10 +1152,12 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .prayer-pause .pp-verse span { display: block; }
 .prayer-pause cite { display: block; margin-top: 6px; font: normal 13px/1.4 var(--sans, inherit); color: var(--pencil); }
 .prayer-pause .pp-prayer { text-align: left; background: color-mix(in srgb, var(--pencil) 7%, transparent); border-radius: 10px; padding: 14px 18px; margin: 0 0 18px; }
-.prayer-pause .pp-prayer p { margin: 0; line-height: 1.6; }
+.prayer-pause .pp-prayer p { margin: 0; line-height: 1.6; white-space: pre-line; }
 .prayer-pause .actions { justify-content: center; flex-wrap: wrap; }
 #bellBtn.muted { opacity: .45; }
 .lock-remember { display: flex; align-items: center; gap: 8px; margin: 2px 0 12px; font-size: 13.5px; color: rgba(255,255,255,.75); cursor: pointer; }
 .lock-remember input { width: 16px; height: 16px; accent-color: var(--foil, #d6b263); }
 /* Fingers: a bigger target for "Credit" without making the line taller */
 @media (pointer: coarse) { .q-attr-btn { padding: 10px 0 10px 12px; margin: -10px 0; } }
+/* Locked when the bell was tapped: "Morning prayer: unlock to pray" */
+.lock-prayer { margin: -4px 0 14px; font-size: 14px; font-weight: 600; color: var(--ribbon); text-align: center; }

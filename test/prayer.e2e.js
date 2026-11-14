@@ -18,6 +18,8 @@ app.whenReady().then(async () => {
   await new Promise(r => win.webContents.once('did-finish-load', r));
   await wait(400);
   const js = c => win.webContents.executeJavaScript(`(async () => { ${c} })()`).catch(e => { throw new Error(e.message + '\n  in: ' + c.slice(0, 140)); });
+  // Unlock from the lock screen (password, or "Open" on a trusted computer).
+  const unlock = () => js(`if (!document.querySelector('#trustForm').hidden) document.querySelector('#trustForm').requestSubmit(); else { document.querySelector('#unlockPw').value='river-stone'; document.querySelector('#unlockForm').requestSubmit(); }`);
   const shot = async n => { await wait(300); fs.writeFileSync(path.join(OUT, n + '.png'), (await win.webContents.capturePage()).toPNG()); };
 
   await js(`document.querySelector('#setupPw').value='river-stone'; document.querySelector('#setupPw2').value='river-stone'; document.querySelector('#setupForm').requestSubmit();`);
@@ -71,6 +73,28 @@ app.whenReady().then(async () => {
   assert(!win.isDestroyed() && !win.isVisible(), 'window hidden, app still running');
   assert(await js(`return !state.unlocked`), 'journal locked');
   win.show(); await wait(500);
+
+  // The bell tapped while locked: the lock screen says so, and the Pause opens (with its prayer) once unlocked.
+  await js(`pauseForPrayer('evening');`); await wait(500);
+  assert(!(await js(`return document.querySelector('#dlg').open`)), 'no Pause over the lock screen');
+  assert.match(await js(`return document.querySelector('#lockPrayer').hidden ? '' : document.querySelector('#lockPrayer').textContent`), /Evening prayer: unlock to pray/);
+  await shot('p5-locked-waiting');
+  await unlock(); await wait(1500);
+  assert(await js(`return document.querySelector('#dlg').open && document.querySelector('.pp-prayer p').textContent.length > 40`), 'the Pause and its prayer, after unlocking');
+  assert(await js(`return document.querySelector('#lockPrayer').hidden`));
+  await js(`document.querySelector('#dlg').close();`); await wait(300);
+
+  // The bell tapped as the app came back, then it locked (Android: away too long): the prayer waits, not lost.
+  await js(`pauseForPrayer('morning');`); await wait(800);
+  assert(await js(`return document.querySelector('#dlg').open`));
+  await js(`await lockNow();`); await wait(800);
+  assert.match(await js(`return document.querySelector('#lockPrayer').textContent`), /Morning prayer: unlock to pray/);
+  await unlock(); await wait(1500);
+  assert.match(await js(`return document.querySelector('.pp-hour').textContent`), /Morning prayer/);
+  assert(await js(`const r = document.querySelector('.pp-hour').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight`), 'opens at the top');
+  assert(await js(`return document.querySelector('.pp-prayer p').textContent.length > 40`), 'the morning prayer is there');
+  await shot('p6-after-unlock');
+  await js(`document.querySelector('#dlg').close();`); await wait(300);
 
   // Turning the bell off: closing quits as before.
   await js(`await window.wellwrite.setSettings({ ...state.settings, prayerBell: false });`); await wait(300);

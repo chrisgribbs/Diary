@@ -96,7 +96,7 @@ app.whenReady().then(async () => {
   assert.notEqual(await js(`return prayerFor(todayISO()).id`), second);
 
   // In the morning, Pause for prayer prays the day's prayer.
-  const today = await js(`return prayerFor(todayISO()).text`);
+  const today = await js(`return prayerFor(todayISO(), 'morning').text`);
   await js(`pauseForPrayer('morning');`); await wait(800);
   assert.equal(await js(`return document.querySelector('.pp-prayer p').textContent`), today);
   await shot('d3-pause');

@@ -365,11 +365,14 @@ async function lockNow({ auto = false } = {}) {
   closePopover();
   $('#body').innerHTML = ''; $('#title').value = ''; $('#tagChips').replaceChildren();
   $('#list').replaceChildren(); $('#calGrid').replaceChildren(); $('#search').value = '';
+  // Praying when it locked (the bell was tapped as the app came back): the prayer waits for you.
+  const praying = state.praying;
   if ($('#dlg').open) $('#dlg').close();
   $('#lightbox').hidden = true;
   let trust = null;
   try { trust = (await api.status()).trust; } catch {}
   showLock(true, trust);
+  if (praying != null) { state.praying = null; waitToPray(praying || null); }
 }
 
 /* ---------- entries: list + filtering ---------- */
@@ -3757,6 +3760,10 @@ function prayerControls(again) {
 }
 /** "Pause for prayer": the hour's verse and prayer, a moment of quiet, then Amen or a line in today's entry. */
 async function pauseForPrayer(key) {
+  // The journal's locked: the prayer waits on the lock screen and opens as soon as you unlock
+  // (with the day's prayer, which needs the journal open).
+  if (!state.unlocked && !$('#lock').hidden && $('#setupForm').hidden) { waitToPray(key); return; }
+  state.praying = key || '';
   let p;
   try { p = await api.prayerPause(key || null, null); } catch (x) { toast(x.message); return; }
   // In the morning and the evening, the day's prayer for that hour.
@@ -3765,6 +3772,8 @@ async function pauseForPrayer(key) {
   if (today) p.prayer = { text: today.text, source: [today.author, shortCredit(today)].filter(Boolean).join(' · ') };
   await openDialog((f, done) => {
     f.classList.add('prayer-pause');
+    // Start at the top (the hour and the verse), not scrolled down to Amen.
+    setTimeout(() => { f.scrollTop = 0; $('#dlg').scrollTop = 0; }, 0);
     f.append(
       el('p', { class: 'pp-hour' }, `${p.name} prayer`),
       el('h2', {}, 'Pause for prayer'),
@@ -3776,6 +3785,15 @@ async function pauseForPrayer(key) {
         state.unlocked ? el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); writePrayerLine(p.name); } }, 'Write a line') : null,
         el('button', { type: 'button', class: 'btn-ink', autofocus: true, onclick: () => done() }, 'Amen')));
   });
+  state.praying = null;
+}
+/** Locked when the bell was tapped: say so on the lock screen, and pray once it's open. */
+function waitToPray(key) {
+  const names = { morning: 'Morning', midday: 'Midday', afternoon: 'Afternoon', evening: 'Evening', night: 'Night' };
+  const line = $('#lockPrayer');
+  line.textContent = `${names[key] ? names[key] + ' prayer' : 'Pause for prayer'}: unlock to pray`;
+  line.hidden = false;
+  state.afterUnlock = () => { line.hidden = true; pauseForPrayer(key); };
 }
 /** A short note in today's entry, under the hour's name. */
 async function writePrayerLine(name) {
