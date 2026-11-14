@@ -40,7 +40,9 @@ app.whenReady().then(async () => {
     let t = 0; for (let i = 0; i < 40 && t < 3; i++) { await wait(500); t = await js(`return listen.audio.currentTime`); }
     assert(t >= 3, 'playing: ' + t + 's in');
     assert(await js(`return !listen.audio.paused && listen.audio.duration > 120`), 'a whole chapter');
-    await js(`document.querySelector('.ls-skip:last-of-type').click();`); await wait(300);
+    const before = await js(`return listen.audio.currentTime`);
+    await js(`document.querySelectorAll('.ls-skip')[1].click();`); await wait(300);
+    assert(await js(`return listen.audio.currentTime`) >= before + 14, 'forward 15 seconds');
     await js(`listen.audio.currentTime = 200;`); await wait(2500);
     assert(await js(`return listen.audio.currentTime > 200 && !listen.audio.paused`), 'skipping ahead (range requests) works');
     console.log('  played John 3 from eBible.org:', Math.round(await js(`return listen.audio.duration`)), 's long');
