@@ -87,6 +87,8 @@ public class MainActivity extends ComponentActivity {
         super.onCreate(saved);
         NodeBridge.start(this);
         updater = new Updater(this, json -> post("U" + ascii(json)));
+        // The Listening notification's Pause/Play/Stop, passed to the page.
+        ListenService.sink = cmd -> post("A{\"cmd\":\"" + cmd + "\"}");
         if (saved == null) clearCameraCache(getCacheDir());
 
         root = new FrameLayout(this);
@@ -297,6 +299,10 @@ public class MainActivity extends ComponentActivity {
                 else { pendingPermission = req; notifyPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS); }
                 break;
             case "bars": systemBars(req.optString("color"), req.optBoolean("light")); reply(req, true, true, null); break;
+            case "listening":
+                if (req.optBoolean("on")) ListenService.show(this, req.optString("title"), req.optString("text"), req.optBoolean("playing"));
+                else ListenService.stop(this);
+                reply(req, true, true, null); break;
             default: reply(req, false, null, "Unknown request");
         }
     }
@@ -390,6 +396,8 @@ public class MainActivity extends ComponentActivity {
     @Override
     protected void onDestroy() {
         NodeBridge.setListener(null);
+        ListenService.sink = null;
+        ListenService.stop(this);   // the page that was playing is gone
         if (web != null) { ((ViewGroup) web.getParent()).removeView(web); web.destroy(); web = null; }
         super.onDestroy();
     }

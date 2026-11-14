@@ -21,6 +21,7 @@
     if (kind === 'B') { back(); return; }
     if (kind === 'Q') { try { emit('prayer:open', JSON.parse(raw.slice(1)).key || null); } catch {} return; }
     if (kind === 'U') { try { emit('update-progress', JSON.parse(raw.slice(1))); } catch {} return; }
+    if (kind === 'A') { try { emit('listen-control', JSON.parse(raw.slice(1)).cmd); } catch {} return; }
     let m; try { m = JSON.parse(raw.slice(1)); } catch { return; }
     if (kind === 'P') {        // from WellWrite's engine
       if (m.ev) { emit(m.ev, ...(m.args || [])); return; }
@@ -136,6 +137,10 @@
     bibleBooks: () => engine('bible:books'),
     bibleParseRef: text => engine('bible:parseRef', text),
     bibleChapter: (translation, book, chapter) => engine('bible:chapter', translation, book, chapter),
+    bibleAudio: (book, chapter) => engine('bible:audio', book, chapter),
+    // Listening keeps going with the screen off: Android shows "Listening" with Pause and Stop.
+    listening: o => app('listening', { on: !!o.on, playing: !!o.playing, title: String(o.title || ''), text: String(o.text || '') }),
+    onListenControl: fn => on('listen-control', fn),
     bibleSearch: (translation, query, offset) => engine('bible:search', translation, query, offset),
     wpStatus: () => engine('wp:status'),
     wpConnect: (site, user, password) => engine('wp:connect', site, user, password),

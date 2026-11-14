@@ -5,6 +5,15 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.31.0', date: '2026-11-14', title: 'Listen to the Bible',
+    new: [
+      'Listen: in the Bible, tap Listen (the headphones) to hear the chapter read aloud: the World English Bible, read by Winfred Henson. It streams a chapter at a time from eBible.org, so there’s nothing to download first (it uses about 1 MB a minute).',
+      'The player stays at the bottom while you read, write or look at photos: play and pause, back or forward 15 seconds, drag to any point, and choose the speed (1×, 1.25×, 1.5×, 0.75×).',
+      'At the end of a chapter it goes on to the next, and if you’re reading along the page turns with it.',
+      'On Android it keeps going with the screen off, with a Listening notification to pause or stop it. It also keeps going if the journal locks.',
+    ],
+  },
+  {
     v: '1.30.2', date: '2026-11-14', title: 'The prayer stays when you tap the bell',
     fixed: [
       'Tapping the prayer bell’s notification when WellWrite had been away for a while showed the prayer, then the journal locked and the prayer vanished. Now the lock screen says “Morning prayer: unlock to pray”, and the prayer opens as soon as you unlock.',
