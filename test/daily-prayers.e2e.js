@@ -63,7 +63,14 @@ app.whenReady().then(async () => {
   assert(year.easter, 'Easter Day has its own prayer in the morning');
   assert.equal(new Set(year.ids).size, 3, "today's three prayers differ");
   assert(await js(`return ${card}.querySelector('blockquote').textContent.length > 30`));
-  assert.match(await js(`return ${card}.querySelector('.q-credit summary').textContent`), /Used with permission|Public domain/);
+  // The credit: one line, with "Credit" to see it all (the licence's full credit is a click away).
+  assert.equal(await js(`return ${card}.querySelector('.q-attr-btn').textContent`), 'Credit');
+  assert(await js(`return ${card}.querySelector('.q-attr-more').hidden`), 'the full credit starts folded');
+  assert(await js(`const l = ${card}.querySelector('.q-attr'); return l.getBoundingClientRect().height < 30`), 'one line');
+  await js(`${card}.querySelector('.q-attr-btn').click();`);
+  assert.match(await js(`return ${card}.querySelector('.q-attr-more').textContent`), /(Used with permission|Public domain)[\s\S]*Licence:/);
+  await js(`${card}.querySelector('.q-attr-line').click();`);
+  assert(await js(`return ${card}.querySelector('.q-attr-more').hidden`), 'folds again');
   await shot('d1-card');
 
   // I like this: a favourite, shown as liked.

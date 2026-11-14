@@ -189,6 +189,7 @@ app.whenReady().then(async () => {
   assert.equal((await js(`return (await window.wellwrite.list()).find(m => m.id === '${sam}')`)).category, family.id, 'moved up to Family');
   await js(`document.querySelector('#dlg').close();`);
 
+  if (errors.length) console.log('ERRS', JSON.stringify(errors));
   assert.deepEqual(errors, [], 'no console errors');
   console.log('connections e2e passed; shots in', OUT);
   fs.rmSync(process.env.WELLWRITE_DATA_DIR, { recursive: true, force: true });

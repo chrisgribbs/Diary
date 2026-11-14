@@ -1988,6 +1988,43 @@ setInterval(() => {
 /** The short credit a prayer's licence asks for, shown under it; the full credit is a click away. */
 const shortCredit = q => (q.credit || '').split('\n').find(l => /used with permission|public domain|shared by/i.test(l)) || '';
 const LICENCE_NAMES = { 'public-domain': 'Public domain', 'cc-by-nc-nd': 'CC BY-NC-ND 4.0', own: 'Shared by the writer' };
+/**
+ * Who wrote it, on one line: "— Augustine of Hippo, Prayers of the Early Church…", with "Credit" when there's a
+ * credit or licence to give. Click the line (or Credit) for all of it: the full source, the credit and the licence.
+ */
+function attribution(q) {
+  const line = el('span', { class: 'q-attr-line' }, '— ', authorLink(q.author), q.source ? ', ' : '', q.source ? el('cite', {}, q.source) : null);
+  const more = q.credit || q.licence ? el('div', { class: 'q-attr-more', hidden: true },
+    q.credit ? el('p', {}, ...q.credit.split('\n').flatMap((l, i) => (i ? [el('br'), l] : [l]))) : null,
+    q.licence ? el('p', {}, 'Licence: ' + (LICENCE_NAMES[q.licence] || q.licence)) : null) : null;
+  const fig = el('figcaption', { class: 'q-attr' });
+  const toggle = () => {
+    const open = fig.classList.toggle('open');
+    if (more) more.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+  };
+  const btn = el('button', { type: 'button', class: 'q-attr-btn', 'aria-expanded': 'false', title: 'Show the full credit', onclick: e => { e.stopPropagation(); toggle(); } },
+    more ? 'Credit' : '…');
+  fig.append(line, btn);
+  if (more) fig.append(more);
+  else btn.style.visibility = 'hidden';   // nothing more to show unless the line is cut short
+  line.addEventListener('click', () => { if (fig.classList.contains('cut') || more || fig.classList.contains('open')) toggle(); });
+  // Only offer "…" when the line really is cut short (it depends on the width of the window). Checked a frame
+  // later, and shown without changing the line's width, so it never sets off another resize.
+  if (!more && typeof ResizeObserver !== 'undefined') {
+    let pending = false;
+    new ResizeObserver(() => {
+      if (pending) return; pending = true;
+      requestAnimationFrame(() => {
+        pending = false;
+        if (fig.classList.contains('open')) return;
+        const cut = line.scrollWidth > line.clientWidth + 1;
+        fig.classList.toggle('cut', cut); btn.style.visibility = cut ? '' : 'hidden';
+      });
+    }).observe(line);
+  }
+  return fig;
+}
 function prayerCard(iso, where) {
   if (state.settings.dailyPrayer === false || hiddenQuoteDays.has('p' + iso)) return null;
   const btn = (label, fn, cls = 'q-btn') => el('button', { type: 'button', class: cls, onclick: fn }, label);
@@ -2004,17 +2041,13 @@ function prayerCard(iso, where) {
   if (!q) return null;
   const season = seasonOn(iso);
   const liked = !!q.fav;
-  const credit = shortCredit(q);
   const long = q.text.split('\n').length > 12 || q.text.length > 700;   // long prayers start folded, so the page stays yours
   return el('figure', { class: 'quote-card prayer ' + where },
     el('p', { class: 'q-season' }, prayerHeading(iso) + (season ? ` · ${season.name}, day ${season.dayIndex + 1}` : '')),
     q.title ? el('p', { class: 'q-title' }, q.title) : null,
     el('blockquote', { class: long ? 'folded' : '' }, q.text),
     long ? el('button', { type: 'button', class: 'q-btn q-more', onclick: e => { e.target.previousElementSibling.classList.remove('folded'); e.target.remove(); } }, 'Read the whole prayer') : null,
-    el('figcaption', {}, '— ', authorLink(q.author), q.source ? ', ' : '', q.source ? el('cite', {}, q.source) : null),
-    q.credit ? el('details', { class: 'q-credit' }, el('summary', {}, credit || 'Credit'),
-      el('p', {}, ...q.credit.split('\n').flatMap((l, i) => (i ? [el('br'), l] : [l]))),
-      q.licence ? el('p', {}, 'Licence: ' + LICENCE_NAMES[q.licence]) : null) : null,
+    attribution(q),
     el('div', { class: 'q-actions' },
       btn('Pray and write', () => writeAboutQuote(q, iso), 'q-btn primary'),
       el('button', { type: 'button', class: 'q-btn q-like' + (liked ? ' on' : ''), 'aria-pressed': String(liked),
@@ -2046,7 +2079,7 @@ function quoteCard(iso, where) {
   return el('figure', { class: 'quote-card ' + where },
     season ? el('p', { class: 'q-season' }, `${season.name}, day ${season.dayIndex + 1}`) : null,
     el('blockquote', {}, q.text),
-    el('figcaption', {}, '— ', authorLink(q.author), q.source ? ', ' : '', q.source ? el('cite', {}, q.source) : null),
+    attribution(q),
     el('div', { class: 'q-actions' },
       btn('Write about this', () => writeAboutQuote(q, iso), 'q-btn primary'),
       state.quotes.length > 1 ? btn('Another', () => { state.quoteSkip[iso] = (state.quoteSkip[iso] || 0) + 1; refreshQuote(); }) : null,

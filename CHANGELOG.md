@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.30.1 — Shorter credits
+_14 November 2026_
+
+**Improved**
+
+- Who wrote a quote or prayer now takes one line under it. Tap the line, or Credit, to see the full source, credit and licence; tap again to fold it away. On a phone this saves several lines on every prayer.
+
 ## 1.30.0 — A prayer for the morning, the day and the evening
 _14 November 2026_
 

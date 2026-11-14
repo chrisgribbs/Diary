@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.30.1', date: '2026-11-14', title: 'Shorter credits',
+    improved: [
+      'Who wrote a quote or prayer now takes one line under it. Tap the line, or Credit, to see the full source, credit and licence; tap again to fold it away. On a phone this saves several lines on every prayer.',
+    ],
+  },
+  {
     v: '1.30.0', date: '2026-11-14', title: 'A prayer for the morning, the day and the evening',
     new: [
       'The prayer for today now changes through the day: a prayer for the morning until noon, another for the day until six, and one for the evening after that. The page changes by itself when the hour turns.',
