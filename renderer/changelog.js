@@ -5,6 +5,15 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.31.1', date: '2026-11-14', title: 'A tidier Bible bar on phones',
+    improved: [
+      'On a phone, the bar above a chapter fits on one line: ‹ Matt 13 ▾ ›, then Listen and the version as two matching buttons. Long book names are shortened there (the full name is the heading underneath), and the second Search button is gone: Search is the tab above.',
+    ],
+    fixed: [
+      'Versions that don’t number every verse (like The Message) no longer show “0” before each paragraph.',
+    ],
+  },
+  {
     v: '1.31.0', date: '2026-11-14', title: 'Listen to the Bible',
     new: [
       'Listen: in the Bible, tap Listen (the headphones) to hear the chapter read aloud: the World English Bible, read by Winfred Henson. It streams a chapter at a time from eBible.org, so there’s nothing to download first (it uses about 1 MB a minute).',

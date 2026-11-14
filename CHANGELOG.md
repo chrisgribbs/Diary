@@ -2,6 +2,17 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.31.1 — A tidier Bible bar on phones
+_14 November 2026_
+
+**Improved**
+
+- On a phone, the bar above a chapter fits on one line: ‹ Matt 13 ▾ ›, then Listen and the version as two matching buttons. Long book names are shortened there (the full name is the heading underneath), and the second Search button is gone: Search is the tab above.
+
+**Fixed**
+
+- Versions that don’t number every verse (like The Message) no longer show “0” before each paragraph.
+
 ## 1.31.0 — Listen to the Bible
 _14 November 2026_
 

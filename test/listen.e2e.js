@@ -105,6 +105,20 @@ app.whenReady().then(async () => {
   assert(r.bottom <= r.tabTop, 'above the tab bar');
   assert(r.left >= 0 && r.right <= r.w && r.out === 0, 'nothing off-screen');
   await shot('l3-phone');
+  // The reader's bar on a phone: one line, short book name, no second Search, nothing cut off.
+  await js(`setReaderPos(51, 5); renderBibleView();`); await wait(900);
+  const bar = await js(`const b = document.querySelector('.rd-bar'), ref = document.querySelector('.rd-ref');
+    const shown = [...b.children].filter(e => getComputedStyle(e).display !== 'none');
+    return { h: Math.round(b.getBoundingClientRect().height), find: getComputedStyle(document.querySelector('.rd-find')).display,
+      ref: document.querySelector('.rd-ref-short').textContent, cut: ref.scrollWidth > ref.clientWidth + 1,
+      tops: new Set(shown.map(e => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2))).size }`);
+  console.log('  phone reader bar:', JSON.stringify(bar));
+  assert(bar.h < 60 && bar.tops === 1, 'one line');
+  assert.equal(bar.find, 'none');
+  assert.equal(bar.ref, '1 Thess 5');
+  assert(!bar.cut, 'the book and chapter fit');
+  // The Message numbers its paragraphs, not verses: no "0" verse numbers.
+  assert(await js(`return ![...document.querySelectorAll('.rd-v sup')].some(s => s.textContent === '0')`));
 
   assert.deepEqual(errors, [], 'no console errors');
   console.log('listen e2e passed; shots in ' + OUT);

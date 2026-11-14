@@ -839,6 +839,8 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .rd-ref:hover, .rd-ref:focus-visible { background: color-mix(in srgb, var(--foil) 16%, transparent); }
 .rd-ref .chev { color: var(--pencil); font-size: 12px; }
 .rd-gap { flex: 1; }
+.rd-ref-short { display: none; }
+.rd-ver, .rd-ref, .rd-listen, .rd-find { white-space: nowrap; flex: none; }
 .rd-find { padding: 6px 12px; font-size: 13px; }
 .rd-text { max-width: 34em; margin: 18px auto 0; font: calc(var(--write-size) * 1.05)/1.85 var(--serif); color: var(--ink); }
 .rd-title { font: 600 30px/1.2 var(--serif); text-align: center; margin: 4px 0 18px; }
@@ -1197,3 +1199,22 @@ body.listening .readview { padding-bottom: 96px; }
 }
 /* Locked: the player keeps playing but isn't shown over the lock screen */
 #lock:not([hidden]) ~ .listen-bar { display: none; }
+
+/* Phones: the reader's bar on one line. ‹ Matthew 13 ▾ ›, then the version and Listen as two matching buttons.
+   (Search is the tab above, so no second Search button here.) */
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1024px) {
+  .rd-bar { gap: 3px; padding: 6px 0; flex-wrap: nowrap; }
+  .rd-bar .rd-gap { display: none; }
+  .rd-ref { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: center; padding: 8px 2px; font-size: 17px; }
+  .rd-ref .chev { font-size: 10px; }
+  .rd-arrow { flex: none; width: 32px; height: 40px; }
+  .rd-find { display: none; }
+  .rd-ref-long { display: none; }
+  .rd-ref-short { display: inline; }
+  .rd-ver, .rd-listen { height: 40px; min-width: 44px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 10px; border: 1px solid var(--rule); border-radius: 10px; background: transparent; font-size: 14px; }
+  .rd-ver { padding: 0; }
+  .rd-ver .version-btn { border-bottom: 0; font-weight: 600; height: 100%; display: inline-flex; align-items: center; gap: 3px; padding: 0 9px; }
+  .rd-ver cite { font-style: normal; }
+  .rd-listen { padding: 0 10px; min-width: 42px; }
+}

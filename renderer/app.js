@@ -2771,6 +2771,10 @@ let bibleBooksList = null;
 const readerStart = () => { try { const r = JSON.parse(localStorage.getItem('bibleRef') || 'null'); if (r && Number.isInteger(r.b) && Number.isInteger(r.c)) return r; } catch {} return { b: 18, c: 23 }; };
 function setReaderPos(b, c) { state.readerPos = { b, c }; try { localStorage.setItem('bibleRef', JSON.stringify(state.readerPos)); } catch {} }
 const bookShort = name => name.replace(/^Psalms$/, 'Psalm');
+// The usual short names, for the reader's bar on a phone (the chapter's heading underneath gives the full name).
+const BOOK_ABBR = { Deuteronomy: 'Deut', '1 Chronicles': '1 Chr', '2 Chronicles': '2 Chr', Ecclesiastes: 'Eccl', 'Song of Solomon': 'Song',
+  Lamentations: 'Lam', '1 Corinthians': '1 Cor', '2 Corinthians': '2 Cor', Philippians: 'Phil', Colossians: 'Col',
+  '1 Thessalonians': '1 Thess', '2 Thessalonians': '2 Thess', Revelation: 'Rev' };
 
 async function renderReader(body, { verse = 0, to = 0 } = {}) {
   const token = ++bibleToken;
@@ -2818,13 +2822,13 @@ async function renderReader(body, { verse = 0, to = 0 } = {}) {
     if (block[0] === 'h') { text.append(el('p', { class: 'rd-head' }, block[1])); continue; }
     if (block[0] === 'p') {
       const para = el('p', { class: 'rd-para' });
-      for (const [v, t] of block[1]) { para.append(el('span', { class: 'rd-v', 'data-v': v }, el('sup', {}, String(v)), t + ' ')); verseText.set(v, (verseText.has(v) ? verseText.get(v) + ' ' : '') + t); }
+      for (const [v, t] of block[1]) { para.append(el('span', { class: 'rd-v', 'data-v': v }, v > 0 ? el('sup', {}, String(v)) : null, t + ' ')); verseText.set(v, (verseText.has(v) ? verseText.get(v) + ' ' : '') + t); }
       text.append(para);
     } else {
       const poem = el('div', { class: 'rd-poem' });
       let last = null;
       for (const [v, t] of block[1]) {
-        poem.append(el('span', { class: 'rd-line rd-v', 'data-v': v }, v !== last ? el('sup', {}, String(v)) : null, t));
+        poem.append(el('span', { class: 'rd-line rd-v', 'data-v': v }, v > 0 && v !== last ? el('sup', {}, String(v)) : null, t));
         verseText.set(v, (verseText.has(v) ? verseText.get(v) + '\n' : '') + t); last = v;
       }
       text.append(poem);
@@ -2857,12 +2861,15 @@ async function renderReader(body, { verse = 0, to = 0 } = {}) {
   body.replaceChildren(...[
     el('div', { class: 'rd-bar' },
       el('button', { type: 'button', class: 'rd-arrow', title: prev ? label(prev) : '', disabled: !prev, onclick: () => prev && go(prev) }, '‹'),
-      el('button', { type: 'button', class: 'rd-ref', id: 'rdRef', onclick: () => bookPicker(pos, go) }, label(pos), el('span', { class: 'chev' }, ' ▾')),
+      el('button', { type: 'button', class: 'rd-ref', id: 'rdRef', 'aria-label': label(pos) + ', choose a book and chapter', onclick: () => bookPicker(pos, go) },
+        el('span', { class: 'rd-ref-long' }, label(pos)),
+        el('span', { class: 'rd-ref-short' }, `${BOOK_ABBR[books[pos.b].name] || bookShort(books[pos.b].name)} ${pos.c}`),
+        el('span', { class: 'chev' }, ' ▾')),
       el('button', { type: 'button', class: 'rd-arrow', title: next ? label(next) : '', disabled: !next, onclick: () => next && go(next) }, '›'),
       el('span', { class: 'rd-gap' }),
       el('button', { type: 'button', class: 'btn-plain rd-listen' + (listen.pos && listen.pos.b === pos.b && listen.pos.c === pos.c ? ' on' : ''), title: 'Listen to this chapter (World English Bible, read aloud)', 'aria-label': 'Listen to ' + label(pos), onclick: () => listenTo(pos) },
         headphones(), el('span', { class: 'rd-listen-t' }, 'Listen')),
-      versionButton(ch.translation),
+      el('span', { class: 'rd-ver' }, versionButton(ch.translation)),
       el('button', { type: 'button', class: 'btn-plain rd-find', onclick: () => { state.bibleTab = 'search'; renderBibleView(); } }, 'Search')),
     ch.fallback ? el('p', { class: 'rv-note warn' }, `Couldn’t reach API.Bible (${ch.fallback}), so this is the World English Bible.`) : null,
     text,
