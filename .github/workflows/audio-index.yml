@@ -1,0 +1,26 @@
+name: Audio index
+on: { push: { branches: [audio-index] } }
+permissions: { contents: write }
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Index the WEB audio Bible (Winfred Henson) on ebible.org
+        run: |
+          set -e
+          B=https://ebible.org/eng-web/audio/
+          curl -fsS "$B" -o top.html
+          grep -oE 'href="[0-9]{2}_[^"/]+/"' top.html | sed 's/href="//;s/"$//' | sort -u > books.txt
+          wc -l books.txt
+          : > files.tsv
+          while read -r d; do
+            curl -fsS "$B$d" | grep -oiE 'href="[^"]+\.mp3"' | sed 's/href="//I;s/"$//' | while read -r f; do printf '%s\t%s\n' "$d" "$f" >> files.tsv; done
+          done < books.txt
+          wc -l files.tsv; head -5 files.tsv; grep -i psalm files.tsv | sed -n '20,25p'; grep -iE 'Obadiah|Jude|Philemon' files.tsv
+          echo "== headers"; f=$(sed -n '1000p' files.tsv | tr '\t' ' ' | tr -d ' ' ); curl -sSI "$B$(sed -n '1000p' files.tsv | cut -f1)$(sed -n '1000p' files.tsv | cut -f2)" | grep -iE "HTTP|accept-ranges|content-length|content-type|access-control|cache"
+          sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
+          curl -fsS "$B$(sed -n '1000p' files.tsv | cut -f1)$(sed -n '1000p' files.tsv | cut -f2)" -o one.mp3 && ffprobe -hide_banner one.mp3 2>&1 | grep -E "Duration|Audio|TIT|artist|copyright|comment" | head
+          mkdir -p audio-index && cp files.tsv books.txt audio-index/
+          git config user.name github-actions; git config user.email github-actions@users.noreply.github.com
+          git add audio-index && git commit -qm "Audio index" && git push -q origin HEAD:audio-index-result -f
