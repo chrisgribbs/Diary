@@ -5,6 +5,13 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.31.2', date: '2026-11-15', title: 'No more duplicate entries from sync',
+    fixed: [
+      'Sync kept making copies of an entry, titled “(from another device)”, that were exactly the same as the entry. Saving an entry without changing anything (opening it, tapping into it, a keyboard’s stray keystroke) used to count as an edit, so writing on one device while the other had the same entry open looked like two edits. Now a save that changes nothing isn’t an edit, and two versions that say the same thing aren’t a conflict.',
+      'The duplicate copies already made are tidied away by themselves on the next sync, on all your devices. Only exact duplicates are removed: a copy with anything different in it is kept, so nothing you wrote is lost.',
+    ],
+  },
+  {
     v: '1.31.1', date: '2026-11-14', title: 'A tidier Bible bar on phones',
     improved: [
       'On a phone, the bar above a chapter fits on one line: ‹ Matt 13 ▾ ›, then Listen and the version as two matching buttons. Long book names are shortened there (the full name is the heading underneath), and the second Search button is gone: Search is the tab above.',

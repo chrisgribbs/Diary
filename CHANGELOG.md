@@ -2,6 +2,14 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.31.2 — No more duplicate entries from sync
+_15 November 2026_
+
+**Fixed**
+
+- Sync kept making copies of an entry, titled “(from another device)”, that were exactly the same as the entry. Saving an entry without changing anything (opening it, tapping into it, a keyboard’s stray keystroke) used to count as an edit, so writing on one device while the other had the same entry open looked like two edits. Now a save that changes nothing isn’t an edit, and two versions that say the same thing aren’t a conflict.
+- The duplicate copies already made are tidied away by themselves on the next sync, on all your devices. Only exact duplicates are removed: a copy with anything different in it is kept, so nothing you wrote is lost.
+
 ## 1.31.1 — A tidier Bible bar on phones
 _14 November 2026_
 

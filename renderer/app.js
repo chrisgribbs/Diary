@@ -4385,10 +4385,12 @@ api.onSyncChanged(async r => {
   const c = state.current;
   if (c && c.saved && r.changed.includes(c.id) && !state.dirty) {
     if (state.metas.some(m => m.id === c.id)) { state.current = null; await openEntry(c.id, { keepMode: true }); }
-    else { toast('This entry was deleted on another device'); state.current = null; await newEntry(); }
+    else { if (!r.tidied) toast('This entry was deleted on another device'); state.current = null; await newEntry(); }
   }
   renderSidebar();
-  if (r.copies && r.copies.length) toast(r.copies.length === 1
+  if (r.tidied) toast(r.tidied === 1 ? 'Removed a duplicate copy of an entry (it was the same as the original).'
+    : `Removed ${r.tidied} duplicate copies of entries (each was the same as the original).`);
+  else if (r.copies && r.copies.length) toast(r.copies.length === 1
     ? 'An entry was changed on two devices. Both versions are kept: look for “(from another device)”.'
     : `${r.copies.length} entries were changed on two devices. Both versions are kept: look for “(from another device)”.`);
 });

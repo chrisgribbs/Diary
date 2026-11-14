@@ -20,7 +20,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { ID_RE, _internal: { seal, open, wrapDataKey, unwrapDataKey } } = require('./vault');
+const { ID_RE, sameEntry, _internal: { seal, open, wrapDataKey, unwrapDataKey } } = require('./vault');
 
 const KEY_FILE = 'sync-key';
 const CATS = 'categories';
@@ -175,9 +175,12 @@ class Sync {
     const st = this.st, vault = this.vault, drive = this.drive;
     if (!st || !st.on || !vault.isUnlocked()) return null;
     const key = this._key();
-    const out = { changed: [], copies: [], removed: [], categories: false, quotes: false, sent: 0 };
+    const out = { changed: [], copies: [], removed: [], categories: false, quotes: false, sent: 0, tidied: 0 };
     const save = () => { if (this.vault.isUnlocked() && this.st === st) this._write(); };
     try {
+      // Copies kept "(from another device)" that say exactly the same as another entry: tidied away (and so, below,
+      // from your other devices too). Anything that differs is kept.
+      for (const id of vault.removeIdenticalCopies()) { out.removed.push(id); out.changed.push(id); out.tidied++; }
       const files = await drive.listFolder(st.folder);
       if (!files.some(f => f.name === KEY_FILE)) { const e = new Error('The sync folder in your Drive is missing or was emptied. Turn sync off and on again.'); e.code = 'gone'; throw e; }
       // Several files with one name (two devices made it at once): keep the newest, bin the rest.
@@ -285,6 +288,10 @@ class Sync {
     // Changed in both places.
     if (p.deleted) { record(there); return; }                         // edited here, deleted there: keep it (sent in step 2)
     if (!local) { bring(); return; }                                  // deleted here, edited there: the edit wins
+    // "Both edited", but they say the same thing (saved again without a change, or the same change twice): no copy.
+    let mine = null;
+    try { mine = vault.get(id); } catch {}
+    if (mine && sameEntry(mine, p)) { if (there > here) bring(); else record(there); return; }
     // Both edited: yours stays; theirs is kept beside it as a copy.
     const copy = vault.save({ ...p, id: crypto.randomUUID(), title: `${p.title || p.date} (from another device)`, keepUpdated: true });
     out.copies.push(copy.id); out.changed.push(copy.id);

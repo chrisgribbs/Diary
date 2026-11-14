@@ -54,6 +54,18 @@ function open(key, buf) {
   return Buffer.concat([d.update(ct), d.final()]);
 }
 
+/** What an entry says (not when it was saved): two entries that say the same thing are the same. */
+function sameEntry(a, b) {
+  // Spaces and line breaks at the ends of paragraphs, and between them, aren't a change; between words they are.
+  const html = h => String(h || '').replace(/\s+/g, ' ')
+    .replace(/\s*(<\/?(?:p|div|li|ul|ol|h[1-6]|blockquote|figure|figcaption)\b[^>]*>)\s*/gi, '$1')
+    .replace(/(<br\s*\/?>\s*)+(<\/p>)?\s*$/i, '$2').trim();
+  return !!a && !!b && a.date === b.date && String(a.time || '') === String(b.time || '') && String(a.title || '').trim() === String(b.title || '').trim()
+    && String(a.category || '') === String(b.category || '')
+    && [...(a.tags || [])].sort().join(',') === [...(b.tags || [])].sort().join(',')
+    && html(a.html) === html(b.html);
+}
+
 function writeAtomic(file, data) {
   const tmp = file + '.' + crypto.randomBytes(4).toString('hex') + '.tmp';
   fs.writeFileSync(tmp, data);
@@ -505,12 +517,46 @@ class Vault {
       created: prev ? prev.created : (input.created || now),
       updated: input.updated && input.keepUpdated ? input.updated : now,
     };
+    // Saved again with nothing changed (opening an entry, tapping into it, a keyboard's stray "input"): it isn't an
+    // edit, so it keeps its time. Otherwise sync would think it was changed here, and keep "(from another device)" copies.
+    if (prev && !input.keepUpdated) {
+      let old = null;
+      try { old = this._readEntry(id); } catch {}
+      if (old && sameEntry(old, entry)) return prev;
+    }
     fs.mkdirSync(this.entriesDir, { recursive: true });
     writeAtomic(this._entryFile(id), seal(this.key, Buffer.from(JSON.stringify(entry))));
     const meta = Vault.metaOf(entry);
     this.index.set(id, meta);
     this._writeIndex();
     return meta;
+  }
+
+  /**
+   * Copies sync made ("… (from another device)") that say exactly what another entry says: removed, keeping the
+   * original (or one of the copies, if they all differ from it). Copies with anything different are kept. Returns the ids removed.
+   */
+  removeIdenticalCopies() {
+    this._requireKey();
+    const SUFFIX = / \(from another device\)$/;
+    const base = t => { let x = String(t || ''); while (SUFFIX.test(x)) x = x.replace(SUFFIX, ''); return x; };
+    const copies = [...this.index.values()].filter(m => SUFFIX.test(m.title || ''));
+    if (!copies.length) return [];
+    const removed = [];
+    const read = new Map();
+    const entry = id => { if (!read.has(id)) { try { read.set(id, this._readEntry(id)); } catch { read.set(id, null); } } return read.get(id); };
+    // Compare each copy with the entries of its day whose title is the same without "(from another device)".
+    const kept = [];   // [entry with its original title]
+    const sameDay = [...this.index.values()].filter(m => copies.some(c => c.date === m.date));
+    for (const m of sameDay.filter(m => !SUFFIX.test(m.title || ''))) { const e = entry(m.id); if (e) kept.push({ ...e, title: base(e.title) }); }
+    for (const c of copies.sort((a, b) => String(a.updated).localeCompare(String(b.updated)))) {
+      const e = entry(c.id);
+      if (!e) continue;
+      const plain = { ...e, title: base(e.title) };
+      if (kept.some(k => sameEntry(k, plain))) { this.remove(c.id); removed.push(c.id); }
+      else kept.push(plain);
+    }
+    return removed;
   }
 
   remove(id) {
@@ -697,4 +743,4 @@ blockquote{border-left:3px solid #ccc;margin-left:0;padding-left:1em;color:#555}
   }
 }
 
-module.exports = { Vault, CATEGORY_COLORS, ID_RE, _internal: { seal, open, deriveKey, wrapDataKey, unwrapDataKey } };
+module.exports = { sameEntry, Vault, CATEGORY_COLORS, ID_RE, _internal: { seal, open, deriveKey, wrapDataKey, unwrapDataKey } };
