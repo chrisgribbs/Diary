@@ -290,7 +290,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(await is(() => state.current && state.current.date === todayISO()), 'Back on an older entry goes to today');
   await device.shell('input keyevent 4'); await wait(1200);
   const front = async () => /wellwrite/i.test(String(await device.shell('dumpsys window | grep -E "mCurrentFocus|mFocusedApp"')));
-  check(await front() && await is(() => /Swipe back again/.test(document.querySelector('.toast') ? document.querySelector('.toast').textContent : '')), 'one Back on today stays, and says to swipe again');
+  check(await front() && await is(() => /Swipe back again/.test(document.querySelector('#toast').textContent)), 'one Back on today stays, and says to swipe again');
   await shot('back-once');
   await device.shell('input keyevent 4'); await wait(1500);
   check(!(await front()), 'a second Back leaves WellWrite');
