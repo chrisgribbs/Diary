@@ -5,6 +5,13 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.31.3', date: '2026-11-15', title: 'Duplicate entries: the real fix',
+    fixed: [
+      'Writing an entry with sync on kept making copies of it, titled “(from another device)”, even on one device. Google Drive renumbers its files a little after each upload, and WellWrite took the new number as a change made elsewhere; with your own typing since, it looked like two edits, and it kept your earlier draft as a copy, again with each save. Now a file that says what it said at the last sync isn’t a change, whatever its number.',
+      'The copies already made are tidied away on the next sync, on all your devices: exact duplicates, and earlier drafts whose every word is in the entry. A copy with anything of its own in it is kept, so nothing you wrote is lost.',
+    ],
+  },
+  {
     v: '1.31.2', date: '2026-11-15', title: 'No more duplicate entries from sync',
     fixed: [
       'Sync kept making copies of an entry, titled “(from another device)”, that were exactly the same as the entry. Saving an entry without changing anything (opening it, tapping into it, a keyboard’s stray keystroke) used to count as an edit, so writing on one device while the other had the same entry open looked like two edits. Now a save that changes nothing isn’t an edit, and two versions that say the same thing aren’t a conflict.',

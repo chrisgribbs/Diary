@@ -66,6 +66,13 @@ function sameEntry(a, b) {
     && html(a.html) === html(b.html);
 }
 
+/** An entry's words, as plain text with single spaces (for comparing drafts). */
+function textOf(html) {
+  return String(html || '').replace(/<(br|\/p|\/div|\/li|\/h[1-6]|\/blockquote)\b[^>]*>/gi, ' ').replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ').trim();
+}
+
 function writeAtomic(file, data) {
   const tmp = file + '.' + crypto.randomBytes(4).toString('hex') + '.tmp';
   fs.writeFileSync(tmp, data);
@@ -553,7 +560,11 @@ class Vault {
       const e = entry(c.id);
       if (!e) continue;
       const plain = { ...e, title: base(e.title) };
-      if (kept.some(k => sameEntry(k, plain))) { this.remove(c.id); removed.push(c.id); }
+      // The same as another entry of the day, or an earlier draft of one (every word of it is in that entry, in
+      // order: the entry is this copy written further). Anything else, the copy has something of its own: kept.
+      const words = textOf(plain.html);
+      const draftOf = k => k.title === plain.title && words.length >= 1 && textOf(k.html).includes(words);
+      if (kept.some(k => sameEntry(k, plain) || draftOf(k))) { this.remove(c.id); removed.push(c.id); }
       else kept.push(plain);
     }
     return removed;

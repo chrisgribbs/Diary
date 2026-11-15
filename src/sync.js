@@ -284,6 +284,9 @@ class Sync {
       if (remoteTime > local.updated) bring(); else record(there);    // ours is newer: it gets sent in step 2
       return;
     }
+    // Drive's file says what it said at our last sync (Google Drive renumbers its versions by itself, after uploads):
+    // nothing changed there. Ours may have changed since: it's sent in step 2.
+    if (there === baseSig) { record(there); return; }
     if (here === baseSig) { bring(); return; }                        // only Drive changed
     // Changed in both places.
     if (p.deleted) { record(there); return; }                         // edited here, deleted there: keep it (sent in step 2)

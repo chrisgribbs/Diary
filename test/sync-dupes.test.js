@@ -45,12 +45,31 @@ const copies = d => d.vault.list().filter(m => / \(from another device\)$/.test(
   await A.sync.enable('river-stone'); await B.sync.enable('river-stone');
   assert.equal(B.vault.get(ID).html, '<p>This passage today speaks of Paul.</p>');
 
+  // ---- Google Drive renumbers a file's version after an upload, by itself. Writing on one device, syncing as you
+  //      go, used to see "changed on Drive" (the number) and "changed here" (the typing): a copy of your own earlier
+  //      draft, every time. ----
+  const renumber = () => { for (const f of drive.shared.files.values()) f.version += 2; };   // as Drive does, later
+  let draft = 'This passage today speaks of Paul.';
+  for (let i = 0; i < 6; i++) {
+    await wait(3); draft += ' And more.';
+    entry(A.vault, ID, 'Sunday, 15 November 2026', `<p>${draft}</p>`);
+    await A.sync.run();
+    renumber();
+    await wait(3); draft += ' Still typing.';
+    entry(A.vault, ID, 'Sunday, 15 November 2026', `<p>${draft}</p>`);   // typed more before the next sync
+    await A.sync.run();
+  }
+  await B.sync.run(); await A.sync.run();
+  assert.equal(copies(A).length, 0, 'no copies of my own drafts (computer)');
+  assert.equal(copies(B).length, 0, 'no copies of my own drafts (phone)');
+  assert.equal(B.vault.get(ID).html, `<p>${draft}</p>`, 'the phone has the latest');
+
   // ---- saving without changing anything keeps the entry's time ----
   const t0 = A.vault.index.get(ID).updated;
   await wait(5);
   A.vault.save({ ...A.vault.get(ID) });                                  // e.g. opened, tapped into, a stray keyboard event
   assert.equal(A.vault.index.get(ID).updated, t0, 'not an edit');
-  A.vault.save({ ...A.vault.get(ID), html: '<p>This passage today speaks of Paul. </p>\n' });   // only spaces at the end
+  { const e = A.vault.get(ID); A.vault.save({ ...e, html: e.html.replace('</p>', ' </p>') + '\n' }); }   // only spaces at the end
   assert.equal(A.vault.index.get(ID).updated, t0, 'spaces alone are not an edit');
 
   // ---- writing on the computer while the phone has the same entry open (and re-saves it) ----
@@ -88,6 +107,12 @@ const copies = d => d.vault.list().filter(m => / \(from another device\)$/.test(
   for (let i = 0; i < 4; i++) dup.push(A.vault.save({ ...same, id: undefined, title: same.title + ' (from another device)' + (i === 3 ? ' (from another device)' : '') }).id);
   const twin1 = A.vault.save({ ...same, id: undefined, html: '<p>an older draft</p>', title: same.title + ' (from another device)' }).id;
   const twin2 = A.vault.save({ ...same, id: undefined, html: '<p>an older draft</p>', title: same.title + ' (from another device)' }).id;
+  // Copies of earlier drafts (what the Drive renumbering made): every word of them is in the entry, so they go too.
+  const cur = A.vault.get(ID);
+  const words = cur.html.replace(/<[^>]+>/g, '');
+  const drafts = [];
+  for (const n of [5, 12]) drafts.push(A.vault.save({ ...cur, id: undefined, html: '<p>' + words.slice(0, n) + '</p>', title: cur.title + ' (from another device)' }).id);
+  const ownWords = A.vault.save({ ...cur, id: undefined, html: '<p>' + words.slice(0, 5) + ' a line only in the copy</p>', title: cur.title + ' (from another device)' }).id;
   await A.sync.run(); await B.sync.run();   // B gets them all (as it would have before this fix)
   await A.sync.run(); await B.sync.run();
   for (const d of [A, B]) {
@@ -96,10 +121,12 @@ const copies = d => d.vault.list().filter(m => / \(from another device\)$/.test(
     assert(left.includes(real) || left.length >= 1, 'the real conflict copy stays');
     assert.equal(left.filter(id => id === twin1 || id === twin2).length, 1, 'of two identical older drafts, one stays');
     assert(d.vault.index.has(ID), 'the entry itself stays');
+    for (const id of drafts) assert(!left.includes(id), 'an earlier draft copy removed');
+    assert(left.includes(ownWords), 'a copy with words of its own stays');
   }
   assert.deepEqual(A.vault.list().map(m => m.id).sort(), B.vault.list().map(m => m.id).sort(), 'both devices the same');
   const tidy = A.events.concat(B.events).filter(([ev, r]) => ev === 'sync:changed' && r.tidied).reduce((n, [, r]) => n + r.tidied, 0);
-  assert(tidy >= 5, 'reported as tidied: ' + tidy);
+  assert(tidy >= 7, 'reported as tidied: ' + tidy);
   console.log('sync duplicate tests passed');
   process.exit(0);   // (sync's own timers would keep it running)
 })().catch(e => { console.error(e); process.exit(1); });
