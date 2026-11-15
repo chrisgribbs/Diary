@@ -261,6 +261,54 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(r2 === true, '“Mute today” on the notification mutes the bell in WellWrite too');
   await is(() => updateSetting({ prayerBell: false }));
 
+  // ---- swiping between journal entries with a real finger; Back on an older entry; Back twice to leave
+  await is(() => { document.querySelectorAll('dialog[open]').forEach(d => d.close()); setMode('journal'); });
+  const ids = await page.evaluate(async () => {
+    const mk = async (date, words) => (await api.save({ id: crypto.randomUUID(), date, time: '09:00', title: words, html: '<p>' + words + '</p>', text: words, tags: [] })).id;
+    const a = await mk('2026-10-01', 'Swipe one'), b = await mk('2026-10-02', 'Swipe two'), c = await mk('2026-10-03', 'Swipe three');
+    state.metas = await api.list(); renderSidebar();
+    await openEntry(b); document.activeElement && document.activeElement.blur();
+    return [a, b, c];
+  });
+  await wait(800);
+  const swipeEntry = async dir => {
+    const r = await page.evaluate(() => { const b = document.querySelector('#body').getBoundingClientRect(); return { y: Math.min(b.top + 40, innerHeight - 160), w: innerWidth }; });
+    const y = Math.round(box.y + r.y * dpr), a = Math.round(r.w * 0.8 * dpr), b = Math.round(r.w * 0.2 * dpr);
+    await device.shell(dir === 'left' ? `input swipe ${a} ${y} ${b} ${y} 160` : `input swipe ${b} ${y} ${a} ${y} 160`);
+    await wait(1500);
+  };
+  const titleNow = () => is(() => document.querySelector('#title').value);
+  await swipeEntry('right');
+  check(await titleNow() === 'Swipe one', `swiping right on an entry goes to the one before (${await titleNow()})`);
+  await swipeEntry('left');
+  check(await titleNow() === 'Swipe two', 'swiping left goes to the next');
+  await swipeEntry('left');
+  check(await titleNow() === 'Swipe three', 'and the next');
+  await shot('entry-swiped');
+  if (await is(() => document.body.classList.contains('keyboard'))) { await device.shell('input keyevent 4'); await wait(1200); }
+  await device.shell('input keyevent 4'); await wait(1500);
+  check(await is(() => state.current && state.current.date === todayISO()), 'Back on an older entry goes to today');
+  await device.shell('input keyevent 4'); await wait(1200);
+  const front = async () => /wellwrite/i.test(String(await device.shell('dumpsys window | grep -E "mCurrentFocus|mFocusedApp"')));
+  check(await front() && await is(() => /Swipe back again/.test(document.querySelector('.toast') ? document.querySelector('.toast').textContent : '')), 'one Back on today stays, and says to swipe again');
+  await shot('back-once');
+  await device.shell('input keyevent 4'); await wait(1500);
+  check(!(await front()), 'a second Back leaves WellWrite');
+  await page.evaluate(async ids => { for (const id of ids) await api.remove(id); }, ids).catch(() => {});
+
+  // ---- the prayer bell tapped while WellWrite is closed (a fresh start): the prayer opens, not just the journal
+  await device.shell('am force-stop com.chrisgribble.wellwrite'); await wait(1500);
+  await device.shell('am start -n com.chrisgribble.wellwrite/.MainActivity --es prayerKey afternoon'); await wait(1000);
+  const web2 = await device.webView({ pkg: 'com.chrisgribble.wellwrite' }, { timeout: 60000 });
+  const page2 = await web2.page();
+  let opened = false;
+  for (let i = 0; i < 20 && !opened; i++) {
+    await wait(1000);
+    opened = await page2.evaluate(() => !!document.querySelector('.prayer-pause') || (!document.querySelector('#lock').hidden && !document.querySelector('#lockPrayer').hidden)).catch(() => false);
+  }
+  check(opened, 'a bell tapped while WellWrite was closed opens the prayer (or “unlock to pray”)');
+  await device.screenshot({ path: `smoke/tap-${String(++n).padStart(2, '0')}-cold-start-prayer.png` });
+
   log(failures ? `${failures} TAP CHECKS FAILED` : 'ALL TAP CHECKS PASSED');
   await device.close();
   process.exit(failures ? 1 : 0);

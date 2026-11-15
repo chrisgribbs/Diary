@@ -751,6 +751,64 @@ async function openEntry(id, { via, keepMode } = {}) {
   document.querySelectorAll('#list .item').forEach(n => n.classList.toggle('active', n.dataset.id === id));
 }
 
+// --- Swiping between entries (phones and tablets): right for the one before, left for the next; past the newest, today.
+const byWhen = (a, b) => (a.date + ' ' + (a.time || '')).localeCompare(b.date + ' ' + (b.time || '')) || String(a.created || '').localeCompare(String(b.created || ''));
+/** The entry before (-1) or after (+1) the one open, in date order; after the newest, today's page. */
+function entryBeside(step) {
+  const list = [...state.metas].sort(byWhen);
+  const cur = state.current;
+  if (!cur) return null;
+  let i = list.findIndex(m => m.id === cur.id);
+  if (i < 0) {   // a new, unsaved entry: where its date would be
+    i = list.findIndex(m => byWhen(m, cur) > 0);
+    i = step < 0 ? (i < 0 ? list.length : i) : i - 1;
+  }
+  const to = list[i + step];
+  if (to) return { id: to.id };
+  if (step > 0 && cur.date < todayISO()) return { today: true };
+  return null;
+}
+/** Today: its latest entry, or a fresh page. */
+async function goToday() {
+  const today = [...state.metas].filter(m => m.date === todayISO()).sort(byWhen).pop();
+  if (today) await openEntry(today.id); else await newEntry(todayISO());
+}
+async function swipeTo(step) {
+  const to = entryBeside(step);
+  const sheet = $('#sheet');
+  if (!to) { sheet.classList.remove('nudge'); void sheet.offsetWidth; sheet.classList.add('nudge'); return; }   // nothing further: a little nudge
+  if (to.today) await goToday(); else await openEntry(to.id);
+  sheet.classList.remove('rd-in-left', 'rd-in-right'); void sheet.offsetWidth;
+  sheet.classList.add(step > 0 ? 'rd-in-left' : 'rd-in-right');
+}
+(() => {
+  const area = $('#sheetScroll');
+  if (!area) return;
+  let touch = null;
+  area.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    // Not from the screen's edges (Android's Back), not on buttons or the photos strip.
+    touch = TOUCH && state.mode === 'journal' && e.touches.length === 1 && t.clientX > 28 && t.clientX < innerWidth - 28
+      && !e.target.closest('button, a, input, select, .q-actions, .photo-strip, .chips, img') ? { x: t.clientX, y: t.clientY, at: Date.now() } : null;
+  }, { passive: true });
+  area.addEventListener('touchmove', e => {
+    if (!touch) return;
+    const dx = e.touches[0].clientX - touch.x, dy = e.touches[0].clientY - touch.y;
+    if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx)) { touch = null; $('#sheet').style.transform = ''; return; }   // scrolling
+    if (Math.abs(dx) > 14 && Math.abs(dx) > Math.abs(dy) * 2) { const s = $('#sheet'); s.style.transition = 'none'; s.style.transform = `translateX(${dx * 0.25}px)`; }
+  }, { passive: true });
+  const end = e => {
+    if (!touch) return;
+    const t = e.changedTouches && e.changedTouches[0];
+    const dx = t ? t.clientX - touch.x : 0, dy = t ? t.clientY - touch.y : 0, quick = Date.now() - touch.at < 700;
+    touch = null;
+    const s = $('#sheet'); s.style.transition = 'transform .18s'; s.style.transform = '';
+    if (quick && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2 && !String(getSelection()).trim()) swipeTo(dx < 0 ? 1 : -1);
+  };
+  area.addEventListener('touchend', end, { passive: true });
+  area.addEventListener('touchcancel', () => { touch = null; $('#sheet').style.transform = ''; });
+})();
+
 async function newEntry(date = todayISO()) {
   if (state.mode !== 'journal') setMode('journal');
   await saveNow();
@@ -4688,8 +4746,13 @@ if (api.onBack) api.onBack(() => {
   const sel = document.querySelector('.rd-selbar:not([hidden]) .btn-link');   // chosen verses: clear them first
   if (sel && state.mode === 'bible') { sel.click(); return true; }
   if (state.unlocked && state.mode !== 'journal') { setMode('journal'); return true; }
+  // Looking at an older entry: Back brings you to today.
+  if (state.unlocked && state.current && state.current.date !== todayISO()) { goToday(); return true; }
+  // Leaving WellWrite: only with a second Back (an edge swipe is easy to do by mistake).
+  if (Date.now() - lastBackAt > 2500) { lastBackAt = Date.now(); toast('Swipe back again to close WellWrite'); return true; }
   return false;
 });
+let lastBackAt = 0;
 /** The phone's status and navigation bars take the colour of what's behind them. */
 function syncSystemBars() {
   if (!api.systemBars) return;
