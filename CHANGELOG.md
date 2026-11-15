@@ -2,6 +2,17 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.32.0 — Swipe between entries
+_15 November 2026_
+
+**New**
+
+- On a phone or tablet, swipe across an entry to move through your journal: right for the entry before, left for the next. Past your newest entry it goes to today’s page. (Start the swipe a little in from the edge: the very edge is Android’s Back.)
+
+**Improved**
+
+- Back (or swiping in from the edge) on an older entry brings you to today. On today’s page it asks you to swipe back again before WellWrite closes, so a stray swipe doesn’t close it.
+
 ## 1.31.4 — The prayer bell opens the prayer
 _15 November 2026_
 

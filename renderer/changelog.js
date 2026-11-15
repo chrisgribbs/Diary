@@ -5,6 +5,15 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.32.0', date: '2026-11-15', title: 'Swipe between entries',
+    new: [
+      'On a phone or tablet, swipe across an entry to move through your journal: right for the entry before, left for the next. Past your newest entry it goes to today’s page. (Start the swipe a little in from the edge: the very edge is Android’s Back.)',
+    ],
+    improved: [
+      'Back (or swiping in from the edge) on an older entry brings you to today. On today’s page it asks you to swipe back again before WellWrite closes, so a stray swipe doesn’t close it.',
+    ],
+  },
+  {
     v: '1.31.4', date: '2026-11-15', title: 'The prayer bell opens the prayer',
     fixed: [
       'Android: tapping the prayer bell’s notification when WellWrite was closed opened the journal, not the prayer. The tap reached WellWrite before it was ready and was lost. Now it waits: the prayer opens once the journal is open (or the lock screen says “unlock to pray”).',
