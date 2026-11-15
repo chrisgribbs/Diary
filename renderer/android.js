@@ -12,14 +12,23 @@
   const pending = new Map();
   const listeners = {};
   let seq = Math.floor(Math.random() * 1e9);   // never mistaken for a reply meant for an earlier page
-  const on = (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); };
+  // A prayer bell tapped while WellWrite was closed arrives as the page starts, before anything listens: kept till then.
+  const held = {};
+  const on = (ev, fn) => {
+    (listeners[ev] = listeners[ev] || []).push(fn);
+    if (ev in held) { const args = held[ev]; delete held[ev]; setTimeout(() => fn(...args)); }
+  };
   const emit = (ev, ...args) => { for (const fn of listeners[ev] || []) { try { fn(...args); } catch (e) { console.error(e); } } };
 
   native.addEventListener('message', e => {
     const raw = String(e.data);
     const kind = raw[0];
     if (kind === 'B') { back(); return; }
-    if (kind === 'Q') { try { emit('prayer:open', JSON.parse(raw.slice(1)).key || null); } catch {} return; }
+    if (kind === 'Q') {
+      let key = null; try { key = JSON.parse(raw.slice(1)).key || null; } catch {}
+      if ((listeners['prayer:open'] || []).length) emit('prayer:open', key); else held['prayer:open'] = [key];
+      return;
+    }
     if (kind === 'U') { try { emit('update-progress', JSON.parse(raw.slice(1))); } catch {} return; }
     if (kind === 'A') { try { emit('listen-control', JSON.parse(raw.slice(1)).cmd); } catch {} return; }
     let m; try { m = JSON.parse(raw.slice(1)); } catch { return; }

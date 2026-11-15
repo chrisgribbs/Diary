@@ -72,3 +72,24 @@ const pump = setInterval(() => {
   console.log('android tests passed');
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });
+
+// A prayer bell tapped while WellWrite was closed: the app passes it on as the page starts, before the page listens.
+// It must be kept until the page listens, not dropped (it used to open the journal and no prayer).
+{
+  const vm = require('vm');
+  let deliver = null;
+  const native = { addEventListener: (ev, fn) => { if (ev === 'message') deliver = fn; }, postMessage: () => {} };
+  const win = { WellWriteNative: native, addEventListener() {} };
+  const doc = { documentElement: { dataset: {} }, addEventListener() {}, querySelectorAll: () => [], hidden: false, body: { classList: { contains: () => false } } };
+  const ctx = vm.createContext({ window: win, document: doc, setTimeout, console, JSON, Promise, Math, Date, String, Number, Object, Array, Map, Error, Event: class {}, FileReader: class {} });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'renderer', 'android.js'), 'utf8'), ctx);
+  deliver({ data: 'Q{"key":"afternoon"}' });          // arrives before anyone listens
+  let got;
+  win.wellwrite.onPrayerOpen(k => { got = k; });
+  setTimeout(() => {
+    assert.equal(got, 'afternoon', 'the prayer bell tap is kept until the page listens');
+    let again; win.wellwrite.onPrayerOpen(k => { again = k; }); deliver({ data: 'Q{"key":"evening"}' });
+    assert.equal(again, 'evening', 'and later taps go straight through');
+    console.log('android prayer tap tests passed');
+  }, 20);
+}

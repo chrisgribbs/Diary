@@ -1218,3 +1218,7 @@ body.listening .readview { padding-bottom: 96px; }
   .rd-ver cite { font-style: normal; }
   .rd-listen { padding: 0 10px; min-width: 42px; }
 }
+
+/* A version's copyright notice under the day's verse: one line, tap for all of it */
+.quote-card .q-copy.fold { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.quote-card .q-copy.fold.open { white-space: normal; overflow: visible; }

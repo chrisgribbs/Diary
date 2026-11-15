@@ -63,6 +63,11 @@ app.whenReady().then(async () => {
   assert(year.easter, 'Easter Day has its own prayer in the morning');
   assert.equal(new Set(year.ids).size, 3, "today's three prayers differ");
   assert(await js(`return ${card}.querySelector('blockquote').textContent.length > 30`));
+  // "Pause for prayer" on today's prayer card opens the hour's prayer.
+  await js(`[...${card}.querySelectorAll('.q-btn')].find(b => b.textContent === 'Pause for prayer').click();`); await wait(1200);
+  assert(await js(`return document.querySelector('#dlg').open && !!document.querySelector('.prayer-pause .pp-prayer')`), 'the Pause opens from the card');
+  await js(`document.querySelector('#dlg').close();`); await wait(400);
+
   // The credit: one line, with "Credit" to see it all (the licence's full credit is a click away).
   assert.equal(await js(`return ${card}.querySelector('.q-attr-btn').textContent`), 'Credit');
   assert(await js(`return ${card}.querySelector('.q-attr-more').hidden`), 'the full credit starts folded');

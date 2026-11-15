@@ -5,6 +5,16 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.31.4', date: '2026-11-15', title: 'The prayer bell opens the prayer',
+    fixed: [
+      'Android: tapping the prayer bell’s notification when WellWrite was closed opened the journal, not the prayer. The tap reached WellWrite before it was ready and was lost. Now it waits: the prayer opens once the journal is open (or the lock screen says “unlock to pray”).',
+    ],
+    improved: [
+      'Today’s prayer card has Pause for prayer, to pray the hour’s prayer whenever you like (it’s also in the ⋯ menu).',
+      'A Bible version’s copyright notice under the day’s verse takes one line; tap it to read it all.',
+    ],
+  },
+  {
     v: '1.31.3', date: '2026-11-15', title: 'Duplicate entries: the real fix',
     fixed: [
       'Writing an entry with sync on kept making copies of it, titled “(from another device)”, even on one device. Google Drive renumbers its files a little after each upload, and WellWrite took the new number as a change made elsewhere; with your own typing since, it looked like two edits, and it kept your earlier draft as a copy, again with each save. Now a file that says what it said at the last sync isn’t a change, whatever its number.',

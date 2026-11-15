@@ -2,6 +2,18 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.31.4 — The prayer bell opens the prayer
+_15 November 2026_
+
+**Improved**
+
+- Today’s prayer card has Pause for prayer, to pray the hour’s prayer whenever you like (it’s also in the ⋯ menu).
+- A Bible version’s copyright notice under the day’s verse takes one line; tap it to read it all.
+
+**Fixed**
+
+- Android: tapping the prayer bell’s notification when WellWrite was closed opened the journal, not the prayer. The tap reached WellWrite before it was ready and was lost. Now it waits: the prayer opens once the journal is open (or the lock screen says “unlock to pray”).
+
 ## 1.31.3 — Duplicate entries: the real fix
 _15 November 2026_
 

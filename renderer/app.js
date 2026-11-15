@@ -219,9 +219,10 @@ async function boot() {
   state.dataDir = s.dataDir;
   // Remembered password: open straight away.
   if (s.exists && s.trust && s.trust.active) {
-    try { if (await api.unlockTrusted()) { await enterApp(); return; } } catch {}
+    try { if (await api.unlockTrusted()) { await enterApp(); bootDone(); return; } } catch {}
   }
   showLock(s.exists);
+  bootDone();
 }
 
 function showLock(exists, trust) {
@@ -2053,6 +2054,8 @@ function prayerCard(iso, where) {
     attribution(q),
     el('div', { class: 'q-actions' },
       btn('Pray and write', () => writeAboutQuote(q, iso), 'q-btn primary'),
+      // The hour's prayer, now (the same as tapping the prayer bell).
+      iso === todayISO() ? btn('Pause for prayer', () => pauseForPrayer(null)) : null,
       el('button', { type: 'button', class: 'q-btn q-like' + (liked ? ' on' : ''), 'aria-pressed': String(liked),
         title: liked ? 'You like this prayer: it’s in your favourites and in the prayers you can share' : 'Keep this prayer: it goes in your favourites and in the prayers you can share',
         onclick: async () => { await saveQuotes(state.quotes.map(x => (x.id === q.id ? { ...x, fav: !x.fav } : x))); refreshQuote(); } }, liked ? '♥ You like this' : '♡ I like this'),
@@ -2109,7 +2112,8 @@ function verseCard(v, iso, where) {
   return el('figure', { class: 'quote-card verse ' + where },
     el('blockquote', {}, v.text),
     el('figcaption', {}, '— ' + v.ref + ' ', versionButton(v.translation)),
-    v.copyright ? el('p', { class: 'q-copy' }, v.copyright) : null,
+    // The version's copyright notice: one line, tap for all of it.
+    v.copyright ? el('p', { class: 'q-copy fold', title: 'Show the full copyright notice', onclick: e => e.currentTarget.classList.toggle('open') }, v.copyright) : null,
     el('div', { class: 'q-actions' },
       btn('Write about this', () => writeAboutQuote({ text: v.text, author: v.ref, source: v.translation }, iso), 'q-btn primary'),
       btn(state.bible && state.bible.state.plan ? 'Today’s reading' : 'Reading plans', () => { state.bibleTab = 'plan'; setMode('bible'); }),
@@ -3925,7 +3929,16 @@ $('#bellBtn').addEventListener('click', () => {
 });
 // The bell rang and you tapped it (or chose Pause for prayer from the tray): once the journal's open if it's locked.
 // (It works while locked too: the built-in prayers are shown; yours only once the journal is open.)
-if (api.onPrayerOpen) api.onPrayerOpen(key => pauseForPrayer(key));
+// The bell tapped: Pause for prayer. While WellWrite is still starting (opened by the tap), it waits until the journal
+// is open, or the lock screen is up (which then says "unlock to pray").
+let booted = false, prayerOnBoot;
+if (api.onPrayerOpen) api.onPrayerOpen(key => { if (!booted) { prayerOnBoot = key || ''; return; } pauseForPrayer(key); });
+function bootDone() {
+  booted = true;
+  if (prayerOnBoot === undefined) return;
+  const k = prayerOnBoot || null; prayerOnBoot = undefined;
+  setTimeout(() => pauseForPrayer(k), 400);
+}
 if (api.onPrayerSettings) api.onPrayerSettings(async () => { state.settings = await api.getSettings(); syncPrayerBell(); });
 // Windows: the bell's sound comes from here (notifications themselves are silent).
 let bellAudio = null;
