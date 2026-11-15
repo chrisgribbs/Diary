@@ -5,6 +5,13 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.32.1', date: '2026-11-16', title: 'All your quotes on every device',
+    fixed: [
+      'Quotes from your readings file stopped syncing after the first time: when the file changed, the new quotes stayed on that computer. Now changes to your readings file go to your other devices, and readings taken out of the file go from them too.',
+      'Sync could replace one device’s quotes with another’s (whichever changed last), so quotes added on two devices around the same time could be lost, and a newly connected device could briefly take quotes away. Now your quotes are merged: everything from every device is kept, and a quote you delete stays deleted everywhere.',
+    ],
+  },
+  {
     v: '1.32.0', date: '2026-11-15', title: 'Swipe between entries',
     new: [
       'On a phone or tablet, swipe across an entry to move through your journal: right for the entry before, left for the next. Past your newest entry it goes to today’s page. (Start the swipe a little in from the edge: the very edge is Android’s Back.)',

@@ -408,13 +408,39 @@ class Vault {
       next[k] = q && touched.has(q.id) ? Vault.readingHash(q) : was[k] || (q ? 'edited' : 'deleted');
     }
     packs[packId] = { items: next, synced: new Date().toISOString() };
-    this._writeMeta({ quotes: clean, quotesSeeded: true, packs });
+    const write = { quotes: clean, quotesSeeded: true, packs };
+    // Your readings file is yours (not on your other devices already): when it changes, sync sends it, and the
+    // ones taken out of the file go from your other devices too.
+    if (packId === 'file' && (added || updated || removed)) {
+      const at = new Date().toISOString();
+      write.quotesUpdated = at;
+      write.quotesGone = Vault.goneAfter(meta, meta.quotes || [], clean, at);
+    }
+    this._writeMeta(write);
     return { quotes: clean, added, updated, removed };
   }
 
   /** Your changes to your quotes (adding, editing, deleting, favourites). `changed` is when, for sync. */
   setQuotes(list, changed = new Date().toISOString()) {
-    return this._writeMeta({ quotes: Vault.cleanQuotes(list), quotesSeeded: true, quotesUpdated: changed }).quotes;
+    const meta = this.getMeta();
+    const clean = Vault.cleanQuotes(list);
+    const quotesGone = Vault.goneAfter(meta, meta.quotes || [], clean, changed || new Date().toISOString());
+    return this._writeMeta({ quotes: clean, quotesSeeded: true, quotesUpdated: changed, quotesGone }).quotes;
+  }
+
+  /**
+   * Your own quotes (and your readings file's) that you've deleted, with when: so a sync that merges two devices'
+   * quotes doesn't bring them back. { id: time }, the most recent 3000.
+   */
+  static goneAfter(meta, before, after, at) {
+    const own = q => !(q.pack && q.pack !== 'file');
+    const now = new Set(after.map(q => q.id));
+    const gone = { ...(meta.quotesGone || {}) };
+    for (const q of before) if (own(q) && !now.has(q.id)) gone[q.id] = at;
+    for (const id of now) delete gone[id];
+    const ids = Object.keys(gone);
+    if (ids.length > 3000) for (const id of ids.sort((a, b) => String(gone[a]).localeCompare(String(gone[b]))).slice(0, ids.length - 3000)) delete gone[id];
+    return gone;
   }
 
   /**
@@ -439,7 +465,7 @@ class Vault {
       if (pack === 'file') continue;
       for (const k of Object.keys(p.items || {})) if (!have.has(`${pack}-${k}`)) removed.push(`${pack}-${k}`);
     }
-    return { own, favs, edited, removed, updated: meta.quotesUpdated || '' };
+    return { own, favs, edited, removed, gone: meta.quotesGone || {}, updated: meta.quotesUpdated || '' };
   }
 
   /**
@@ -473,10 +499,24 @@ class Vault {
       const k = id.slice(pack.length + 1);
       if (!items[k]) items[k] = 'deleted';
     }
-    const theirOwn = (Array.isArray(p.own) ? p.own : []).filter(q => q && !builtin(q));
-    const own = merge ? [...local.filter(q => !builtin(q)), ...theirOwn] : theirOwn;
+    // Your own quotes (and your readings file's): both devices' kept, theirs taking precedence for the same quote,
+    // less the ones deleted on either (whichever happened last: a quote added again after it was deleted stays).
+    const theirGone = p.gone && typeof p.gone === 'object' && !Array.isArray(p.gone) ? p.gone : {};
+    const myGone = meta.quotesGone || {};
+    const theirAt = String(p.updated || '');
+    const theirOwn = (Array.isArray(p.own) ? p.own : []).filter(q => q && !builtin(q))
+      .filter(q => !(myGone[q.id] && String(myGone[q.id]) > theirAt));            // deleted here since their change
+    const theirIds = new Set(theirOwn.map(q => q.id));
+    const localOwn = local.filter(q => !builtin(q));
+    const onlyHere = localOwn.filter(q => !theirIds.has(q.id) && !theirGone[q.id]);
+    const own = merge ? [...localOwn, ...theirOwn] : [...theirOwn, ...onlyHere];
+    const gone = { ...myGone };
+    for (const [id, at] of Object.entries(theirGone)) if (!gone[id] || String(at) > String(gone[id])) gone[id] = String(at);
     list = Vault.cleanQuotes([...own, ...list]);
-    this._writeMeta({ quotes: list, quotesSeeded: true, quotesUpdated: updated, packs });
+    for (const q of list) if (!builtin(q)) delete gone[q.id];
+    // Anything of yours they didn't have (or deleted since): your set is newer now, so sync sends it on.
+    const mine = merge || onlyHere.length || theirOwn.length < (Array.isArray(p.own) ? p.own.filter(q => q && !builtin(q)).length : 0);
+    this._writeMeta({ quotes: list, quotesSeeded: true, quotesUpdated: mine ? new Date().toISOString() : updated, packs, quotesGone: gone });
     return list;
   }
 

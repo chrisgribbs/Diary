@@ -2,6 +2,14 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.32.1 — All your quotes on every device
+_16 November 2026_
+
+**Fixed**
+
+- Quotes from your readings file stopped syncing after the first time: when the file changed, the new quotes stayed on that computer. Now changes to your readings file go to your other devices, and readings taken out of the file go from them too.
+- Sync could replace one device’s quotes with another’s (whichever changed last), so quotes added on two devices around the same time could be lost, and a newly connected device could briefly take quotes away. Now your quotes are merged: everything from every device is kept, and a quote you delete stays deleted everywhere.
+
 ## 1.32.0 — Swipe between entries
 _15 November 2026_
 
