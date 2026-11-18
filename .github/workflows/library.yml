@@ -1,0 +1,76 @@
+name: Bible study library
+
+# Builds the Bible study library packs (src/study/library.js) from public-domain texts, and attaches them to the
+# prerelease "library-v1", where the app downloads them. Prereleases are never offered as app updates.
+#
+#   fetch: downloads candidate editions (scripts/library/fetch.js) and keeps them as "library-raw.tar.gz" on the
+#          prerelease "library-sources", so the parsers can be written and checked against the real texts.
+#   build: parses the editions chosen in scripts/library/sources.json, chunks, tags and indexes them, embeds them if
+#          the OPENROUTER_API_KEY secret is set, and uploads the packs and library.json.
+#
+# Runs when the library-build branch is pushed, or by hand.
+on:
+  push:
+    branches: [library-build]
+  workflow_dispatch:
+    inputs:
+      fetch:
+        description: Download the source texts again
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  library:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get the source texts (kept from last time, or downloaded)
+        id: raw
+        env:
+          FORCE: ${{ github.event.inputs.fetch == 'true' || contains(github.event.head_commit.message, '[fetch]') }}
+        run: |
+          set -e
+          if [ "$FORCE" != "true" ] && curl -sfL -o library-raw.tar.gz "https://github.com/${GITHUB_REPOSITORY}/releases/download/library-sources/library-raw.tar.gz"; then
+            tar xzf library-raw.tar.gz && echo "fresh=false" >> "$GITHUB_OUTPUT"
+          else
+            node scripts/library/fetch.js library-raw
+            tar czf library-raw.tar.gz library-raw
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          fi
+          node -e "const i=require('./library-raw/index.json');const by={};for(const f of i)(by[f.src]=by[f.src]||[]).push(f.title+' | '+(f.issued||'')+' | '+f.file);for(const[k,v]of Object.entries(by)){console.log('## '+k+' ('+v.length+')');v.slice(0,200).forEach(x=>console.log('  '+x))}" > library-raw/LIST.txt
+          cat library-raw/LIST.txt
+
+      - name: Keep the source texts
+        if: steps.raw.outputs.fresh == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: library-sources
+          name: Bible study library sources (build input, not an app release)
+          prerelease: true
+          body: Raw public-domain texts used to build the Bible study library. Not an app release.
+          files: library-raw.tar.gz
+
+      - name: Build the packs
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: node scripts/library/build.js library-raw library-out
+
+      - name: Publish the packs
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: library-v1
+          name: Bible study library (packs for the app, not an app release)
+          prerelease: true
+          body_path: library-out/REPORT.md
+          files: |
+            library-out/library.json
+            library-out/*.gz
+            library-out/REPORT.md

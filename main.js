@@ -49,6 +49,11 @@ const backend = createBackend({
   // Tests: a stand-in for Google's servers (never in the installed app).
   googleBase: !app.isPackaged ? process.env.WELLWRITE_GOOGLE_URL || null : null,
   picturesUrl: process.env.WELLWRITE_PICTURES_URL || null,
+  // Bible study: the library lives beside the journal folder, not in it (public texts, not part of your journal).
+  libraryDir: process.env.WELLWRITE_LIBRARY_DIR || path.join(path.dirname(DATA_DIR), 'library'),
+  // Tests: stand-ins for OpenRouter and the library release (never in the installed app).
+  openRouterBase: !app.isPackaged ? process.env.WELLWRITE_OPENROUTER_URL || null : null,
+  libraryRelease: !app.isPackaged ? process.env.WELLWRITE_LIBRARY_URL || null : null,
 });
 const { vault, backups, readSettings, writeSettings, backupInfo, suggestFolders } = backend;
 

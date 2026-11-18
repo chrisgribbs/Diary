@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "packs": [
+    { "id": "devotional", "name": "Devotional and contemplative", "about": "F. B. Meyer’s daily readings, and the seven classics: à Kempis, Brother Lawrence, Teresa, John of the Cross, Julian, Augustine and The Cloud of Unknowing." },
+    { "id": "commentary", "name": "Commentaries", "about": "Maclaren’s Expositions, The Expositor’s Bible and Hastings’ Great Texts of the Bible." },
+    { "id": "greek", "name": "Greek word studies", "about": "Vincent’s Word Studies and Robertson’s Word Pictures (Matthew to Paul’s letters)." },
+    { "id": "history", "name": "History and background", "about": "Edersheim’s Life and Times of Jesus the Messiah." }
+  ],
+  "sources": []
+}

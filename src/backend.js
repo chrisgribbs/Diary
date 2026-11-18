@@ -380,7 +380,7 @@ function createBackend(platform) {
   handle('readings:sync', (packId, items, retired) => vault.syncPack(String(packId), items, retired));
 
   // ---------- Bible study (src/study) ----------
-  const study = registerStudy({ handle, vault, send, readSettings, deviceDir: DEVICE_DIR, fetch: (...a) => platform.fetch(...a), secretStore, appVersion: APP_VERSION,
+  const study = registerStudy({ handle, vault, send, readSettings, deviceDir: DEVICE_DIR, libraryDir: platform.libraryDir || null, fetch: (...a) => platform.fetch(...a), secretStore, appVersion: APP_VERSION,
     openRouterBase: platform.openRouterBase || null, libraryRelease: platform.libraryRelease || null });
 
   // ---------- the prayer bell ----------

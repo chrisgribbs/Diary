@@ -362,6 +362,7 @@ async function lockNow({ auto = false } = {}) {
   try { await api.lock(); } catch {}
   // Wipe everything readable from the page.
   state.metas = []; state.current = null; state.categories = []; state.trail = []; state.quotes = []; state.bible = null; state.verseCache = {}; state.pictures = {}; state.weekAt = null; state.photoThumbs = new Map();
+  if (typeof study !== 'undefined') Object.assign(study, { view: 'start', passage: null, current: null, live: '', journal: null, reflection: '', writing: null });
   $('#bibleView').replaceChildren(); $('#quoteView').replaceChildren();
   closePopover();
   $('#body').innerHTML = ''; $('#title').value = ''; $('#tagChips').replaceChildren();
@@ -2814,7 +2815,7 @@ function renderPassage(ch) {
 
 let bibleToken = 0;
 /* ---------- the Bible tab: Read · Search · Plans ---------- */
-const BIBLE_TABS = [['read', 'Read'], ['search', 'Search'], ['plan', 'Plans']];
+const BIBLE_TABS = [['read', 'Read'], ['study', 'Study'], ['search', 'Search'], ['plan', 'Plans']];
 function renderBibleView(opts = {}) {
   const view = $('#bibleView');
   if (!state.bibleTab) state.bibleTab = 'read';
@@ -2825,6 +2826,7 @@ function renderBibleView(opts = {}) {
   view.replaceChildren(bar, body);
   if (state.bibleTab === 'read') return renderReader(body, opts);
   if (state.bibleTab === 'search') return renderBibleSearch(body);
+  if (state.bibleTab === 'study') return renderStudyView(body);   // renderer/study.js
   return renderPlanView(body);
 }
 
@@ -2910,6 +2912,7 @@ async function renderReader(body, { verse = 0, to = 0 } = {}) {
     const ref = refOf(vs), words = vs.map(v => verseText.get(v)).join(' ');
     selBar.replaceChildren(el('b', {}, ref),
       el('button', { type: 'button', class: 'btn-ink', onclick: () => writeAboutQuote({ text: words, author: ref, source: ch.translation }, todayISO()) }, 'Write about this'),
+      el('button', { type: 'button', class: 'btn-plain', title: 'Bible study on these verses', onclick: () => studyPassage({ kind: 'stored', ref: [pos.b, pos.c, vs[0], pos.c, vs[vs.length - 1]] }) }, 'Study'),
       el('button', { type: 'button', class: 'btn-plain', onclick: async () => {
         try { await navigator.clipboard.writeText(`${words}\n— ${ref} (${ch.translation})`); toast('Copied'); } catch { toast('Couldn’t copy'); }
       } }, 'Copy'),
@@ -4033,7 +4036,7 @@ function whatsNew() {
 
 /** Settings, as a page with tabs down the side: each area has its own place. */
 const SETTINGS_TABS = [
-  ['general', 'General'], ['readings', 'Quotes & readings'], ['prayer', 'Prayer bell'], ['bible', 'Bible'], ['privacy', 'Privacy & lock'],
+  ['general', 'General'], ['readings', 'Quotes & readings'], ['prayer', 'Prayer bell'], ['bible', 'Bible'], ['study', 'Bible study'], ['privacy', 'Privacy & lock'],
   ['sync', 'Sync'], ['backups', 'Backups'], ['wordpress', 'WordPress'], ['about', 'About'], ['whatsnew', 'What’s new'],
 ];
 function openSettings(section) {
@@ -4084,6 +4087,9 @@ function openSettings(section) {
       panel('bible', 'Bible', 'The version used for the verse of the day, the weekly pages and reading plans. You can also switch version from the ▾ under any verse.',
         bibleVersionControls(() => openSettings('bible')),
         row('Reading plans', 'Read through the Bible, the New Testament, the Gospels or the Psalms.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); state.bibleTab = 'plan'; setMode('bible'); } }, 'Open reading plans'))),
+
+      panel('study', 'Bible study', 'Studies written by AI from public-domain commentaries and classics, through your own OpenRouter account. Your journal is never sent unless you allow it here.',
+        el('div', { id: 'studySettings' }, el('p', {}, 'Checking…'))),
 
       panel('privacy', 'Privacy & lock', 'Your journal is encrypted with your password. When it locks, your writing is hidden.',
         row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),
@@ -4144,6 +4150,7 @@ function openSettings(section) {
     renderBackupSection();
     refreshBackupInfo();
     renderSyncSection();
+    if ($('#studySettings')) renderStudySettings($('#studySettings'), () => openSettings('study'));   // renderer/study.js
   });
 }
 

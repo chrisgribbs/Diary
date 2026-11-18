@@ -24,9 +24,9 @@ const { verify, questionsOf, replaceQuestions, questionProblems } = require('./v
 
 const STUDY_CATEGORY = { id: 'bible-study', name: 'Bible study', color: '#4f6aa8' };
 
-function registerStudy({ handle, vault, send, readSettings, deviceDir, fetch, secretStore, appVersion, openRouterBase, libraryRelease }) {
+function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDir, fetch, secretStore, appVersion, openRouterBase, libraryRelease }) {
   const or = new OpenRouter({ ...secretStore('openrouter.json'), fetch, usageFile: path.join(deviceDir, 'study-usage.json'), base: openRouterBase || undefined, appVersion });
-  const lib = new Library({ dir: path.join(deviceDir, 'library'), fetch, builtinFile: path.join(__dirname, '..', 'readings', 'classics.json'), release: libraryRelease || undefined });
+  const lib = new Library({ dir: libraryDir || path.join(deviceDir, 'library'), fetch, builtinFile: path.join(__dirname, '..', 'readings', 'classics.json'), release: libraryRelease || undefined });
   const running = new Map();   // requestId → AbortController
 
   const settings = () => {
