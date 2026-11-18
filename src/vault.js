@@ -256,6 +256,31 @@ class Vault {
     return this._writeMeta({ categories: Vault.cleanCategories(list), categoriesUpdated: changed });
   }
 
+  // ---------- Bible study: your studies, bookmarks and prayer list (encrypted, like everything else here) ----------
+  static cleanStudy(s) {
+    s = s && typeof s === 'object' ? s : {};
+    const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+    const history = (Array.isArray(s.history) ? s.history : []).filter(h => h && /^[a-z0-9-]{8,64}$/.test(h.id || '')).slice(0, 50).map(h => ({
+      id: h.id, at: str(h.at, 30), ref: Array.isArray(h.ref) ? h.ref.slice(0, 5).map(n => +n || 0) : [], label: str(h.label, 80),
+      mode: str(h.mode, 20), length: str(h.length, 20), title: str(h.title, 200), model: str(h.model, 100),
+      entryId: ID_RE.test(h.entryId || '') ? h.entryId : '', md: str(h.md, 60000), passageText: str(h.passageText, 12000), translation: str(h.translation, 20),
+      sources: (Array.isArray(h.sources) ? h.sources : []).slice(0, 30).map(x => ({ id: str(x.id, 40), author: str(x.author, 120), work: str(x.work, 200), year: +x.year || 0, section: str(x.section, 200), licence: str(x.licence, 30), credit: str(x.credit, 300), url: str(x.url, 300), text: str(x.text, 6000), why: str(x.why, 10) })),
+      flags: (Array.isArray(h.flags) ? h.flags : []).slice(0, 30).map(f => ({ kind: str(f.kind, 10), text: str(f.text, 200) })),
+      thread: (Array.isArray(h.thread) ? h.thread : []).slice(-30).map(t => ({ role: t.role === 'assistant' ? 'assistant' : 'user', content: str(t.content, 8000) })),
+      topic: str(h.topic, 300), usage: { cost: +(h.usage && h.usage.cost) || 0 },
+    }));
+    const bookmarks = (Array.isArray(s.bookmarks) ? s.bookmarks : []).slice(0, 500).map(b => ({ id: str(b.id, 40), author: str(b.author, 120), work: str(b.work, 200), section: str(b.section, 200), text: str(b.text, 6000), at: str(b.at, 30), credit: str(b.credit, 300) })).filter(b => b.id);
+    const prayers = (Array.isArray(s.prayers) ? s.prayers : []).slice(0, 500).map(p => ({ id: str(p.id, 40), text: str(p.text, 1000), note: str(p.note, 2000), at: str(p.at, 30), done: str(p.done, 30) })).filter(p => p.id && p.text.trim());
+    return { history, bookmarks, prayers };
+  }
+  getStudy() { this._requireKey(); return Vault.cleanStudy(this.getMeta().study); }
+  setStudy(patch) {
+    this._requireKey();
+    const study = Vault.cleanStudy({ ...this.getStudy(), ...patch });
+    this._writeMeta({ study, studyUpdated: new Date().toISOString() });
+    return study;
+  }
+
   _writeMeta(patch) {
     this._requireKey();
     const meta = { categories: [], ...this.getMeta(), ...patch };

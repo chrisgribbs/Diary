@@ -17,6 +17,8 @@ const { GoogleDrive } = require('./gdrive');
 const { Sync } = require('./sync');
 const prayer = require('./prayer');
 const { BackupManager, suggestFolders } = require('./backup');
+const { registerStudy } = require('./study/devotional');
+const { MODEL_RE } = require('./study/openrouter');
 
 const ROOT = path.join(__dirname, '..');
 const APP_VERSION = require('../package.json').version;
@@ -26,6 +28,8 @@ const DEFAULT_SETTINGS = {
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
   // the prayer bell (prayer.js), per device
   prayerBell: false, prayerTimes: {}, prayerHoursOn: {}, prayerDays: 'every', prayerSound: 'bell', prayerMutedOn: '', startWithWindows: false, prayerTrayTold: false,
+  // Bible study (src/study), per device. The journal is never sent to the AI unless studyJournal is on.
+  studyModel: '', studyMode: 'devotional', studyLength: 'standard', studyJournal: false, studyPrivateHosts: true,
 };
 const CHOICES = {
   theme: ['system', 'light', 'dark'],
@@ -35,6 +39,8 @@ const CHOICES = {
   quotePlan: ['christian', 'spiritual', 'off'],
   prayerDays: ['every', 'weekdays'],
   prayerSound: ['bell', 'silent'],
+  studyMode: ['devotional', 'deep', 'lectio', 'public', 'personal', 'explore'],
+  studyLength: ['short', 'standard', 'extended'],
 };
 
 /**
@@ -84,6 +90,7 @@ function createBackend(platform) {
         clean[k] = v; continue;
       }
       if (k === 'prayerMutedOn' && s[k] && !/^\d{4}-\d{2}-\d{2}$/.test(s[k])) continue;
+      if (k === 'studyModel' && s[k] && !MODEL_RE.test(s[k])) continue;
       if (k === 'shareName') { clean[k] = String(s[k]).replace(/\s+/g, ' ').trim().slice(0, 80); continue; }
       clean[k] = s[k];
     }
@@ -372,6 +379,10 @@ function createBackend(platform) {
   });
   handle('readings:sync', (packId, items, retired) => vault.syncPack(String(packId), items, retired));
 
+  // ---------- Bible study (src/study) ----------
+  const study = registerStudy({ handle, vault, send, readSettings, deviceDir: DEVICE_DIR, fetch: (...a) => platform.fetch(...a), secretStore, appVersion: APP_VERSION,
+    openRouterBase: platform.openRouterBase || null, libraryRelease: platform.libraryRelease || null });
+
   // ---------- the prayer bell ----------
   handle('prayer:upcoming', days => prayer.upcoming(readSettings(), new Date(), Math.min(60, Math.max(1, +days || 30))));
   handle('prayer:pause', (key, at) => {
@@ -433,7 +444,7 @@ function createBackend(platform) {
   }
 
   return {
-    handlers, handle, call, vault, backups, drive, sync, trust, wordpress, apiBible,
+    handlers, handle, call, vault, backups, drive, sync, trust, wordpress, apiBible, study,
     readSettings, writeSettings, backupInfo, suggestFolders, setReadingsFile, watchReadings, connectGoogle, setBackupFolder,
     wpLinkOk, startTimers, dataDir: DATA_DIR, deviceDir: DEVICE_DIR, version: APP_VERSION,
   };
