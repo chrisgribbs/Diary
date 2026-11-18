@@ -918,6 +918,7 @@ timeInput.addEventListener('change', () => { state.current.time = timeInput.valu
 /* ---------- WordPress: post an entry to your own site ---------- */
 let wpConnected = false;
 async function updateWpButton() {
+  if (typeof updateStudyButton === 'function') updateStudyButton();   // renderer/study.js
   const b = $('#wpBtn');
   try { wpConnected = (await api.wpStatus()).connected; } catch { wpConnected = false; }
   const c = state.current;
@@ -4713,6 +4714,7 @@ $('#moreBtn').addEventListener('click', () => {
       pop.append(el('p', { class: 'menu-info' }, [$('#saveState').textContent, $('#wordCount').textContent].filter(Boolean).join(' · ')));
       pop.append(item('Write by hand', () => handwrite()));
       if (!$('#wpBtn').hidden) pop.append(item('Post to WordPress', () => $('#wpBtn').click()));
+      if (!$('#studyBtn').hidden) pop.append(item('Reflect in Bible study', () => $('#studyBtn').click()));
       pop.append(item('Delete this entry', () => $('#deleteBtn').click(), 'danger'), el('hr'));
     }
     if (state.mode === 'journal') {

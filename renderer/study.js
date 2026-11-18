@@ -525,3 +525,35 @@ if (api.onStudyDownload) api.onStudyDownload(p => {
     studyDownloading.label.textContent = p.total ? `${Math.round((p.done / p.total) * 100)}%` : `${(p.done / 1048576).toFixed(1)} MB`;
   }
 });
+
+/* ---------- from an entry: "Reflect in Bible study" (only when you've allowed Bible study to read your journal) ---------- */
+function updateStudyButton() {
+  const b = $('#studyBtn');
+  if (!b) return;
+  const c = state.current;
+  b.hidden = !(state.settings && state.settings.studyJournal) || !c || !c.id || c.category === 'bible-study';
+}
+$('#studyBtn').addEventListener('click', async () => {
+  const c = state.current;
+  if (!c || !c.id) return;
+  try { await saveNow(); } catch {}
+  let ex;
+  try { ex = await api.studyEntryExcerpt(c.id); } catch (x) { toast(x.message); return; }
+  if (!ex.excerpt.trim()) { toast('Write a little more first'); return; }
+  // Shown before anything leaves this device: these words, and only these, are sent.
+  const ok = await openDialog((f, done) => {
+    f.append(el('h2', {}, 'Share these words with the AI?'),
+      el('p', {}, 'To choose a passage and shape a reflection, WellWrite will send these words from your entry to the AI model you chose, through OpenRouter. Nothing else from your journal is sent.'),
+      el('blockquote', { class: 'st-share' }, ex.excerpt),
+      el('div', { class: 'actions' },
+        el('button', { type: 'button', class: 'btn-plain', onclick: () => done(false) }, 'Cancel'),
+        el('button', { type: 'button', class: 'btn-ink', autofocus: true, onclick: () => done(true) }, 'Share and continue')));
+  });
+  if (!ok) return;
+  toast('Finding a passage…');
+  await studyPassage({ kind: 'entry', id: c.id, excerpt: ex.excerpt });
+  if (!study.passage) return;
+  study.mode = 'personal';
+  study.journal = [{ id: c.id, date: c.date, title: c.title || '', excerpt: ex.excerpt, on: true }];
+  studyRedraw();
+});

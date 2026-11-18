@@ -1325,3 +1325,4 @@ body.listening .readview { padding-bottom: 96px; }
   .st-keyrow > div:last-child { align-items: stretch; }
   .st-links { flex-wrap: wrap; gap: 12px 18px; }
 }
+.st-share { margin: 10px 0 16px; padding: 10px 14px; border-left: 3px solid var(--foil); font: italic 400 15px/1.5 var(--serif); color: var(--ink); max-height: 40vh; overflow: auto; }

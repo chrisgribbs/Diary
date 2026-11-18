@@ -229,13 +229,20 @@ function run() {
       await shot('s8-personal');
 
       // Phone width
-      win.setSize(393, 860);
-      await wait(500);
+      win.webContents.enableDeviceEmulation({ screenPosition: 'desktop', screenSize: { width: 393, height: 852 }, viewSize: { width: 393, height: 852 }, deviceScaleFactor: 1, viewPosition: { x: 0, y: 0 }, scale: 1 });
+      await wait(800);
+      assert.equal(await js(`return innerWidth`), 393, 'phone width');
       await js(`study.current = (await api.studyGet((await api.studyHistory())[0].id)); study.view = 'study'; state.bibleTab = 'study'; renderBibleView();`);
       assert.ok(await until(`document.querySelector('.st-question')`));
       await shot('s9-phone');
-      const overflow = await js(`const w = document.documentElement.clientWidth; return [...document.querySelectorAll('.st-card *')].filter(n => n.getBoundingClientRect().right > w + 1).map(n => n.className || n.tagName).slice(0, 5)`);
+      const overflow = await js(`const w = innerWidth; return [...document.querySelectorAll('.st-card *')].filter(n => n.getClientRects().length && n.getBoundingClientRect().right > w + 1).map(n => n.className || n.tagName).slice(0, 5)`);
       assert.deepEqual(overflow, [], 'nothing runs off a phone screen');
+      await js(`document.querySelector('.st-question').scrollIntoView();`);
+      await shot('s10-phone-question');
+      await js(`study.view = 'start'; renderBibleView();`);
+      await shot('s11-phone-start');
+      const overflow2 = await js(`const w = innerWidth; return [...document.querySelectorAll('.st-start *')].filter(n => n.getClientRects().length && n.getBoundingClientRect().right > w + 1).map(n => n.className || n.tagName).slice(0, 5)`);
+      assert.deepEqual(overflow2, [], 'the start screen fits a phone');
 
       const bad = errors.filter(e => !/Autofill|DevTools|favicon/.test(e));
       assert.deepEqual(bad, [], 'no errors on the page');

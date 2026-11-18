@@ -220,6 +220,17 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   await call('study:generate', { ref: P, mode: 'personal', entryIds: [entryId] }, 'req-2');
   assert.ok(JSON.stringify(calls.slice(b2).map(c => c.body)).includes('From 2026-11-01'), 'the chosen entry was shared');
 
+  // From an entry: only the excerpt the person saw is sent, never the whole entry.
+  await assert.rejects(call('study:pick', { kind: 'entry', id: entryId }), /Choose the words to share/);
+  const ex = await call('study:entryExcerpt', entryId);
+  assert.ok(ex.excerpt.startsWith('So tired this week'));
+  const b3 = calls.length;
+  const fromEntry = await call('study:pick', { kind: 'entry', id: entryId, excerpt: 'So tired this week.' });
+  assert.deepEqual(fromEntry.entryIds, [entryId]);
+  const sentNow = JSON.stringify(calls.slice(b3).map(c => c.body));
+  assert.ok(sentNow.includes('So tired this week.') && !sentNow.includes('need rest for my soul'), 'only the chosen words were sent');
+  await assert.rejects(call('study:pick', { kind: 'entry', id: entryId, excerpt: 'Words that are not in the entry at all.' }), /Choose the words/);
+
   // Follow-up question, saved with the study.
   const ans = await call('study:ask', study.id, 'What would this have meant to its first hearers?', 'req-3');
   assert.ok(typeof ans.answer === 'string');

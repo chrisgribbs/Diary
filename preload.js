@@ -117,6 +117,7 @@ contextBridge.exposeInMainWorld('wellwrite', {
   studyPick: input => call('study:pick', input),
   studySources: (passage, opts) => call('study:sources', passage, opts),
   studyJournalMatches: passage => call('study:journalMatches', passage),
+  studyEntryExcerpt: id => call('study:entryExcerpt', id),
   studyGenerate: (req, rid) => call('study:generate', req, rid),
   studyCancel: rid => call('study:cancel', rid),
   studyAsk: (id, question, rid) => call('study:ask', id, question, rid),

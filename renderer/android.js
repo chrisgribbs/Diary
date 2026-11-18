@@ -255,6 +255,7 @@
     studyPick: input => engine('study:pick', input),
     studySources: (passage, opts) => engine('study:sources', passage, opts),
     studyJournalMatches: passage => engine('study:journalMatches', passage),
+    studyEntryExcerpt: id => engine('study:entryExcerpt', id),
     studyGenerate: (req, rid) => engine('study:generate', req, rid),
     studyCancel: rid => engine('study:cancel', rid),
     studyAsk: (id, question, rid) => engine('study:ask', id, question, rid),

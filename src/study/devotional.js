@@ -131,12 +131,24 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
     if (input.kind === 'topic') { if (!text.trim()) throw new Error('Write a theme first.'); return { ...passageOf(await passageFor(text)), topic: text }; }
     if (input.kind === 'concern') { if (!text.trim()) throw new Error('Write what’s on your mind first.'); return { ...passageOf(await passageFor(text)), concern: text }; }
     if (input.kind === 'entry') {
+      // Only the excerpt the person saw and agreed to (study:entryExcerpt) is used, never the whole entry.
       if (!settings().journal) throw new Error('Turn on “Let Bible study read my journal” in Settings → Bible study first.');
       const e = vault.get(String(input.id));
-      const words = String(e.text || '').slice(0, 1500);
-      return { ...passageOf(await passageFor(words)), entryIds: [e.id] };
+      const excerpt = String(input.excerpt || '').slice(0, 900);
+      if (!excerpt.trim() || !String(e.text || '').includes(excerpt.slice(0, 40))) throw new Error('Choose the words to share first.');
+      return { ...passageOf(await passageFor(excerpt)), entryIds: [e.id], entryExcerpt: excerpt };
     }
     throw new Error('Unknown starting point');
+  });
+
+  /** The opening of an entry, up to about 700 characters, to show before it's shared (nothing is sent). */
+  handle('study:entryExcerpt', id => {
+    if (!settings().journal) throw new Error('Turn on “Let Bible study read my journal” in Settings → Bible study first.');
+    const e = vault.get(String(id));
+    const sentences = String(e.text || '').split(/(?<=[.!?])\s+/);
+    let out = '';
+    for (const x of sentences) { if (out && (out + ' ' + x).length > 700) break; out = out ? out + ' ' + x : x; }
+    return { id: e.id, date: e.date, title: e.title || '', excerpt: out.slice(0, 900) };
   });
 
   // ---------- sources (no AI) ----------
