@@ -57,7 +57,16 @@ const ARCHIVE = [
   { id: 'johncross', q: 'title:("dark night of the soul") AND mediatype:texts AND date:[1860-01-01 TO 1928-12-31]' },
   { id: 'expositors', q: 'title:("expositor\'s bible") AND mediatype:texts AND date:[1887-01-01 TO 1910-12-31]', rows: 150 },
   { id: 'maclaren', q: 'title:("expositions of holy scripture") AND creator:(maclaren) AND mediatype:texts', rows: 80 },
+  { id: 'edersheim', q: 'title:("life and times of jesus the messiah") AND mediatype:texts AND date:[1883-01-01 TO 1928-12-31]', rows: 30 },
+  { id: 'kempis', q: 'title:("imitation of christ") AND (creator:(benham) OR description:(benham)) AND mediatype:texts', rows: 20 },
+  { id: 'lawrence', q: 'title:("practice of the presence of god") AND mediatype:texts AND date:[1880-01-01 TO 1928-12-31]', rows: 20 },
+  { id: 'julian', q: 'title:("revelations of divine love") AND (creator:(warrack) OR description:(warrack)) AND mediatype:texts', rows: 20 },
+  { id: 'augustine', q: 'title:(confessions) AND creator:(augustine) AND (creator:(pusey) OR description:(pusey)) AND mediatype:texts', rows: 20 },
+  { id: 'cloud', q: 'title:("cloud of unknowing") AND (creator:(underhill) OR description:(underhill)) AND mediatype:texts', rows: 20 },
 ];
+// FETCH_ONLY=edersheim,kempis fetches just those, adding to what's already in the folder.
+const ONLY = (process.env.FETCH_ONLY || '').split(',').map(s => s.trim()).filter(Boolean);
+const wanted = id => !ONLY.length || ONLY.includes(id);
 
 // ---- CrossWire SWORD modules
 const CROSSWIRE = [
@@ -80,7 +89,8 @@ function csvRows(text) {
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
-  const index = [];
+  const indexFile = path.join(OUT, 'index.json');
+  const index = ONLY.length && fs.existsSync(indexFile) ? JSON.parse(fs.readFileSync(indexFile, 'utf8')).filter(f => !ONLY.includes(f.src)) : [];
   const save = (src, name, data, info) => {
     const dir = path.join(OUT, src);
     fs.mkdirSync(dir, { recursive: true });
@@ -89,12 +99,12 @@ function csvRows(text) {
   };
 
   // Gutenberg
-  try {
+  if (GUTENBERG.some(g => wanted(g.id))) try {
     const rows = csvRows(await get('https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv'));
     const head = rows.shift();
     const col = n => head.indexOf(n);
     const [cId, cType, cTitle, cAuthors, cLang, cIssued] = ['Text#', 'Type', 'Title', 'Authors', 'Language', 'Issued'].map(col);
-    for (const g of GUTENBERG) {
+    for (const g of GUTENBERG.filter(g => wanted(g.id))) {
       const hits = rows.filter(r => r[cType] === 'Text' && r[cLang] === 'en' && (!g.author || g.author.test(r[cAuthors] || '')) && (!g.title || g.title.test(r[cTitle] || '')));
       console.log(`gutenberg ${g.id}: ${hits.length}`);
       for (const r of hits.slice(0, 80)) {
@@ -109,7 +119,7 @@ function csvRows(text) {
   } catch (e) { console.log('gutenberg catalogue failed:', e.message); }
 
   // archive.org
-  for (const a of ARCHIVE) {
+  for (const a of ARCHIVE.filter(a => wanted(a.id))) {
     try {
       const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(a.q)}&fl[]=identifier&fl[]=title&fl[]=date&fl[]=creator&fl[]=volume&fl[]=publisher&fl[]=possible-copyright-status&rows=${a.rows || 60}&output=json`;
       const docs = (await get(url, { as: 'json' })).response.docs;
@@ -131,7 +141,7 @@ function csvRows(text) {
   }
 
   // CrossWire
-  for (const c of CROSSWIRE) {
+  for (const c of CROSSWIRE.filter(c => wanted(c.id))) {
     try {
       const zip = await get(`https://crosswire.org/ftpmirror/pub/sword/packages/rawzip/${c.module}.zip`, { as: 'buffer' });
       save(c.id, `${c.module}.zip`, zip, { site: 'crosswire', url: `https://crosswire.org/sword/modules/ModInfo.jsp?modName=${c.module}`, title: c.module, rights: 'see module .conf' });

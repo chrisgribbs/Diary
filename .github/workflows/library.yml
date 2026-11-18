@@ -36,17 +36,22 @@ jobs:
         id: raw
         env:
           FORCE: ${{ github.event.inputs.fetch == 'true' || contains(github.event.head_commit.message, '[fetch]') }}
+          COMMIT: ${{ github.event.head_commit.message }}
         run: |
           set -e
+          ONLY=$(printf '%s' "$COMMIT" | grep -o '\[fetch:[a-z,]*\]' | sed 's/\[fetch:\(.*\)\]/\1/' || true)
           if [ "$FORCE" != "true" ] && curl -sfL -o library-raw.tar.gz "https://github.com/${GITHUB_REPOSITORY}/releases/download/library-sources/library-raw.tar.gz"; then
             tar xzf library-raw.tar.gz && echo "fresh=false" >> "$GITHUB_OUTPUT"
+            if [ -n "$ONLY" ]; then
+              FETCH_ONLY="$ONLY" node scripts/library/fetch.js library-raw
+              tar czf library-raw.tar.gz library-raw
+              echo "fresh=true" >> "$GITHUB_OUTPUT"
+            fi
           else
             node scripts/library/fetch.js library-raw
             tar czf library-raw.tar.gz library-raw
             echo "fresh=true" >> "$GITHUB_OUTPUT"
           fi
-          node -e "const i=require('./library-raw/index.json');const by={};for(const f of i)(by[f.src]=by[f.src]||[]).push(f.title+' | '+(f.issued||'')+' | '+f.file);for(const[k,v]of Object.entries(by)){console.log('## '+k+' ('+v.length+')');v.slice(0,200).forEach(x=>console.log('  '+x))}" > library-raw/LIST.txt
-          cat library-raw/LIST.txt
 
       - name: Keep the source texts
         if: steps.raw.outputs.fresh == 'true'
