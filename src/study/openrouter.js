@@ -16,9 +16,9 @@ const DEFAULT_MODEL = '~deepseek/deepseek-flash-latest';
 const DEFAULT_EMBED = 'perplexity/pplx-embed-v1-0.6b';
 // Offered in Settings; any other OpenRouter model name can be typed in.
 const MODELS = [
-  { id: '~deepseek/deepseek-flash-latest', name: 'DeepSeek Flash (newest)', note: 'Open model. About 0.3¢ a devotional.' },
-  { id: 'z-ai/glm-5.2', name: 'GLM 5.2', note: 'Open model. About 2¢ a devotional.' },
-  { id: 'anthropic/claude-sonnet-5.5', name: 'Claude Sonnet 5.5', note: 'Strongest writing. About 4¢ a devotional.' },
+  { id: '~deepseek/deepseek-flash-latest', name: 'DeepSeek Flash (newest)', note: 'Open model. About 1–2¢ a study.' },
+  { id: 'z-ai/glm-5.2', name: 'GLM 5.2', note: 'Open model. A few cents a study.' },
+  { id: 'anthropic/claude-sonnet-5.5', name: 'Claude Sonnet 5.5', note: 'Strongest writing. About 10¢ a study.' },
 ];
 const MODEL_RE = /^~?[a-z0-9][\w.-]*\/[\w.:~-]{1,80}$/i;
 

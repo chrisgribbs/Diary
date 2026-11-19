@@ -5,6 +5,13 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.8', date: '2026-11-19', title: 'Bible study settings scroll on phones',
+    fixed: [
+      'Phones: Settings → Bible study wouldn’t scroll, so the library downloads further down couldn’t be reached. Long settings sections now scroll on a phone.',
+      'Bible study settings: a stray “null” no longer appears under the library, and the model notes give today’s cost per study (DeepSeek Flash is about 1–2¢ now that it thinks more carefully).',
+    ],
+  },
+  {
     v: '1.33.7', date: '2026-11-19', title: 'Your AI key reaches every device',
     fixed: [
       'Bible study: the OpenRouter key didn’t reach your other devices unless you’d first opened Bible study on the device that had it. Now it’s shared as soon as the journal is unlocked and with every sync, and an open Bible study settings page updates as soon as the key arrives.',

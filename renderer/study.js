@@ -346,8 +346,8 @@ function drawAsk(c) {
       live.removeAttribute('id');
       const works = [...new Set(r.sources.map(s => `${s.author}, ${s.work}`))];
       const cut = (r.flags || []).find(f => f.kind === 'cut');
-      live.replaceChildren(...mdNodes(r.answer), cut ? el('p', { class: 'rv-note warn' }, cut.text) : null,
-        works.length ? el('p', { class: 'q-copy' }, 'From: ', works.join('; ')) : null);
+      live.replaceChildren(...[...mdNodes(r.answer), cut ? el('p', { class: 'rv-note warn' }, cut.text) : null,
+        works.length ? el('p', { class: 'q-copy' }, 'From: ', works.join('; ')) : null].filter(Boolean));
       c.thread = [...(c.thread || []), { role: 'user', content: q }, { role: 'assistant', content: r.answer }];
     } catch (x) { live.replaceChildren(el('p', { class: 'rv-note warn' }, x.message)); }
     finally { study.asking = false; send.disabled = false; }
@@ -526,7 +526,7 @@ async function renderStudySettings(box, reopen) {
       rows.push(row(p.name, p.about, btn));
     }
     for (const p of have.filter(h => h.builtin)) rows.push(row(p.name, `${plural(p.passages, 'passage')}, built into WellWrite.`, el('span', { class: 'st-small' }, 'Included')));
-    lib.replaceChildren(...rows, offer.error ? el('p', { class: 'rv-note warn' }, offer.error) : null);
+    lib.replaceChildren(...rows, ...(offer.error ? [el('p', { class: 'rv-note warn' }, offer.error)] : []));
   };
 
   box.replaceChildren(

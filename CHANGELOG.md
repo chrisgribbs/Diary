@@ -2,6 +2,14 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.8 — Bible study settings scroll on phones
+_19 November 2026_
+
+**Fixed**
+
+- Phones: Settings → Bible study wouldn’t scroll, so the library downloads further down couldn’t be reached. Long settings sections now scroll on a phone.
+- Bible study settings: a stray “null” no longer appears under the library, and the model notes give today’s cost per study (DeepSeek Flash is about 1–2¢ now that it thinks more carefully).
+
 ## 1.33.7 — Your AI key reaches every device
 _19 November 2026_
 

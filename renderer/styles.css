@@ -982,6 +982,8 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
   .set-nav { max-width: 680px; margin: 0 auto; width: 100%; }
   .set-content > * { max-width: 680px; margin-left: auto; margin-right: auto; }
   .set-layout.at-list .set-content { display: none; }
+  /* a section fills the screen and scrolls inside it (otherwise long ones like Bible study run off the bottom) */
+  .set-layout:not(.at-list) .set-content { height: 100%; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; }
   .set-layout:not(.at-list) .set-nav { display: none; }
   .set-nav { flex-direction: column !important; flex-wrap: nowrap !important; padding: 18px 12px !important; height: 100%; overflow-y: auto; border: 0 !important; gap: 2px; }
   .set-nav .set-nav-title { display: block !important; font-size: 26px !important; margin: 4px 8px 14px !important; }

@@ -292,6 +292,14 @@ function run() {
       const overflow2 = await js(`const w = innerWidth; return [...document.querySelectorAll('.st-start *')].filter(n => n.getClientRects().length && n.getBoundingClientRect().right > w + 1).map(n => n.className || n.tagName).slice(0, 5)`);
       assert.deepEqual(overflow2, [], 'the start screen fits a phone');
 
+      // Settings → Bible study on a phone: the page scrolls, so the library's Download buttons can be reached.
+      await js(`openSettings('study');`);
+      assert.ok(await until(`document.querySelector('#studySettings .st-lib, #studySettings button') && /Download|Update|Included/.test(document.querySelector('#studySettings').innerText)`, 8000));
+      const sc = await js(`const c = document.querySelector('#dlg .set-content'); const before = c.scrollTop; c.scrollTop = 99999; const r = { overflow: getComputedStyle(c).overflowY, client: c.clientHeight, scroll: c.scrollHeight, moved: c.scrollTop - before, dlg: document.querySelector('#dlg').clientHeight }; return r;`);
+      assert.ok(sc.client <= sc.dlg && sc.scroll > sc.client && sc.moved > 0, 'a long settings section scrolls on a phone: ' + JSON.stringify(sc));
+      assert.ok(await js(`const b = [...document.querySelectorAll('#studySettings button')].find(x => /^(Download|Update)/.test(x.textContent)) || document.querySelector('#studySettings .st-small:last-child'); const r = b.getBoundingClientRect(); return r.bottom <= innerHeight && r.top >= 0;`), 'the library can be reached');
+      await shot('s12-phone-settings-bottom');
+      assert.ok(!/(^|\n)\s*null\s*(\n|$)/.test(await text('#studySettings')), 'no stray "null" in the settings');
       const bad = errors.filter(e => !/Autofill|DevTools|favicon/.test(e));
       assert.deepEqual(bad, [], 'no errors on the page');
       console.log('study e2e passed; screenshots in ' + OUT);
