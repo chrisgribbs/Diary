@@ -5,6 +5,22 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.0', date: '2026-11-19', title: 'Bible study',
+    new: [
+      'A Study tab in the Bible. Choose a passage (or tap verses in the reader and choose Study), today’s reading, a theme, something on your mind, or Surprise me, and WellWrite writes a study of it: the passage, its background, Greek and Hebrew words, commentary, what it means for today, a contemplative reflection, two or three questions for your journal and a closing prayer.',
+      'Six kinds of study: Daily Devotional, Deep Bible Study, Lectio Divina, Public Theology, Personal Reflection and Theological Exploration, each short, standard or extended. Ask follow-up questions about the passage underneath.',
+      'Studies are written from a library of public-domain commentaries and classics, downloaded once in Settings → Bible study: F. B. Meyer, Hastings’ Great Texts of the Bible, Robertson’s Word Pictures, Vincent’s Word Studies, Edersheim, and Thomas à Kempis, Brother Lawrence, Teresa of Ávila, John of the Cross, Julian of Norwich, Augustine and The Cloud of Unknowing. Every source is shown with its credit; “What the sources say” shows them without any AI.',
+      'Write your reflection under the study’s question and save it to your journal, in a new Bible study category. Bookmark passages from the sources, keep a private prayer list, and look back at your studies.',
+      'Studies are written by AI through your own OpenRouter account (openrouter.ai): add your key in Settings → Bible study. A study costs a fraction of a cent with the default model. Quotations and Greek and Hebrew words are checked against the sources before you see them.',
+    ],
+    improved: [
+      'Your journal stays private: nothing from it is sent to the AI unless you turn on “Let Bible study read my journal”, and even then you see the exact words first and choose them. Bookmarks and your prayer list sync between your devices, encrypted, like everything else.',
+    ],
+    fixed: [
+      'Sync sometimes didn’t tell the page about changes it had just brought in (when a second round followed straight on), so new quotes from another device could take a moment longer to appear.',
+    ],
+  },
+  {
     v: '1.32.1', date: '2026-11-16', title: 'All your quotes on every device',
     fixed: [
       'Quotes from your readings file stopped syncing after the first time: when the file changed, the new quotes stayed on that computer. Now changes to your readings file go to your other devices, and readings taken out of the file go from them too.',
