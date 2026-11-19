@@ -23,7 +23,7 @@ const STUDY_PARTS = {
   understanding: 'Understanding the passage', background: 'Historical and cultural background', words: 'Greek and Hebrew words',
   commentary: 'Commentary', theology: 'Theological implications', today: 'Living it today', reflection: 'Contemplative reflection',
   lectio: 'Reading slowly', meditatio: 'Meditation', oratio: 'Prayer', contemplatio: 'Resting', society: 'For the common good',
-  views: 'How Christians have read it', questions: 'Questions for your journal', prayer: 'Closing prayer',
+  views: 'How Christians have read it', lessons: 'What the passage teaches', questions: 'Questions for your journal', prayer: 'Closing prayer',
 };
 function mdSplit(md) {
   const out = { title: '', sections: [] };
@@ -274,7 +274,7 @@ function drawStudy(body) {
     el('figure', { class: 'quote-card verse st-passage' }, el('blockquote', {}, c.passageText), el('figcaption', {}, 'World English Bible')),
     understanding ? el('section', { class: 'st-lead' }, el('h3', {}, STUDY_PARTS.understanding), ...mdNodes(understanding.text, showSource)) : null,
     explore.length ? el('section', { class: 'st-explore' }, el('h3', {}, lectio ? 'Pray with the passage' : 'Explore today’s reading'),
-      ...explore.map(s => el('details', { class: 'st-part', open: lectio }, el('summary', {}, s.heading), el('div', { class: 'st-part-body' }, ...mdNodes(s.text, showSource))))) : null,
+      ...explore.map(s => el('details', { class: 'st-part', open: lectio || c.mode === 'teaching' }, el('summary', {}, s.heading), el('div', { class: 'st-part-body' }, ...mdNodes(s.text, showSource))))) : null,
     prayer ? el('figure', { class: 'quote-card prayer st-prayer' }, el('p', { class: 'q-title' }, STUDY_PARTS.prayer), el('blockquote', {}, prayer.text.replace(/\*\*?/g, ''))) : null,
     qs.length ? el('section', { class: 'st-question' },
       el('h3', {}, 'A question for your journal'),
@@ -285,6 +285,10 @@ function drawStudy(body) {
         c.entryId ? el('button', { type: 'button', class: 'btn-plain', onclick: () => { setMode('journal'); openEntry(c.entryId); } }, 'Open in journal') : null)) : null,
     (c.flags || []).some(f => f.kind === 'cut') ? el('p', { class: 'rv-note warn' }, 'The AI stopped before it finished, so the end of this study is missing. Try again, or choose a shorter length.') : null,
     drawStudySources(c.sources, showSource),
+    c.barclay ? el('section', { class: 'st-barclay' },
+      el('h3', {}, 'Compare with Barclay'),
+      el('p', { class: 'st-small' }, `William Barclay’s Daily Study Bible on ${c.barclay.label}, on StudyLight.org. It opens in your browser: his commentary is in copyright, so WellWrite links to it rather than using it.`),
+      el('button', { type: 'button', class: 'btn-plain', onclick: () => api.openExternal(c.barclay.url) }, 'Read Barclay on StudyLight ↗')) : null,
     drawAsk(c),
     el('p', { class: 'st-foot' }, `Written with AI (${c.model}) from the sources above. `,
       c.flags && c.flags.length ? `${checkSummary(c.flags)} ` : 'Quotations and Greek and Hebrew words were checked against the sources. ',

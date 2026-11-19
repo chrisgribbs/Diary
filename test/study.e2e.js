@@ -67,6 +67,35 @@ Breathe slowly. Feel the weight of the day settle. Let it be shared.
 Gentle Christ, you know the weight I bring.
 May you find the rest that is given, not earned.`;
 
+const TEACHING = `# An invitation to the weary
+
+## Understanding the passage
+These words were spoken to ordinary people in the towns around the Sea of Galilee: farmers, fishermen, labourers, and the many who felt they could never keep the religious rules well enough. Jesus had just spoken of the wise who missed the point and the simple who saw it. Now he turns to the tired and says, in effect, "Come to me" [S2].
+
+## Historical and cultural background
+A yoke was an everyday thing. It was a wooden beam laid across the necks of two oxen so they could pull together, and a carpenter would shape it to fit the animal that wore it. The teachers of the day spoke of taking up the yoke of the law, meaning a life lived under its many commandments [S2]. So when Jesus speaks of *his* yoke, his hearers would have heard an offer of a different teacher and a different way of living.
+
+## Greek and Hebrew words
+The word translated *easy* is *chrēstos* [S1]. It does not mean that the way is light work. It means kindly, good and well-fitting, the word you might use of something made for you that does not chafe [S3]. The yoke of Jesus is shaped to the one who wears it.
+
+## What the passage teaches
+(i) **Jesus speaks to those who are worn out.** The invitation is not to the strong but to the weary. The first qualification for coming to him is simply needing to.
+
+(ii) **Rest is not the absence of a yoke.** He does not promise a life without work or responsibility. He offers a yoke that fits, and a companion in the pulling [S1].
+
+(iii) **The teacher is gentle.** He calls himself *gentle and lowly in heart*. The one who sets the yoke on us does not drive us; he walks beside us [S3].
+
+## Living it today
+Most of us carry more than we were asked to. Today, notice one weight you have picked up out of habit, fear or pride, and ask whether it is really yours to carry.
+
+## Questions for your journal
+1. What am I carrying today that no one has asked me to carry?
+2. Where in my week does the yoke chafe, and what might a better fit look like?
+3. When have I pulled alongside someone, and what did it make easier?
+
+## Closing prayer
+Lord Jesus, you know the weight I bring. Teach me to walk in step with you, and to find the rest you give.`;
+
 const server = http.createServer((req, res) => {
   let body = '';
   req.on('data', d => { body += d; });
@@ -88,7 +117,7 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'content-type': 'text/event-stream' });
       const text = /the reader’s question/.test(b.messages[1].content)
         ? 'To a crowd worn down by rules, a yoke meant the law [S1]. Jesus offers his own instead: a teacher who walks beside them.'
-        : STUDY;
+        : /gifted teacher/.test(b.messages[1].content) ? TEACHING : STUDY;
       const pieces = text.match(/[\s\S]{1,40}/g);
       let i = 0;
       const tick = () => {
@@ -215,6 +244,22 @@ function run() {
       await click('.st-links button', 'Your studies');
       assert.ok(await until(`document.querySelectorAll('.st-hist .bv-row').length === 1`));
       assert.match(await text('.st-hist'), /saved/);
+
+      // Teaching Study: a teacher's voice, its parts open, and Barclay one click away (linked, never fetched).
+      await js(`study.passage = await api.studyPick({ kind: 'ref', text: 'Matthew 11:28-30' }); study.mode = 'teaching'; study.view = 'passage'; studyRedraw();`);
+      assert.ok(await until(`[...document.querySelectorAll('.st-actions button')].some(b => b.textContent === 'Write the study')`));
+      await click('.st-actions button', 'Write the study');
+      assert.ok(await until(`document.querySelector('.st-title') && document.querySelector('.st-title').textContent === 'An invitation to the weary' && document.querySelector('.st-question')`, 15000), 'teaching study shown');
+      assert.equal(await js(`return document.querySelectorAll('.st-part').length`), 4, 'background, words, lessons, living it');
+      assert.ok(await js(`return [...document.querySelectorAll('.st-part')].every(d => d.open)`), 'a teaching study opens out to read');
+      assert.ok(await js(`return [...document.querySelectorAll('.st-part summary')].some(s => s.textContent === 'What the passage teaches')`));
+      assert.match(await text('.st-barclay'), /Barclay’s Daily Study Bible on Matthew 11/);
+      await shot('s7b-teaching');
+      await js(`[...document.querySelectorAll('.st-part summary')].find(s => s.textContent === 'What the passage teaches').scrollIntoView();`);
+      await shot('s7c-teaching-lessons');
+      await js(`document.querySelector('.st-barclay').scrollIntoView({ block: 'center' });`);
+      await shot('s7d-barclay');
+      await click('.st-back', '‹ New study');
 
       // From the reader: tap verses, then Study
       await js(`state.bibleTab = 'read'; setReaderPos(18, 23); renderBibleView();`);

@@ -2,6 +2,14 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.5 — Teaching Study, and Barclay one click away
+_19 November 2026_
+
+**New**
+
+- Bible study: a new Teaching Study style, for when you want to understand a passage rather than sit with it. It explains what the words meant to the people who first heard them, brings in the history and customs behind them, opens up one Greek or Hebrew word properly, and sets out what the passage teaches as clear numbered points. It’s written fresh from WellWrite’s free commentary library, in plain, warm English. Choose it from the style list when you start a study.
+- Bible study: on New Testament passages, “Compare with Barclay” opens William Barclay’s Daily Study Bible for that chapter on StudyLight.org, in your browser. His commentary is in copyright, so WellWrite links to it rather than using it.
+
 ## 1.33.4 — More thoughtful Bible studies
 _19 November 2026_
 

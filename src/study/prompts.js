@@ -33,6 +33,7 @@ const PARTS = {
   contemplatio: 'Resting',
   society: 'For the common good',
   views: 'How Christians have read it',
+  lessons: 'What the passage teaches',
   questions: 'Questions for your journal',
   prayer: 'Closing prayer',
 };
@@ -79,6 +80,24 @@ const MODES = {
     parts: ['understanding', 'background', 'words', 'views', 'theology', 'reflection', 'questions', 'prayer'],
     wants: ['exposition', 'history', 'greek'],
     brief: 'Set out the main ways Christians have read this passage (for example Catholic, Orthodox, Reformed, Wesleyan, Anabaptist, Pentecostal, or patristic and modern readings, where they genuinely differ). Present each fairly, in its own best terms, say what is at stake, and don’t crown a winner.',
+  },
+  teaching: {
+    label: 'Teaching Study',
+    about: 'A clear, warm explanation: first hearers, background, one word opened up, and what it teaches.',
+    parts: ['understanding', 'background', 'words', 'lessons', 'today', 'questions', 'prayer'],
+    wants: ['greek', 'history', 'exposition', 'illustration'],
+    brief: 'A teaching study for an ordinary reader who wants to understand the passage. Explain rather than evoke.',
+    // Replaces THE VOICE for this mode: the qualities of a good popular Bible teacher, described in WellWrite's own words.
+    voice: [
+      'For this study, write as a gifted teacher explaining Scripture to an ordinary congregation, not as a contemplative guide. In place of the lyrical voice described above:',
+      '1. Start with the first hearers. Under "Understanding the passage", say plainly what was happening and what these words would have meant to the people who first heard or read them.',
+      '2. Make the background vivid. Bring in the customs, places, daily life and history the sources give, so the reader can see the scene; explain why each detail matters for the meaning.',
+      '3. Open up one word properly. Choose the one Greek or Hebrew word the sources discuss that best unlocks the passage, give it in transliteration, and show its range of meaning in ordinary life and how that lights up the verse. One word well explained is better than several listed.',
+      '4. Teach in clear points. Under "What the passage teaches", set out three or four lessons as numbered points written (i), (ii), (iii), each starting with a short bold statement and then a paragraph that explains it from the text and the sources.',
+      '5. Plain, warm, direct English. Short paragraphs. Speak to the reader as "we" and "us" where it is natural. An everyday illustration is welcome when it makes a point clearer; never invent a historical one.',
+      '6. Be practical. Under "Living it today", say concretely what difference the passage makes on an ordinary day, without moralising.',
+      'Everything else above still applies: the sources, the rules for questions, the prayer and the format.',
+    ].join('\n'),
   },
 };
 
@@ -159,6 +178,7 @@ function studyMessages(study, sources) {
   const lines = [
     `Write a ${mode.label} on ${study.ref}, about ${len.words} words in all.`,
     mode.brief,
+    ...(mode.voice ? ['', mode.voice] : []),
     '',
     `The passage (${study.translation || 'World English Bible'}):`,
     `"""\n${study.passageText}\n"""`,
@@ -176,7 +196,8 @@ function studyMessages(study, sources) {
 /** A follow-up question in the conversation about a study. */
 function askMessages(study, history, question, sources) {
   const intro = `We are studying ${study.ref} together (${(MODES[study.mode] || MODES.devotional).label}). The passage (${study.translation || 'WEB'}):\n"""\n${study.passageText}\n"""`;
-  const rules = 'Take time with the reader’s question. Answer in unhurried, thoughtful paragraphs (about 400 to 700 words; longer only if the question truly needs it), in the same voice, from the sources below. Cite them with their labels. If the sources don’t cover something, say so rather than guessing. If the question is personal, don’t advise or fix: reflect, and you may end with one honest, open question. Plain prose, no headings.';
+  const mode = MODES[study.mode] || MODES.devotional;
+  const rules = (mode.voice ? 'Answer as the teacher of this study: clear, warm and explanatory, with the background and any word study the sources give. ' : '') + 'Take time with the reader’s question. Answer in unhurried, thoughtful paragraphs (about 400 to 700 words; longer only if the question truly needs it), in the same voice, from the sources below. Cite them with their labels. If the sources don’t cover something, say so rather than guessing. If the question is personal, don’t advise or fix: reflect, and you may end with one honest, open question. Plain prose, no headings.';
   const msgs = [{ role: 'system', content: SYSTEM }, { role: 'user', content: `${intro}\n\n${rules}\n\nSources:\n${sourceBlock(sources)}` }, { role: 'assistant', content: 'I have the passage and the sources.' }];
   for (const h of (history || []).slice(-8)) msgs.push({ role: h.role === 'assistant' ? 'assistant' : 'user', content: String(h.content).slice(0, 4000) });
   msgs.push({ role: 'user', content: question });

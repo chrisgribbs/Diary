@@ -1288,6 +1288,8 @@ body.listening .readview { padding-bottom: 96px; }
 .st-cites { white-space: nowrap; }
 .st-cite { font: 600 10.5px/1 var(--sans); color: var(--ribbon); background: color-mix(in srgb, var(--ribbon) 10%, transparent); border: 0; border-radius: 4px; padding: 2px 4px; margin: 0 1px; vertical-align: super; cursor: pointer; }
 .st-sources { margin-top: 10px; }
+.st-barclay { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--rule); }
+.st-barclay p { margin: 4px 0 10px; font: 13.5px/1.5 var(--sans); color: var(--pencil); }
 .st-src { border-top: 1px solid color-mix(in srgb, var(--pencil) 18%, transparent); }
 .st-src summary { cursor: pointer; display: flex; gap: 10px; align-items: baseline; padding: 10px 2px; list-style: none; font-size: 14px; color: var(--ink); }
 .st-src summary::-webkit-details-marker { display: none; }

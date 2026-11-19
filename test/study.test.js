@@ -139,6 +139,18 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   assert.ok(/honest|open room|steers/i.test(msgs[0].content));
   assert.ok(msgs[1].content.includes('## Reading slowly') && msgs[1].content.includes('[S1] '));
   assert.ok(!/William Barclay/.test(msgs[0].content), 'no writer is named as a style to copy');
+  // Teaching Study: its own teacher's voice and a numbered "What the passage teaches", still no writer named.
+  const tm = prompts.studyMessages({ ref: 'Matthew 11:28-30', passageText: 'Come to meâ€¦', mode: 'teaching', length: 'standard' }, []);
+  assert.ok(tm[1].content.includes('## What the passage teaches') && tm[1].content.includes('(i), (ii), (iii)') && tm[1].content.includes('first hearers'));
+  assert.ok(!/Barclay/.test(tm[0].content + tm[1].content), 'the teaching voice is described, not borrowed');
+  assert.ok(!msgs[1].content.includes('gifted teacher'), 'other modes keep the reflective voice');
+  assert.ok(prompts.askMessages({ ref: 'Matthew 11:28-30', passageText: 'x', mode: 'teaching' }, [], 'Why a yoke?', [])[1].content.includes('teacher of this study'));
+  // Barclay is linked, never fetched: New Testament chapters only.
+  const refs = require('../src/study/refs');
+  assert.equal(refs.barclayLink(refs.parse('1 Corinthians 13:4-7')).url, 'https://www.studylight.org/commentaries/eng/dsb/1-corinthians-13.html');
+  assert.equal(refs.barclayLink(refs.parse('Matthew 11:28-30')).label, 'Matthew 11');
+  assert.equal(refs.barclayLink(refs.parse('Psalm 23')), null);
+  assert.equal(refs.barclayLink(null), null);
 
   // ---------- OpenRouter, pretend ----------
   const calls = [];

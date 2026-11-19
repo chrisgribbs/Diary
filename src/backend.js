@@ -39,7 +39,7 @@ const CHOICES = {
   quotePlan: ['christian', 'spiritual', 'off'],
   prayerDays: ['every', 'weekdays'],
   prayerSound: ['bell', 'silent'],
-  studyMode: ['devotional', 'deep', 'lectio', 'public', 'personal', 'explore'],
+  studyMode: ['devotional', 'deep', 'lectio', 'public', 'personal', 'explore', 'teaching'],
   studyLength: ['short', 'standard', 'extended'],
 };
 

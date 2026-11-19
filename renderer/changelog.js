@@ -5,6 +5,13 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.5', date: '2026-11-19', title: 'Teaching Study, and Barclay one click away',
+    new: [
+      'Bible study: a new Teaching Study style, for when you want to understand a passage rather than sit with it. It explains what the words meant to the people who first heard them, brings in the history and customs behind them, opens up one Greek or Hebrew word properly, and sets out what the passage teaches as clear numbered points. It’s written fresh from WellWrite’s free commentary library, in plain, warm English. Choose it from the style list when you start a study.',
+      'Bible study: on New Testament passages, “Compare with Barclay” opens William Barclay’s Daily Study Bible for that chapter on StudyLight.org, in your browser. His commentary is in copyright, so WellWrite links to it rather than using it.',
+    ],
+  },
+  {
     v: '1.33.4', date: '2026-11-19', title: 'More thoughtful Bible studies',
     improved: [
       'Bible study: studies and follow-up answers are now more considered. The AI is given time to think the passage through properly before it writes, with plenty of room left for the answer itself, and follow-up answers can run to several unhurried paragraphs (about 400 to 700 words) rather than a short reply. A study still costs only about a cent or two.',

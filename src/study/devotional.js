@@ -237,7 +237,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
       };
       const st = vault.getStudy();
       vault.setStudy({ history: [entry, ...st.history].slice(0, 50) });
-      return { ...entry, sharedJournal: journal.length };
+      return { ...entry, barclay: refs.barclayLink(entry.ref), sharedJournal: journal.length };
     } finally { running.delete(rid); }
   });
   handle('study:cancel', requestId => { const c = running.get(String(requestId)); if (c) c.abort(); return !!c; });
@@ -272,7 +272,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
 
   // ---------- history, saving, bookmarks, prayers ----------
   handle('study:history', () => vault.getStudy().history.map(({ md, passageText, sources, thread, ...rest }) => ({ ...rest, questions: questionsOf(md).length, sources: sources.length })));
-  handle('study:get', id => vault.getStudy().history.find(h => h.id === id) || null);
+  handle('study:get', id => { const h = vault.getStudy().history.find(x => x.id === id); return h ? { ...h, barclay: refs.barclayLink(h.ref) } : null; });
   handle('study:forget', id => { const st = vault.getStudy(); vault.setStudy({ history: st.history.filter(h => h.id !== id) }); return true; });
   handle('study:clearHistory', () => { vault.setStudy({ history: [] }); return true; });
 

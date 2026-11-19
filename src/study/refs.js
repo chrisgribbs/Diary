@@ -100,4 +100,17 @@ function findIn(text) {
 /** The reference of a passage the person picked in the app: { book, chapter, verse, to } (as bible.parseRef gives). */
 const fromPick = p => (p.verse ? [p.book, p.chapter, p.verse, p.chapter, p.to || p.verse] : [p.book, p.chapter, 0, p.chapter, 0]);
 
-module.exports = { overlaps, span, closeness, label, parse, findIn, fromPick, norm };
+/**
+ * William Barclay's Daily Study Bible on StudyLight.org for a passage's chapter (New Testament only), or null.
+ * It's in copyright, so WellWrite only links to it: the page opens in the browser and nothing is fetched or stored.
+ * StudyLight's addresses: /commentaries/eng/dsb/1-corinthians-13.html
+ */
+function barclayLink(r) {
+  if (!Array.isArray(r)) return null;
+  const [b, c] = norm(r);
+  if (!(b >= 39 && b < BOOKS.length) || !(c >= 1)) return null;
+  const slug = BOOKS[b].name.toLowerCase().replace(/ /g, '-');
+  return { url: `https://www.studylight.org/commentaries/eng/dsb/${slug}-${c}.html`, label: `${BOOKS[b].name} ${c}` };
+}
+
+module.exports = { barclayLink, overlaps, span, closeness, label, parse, findIn, fromPick, norm };
