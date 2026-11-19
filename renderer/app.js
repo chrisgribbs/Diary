@@ -4461,6 +4461,10 @@ api.onSyncChanged(async r => {
   state.metas = await api.list();
   if (r.categories) { try { state.categories = await api.getCategories(); } catch {} }
   if (r.quotes) { try { state.quotes = await api.getQuotes(); refreshQuote(); if ($('#dlg').open && $('#dlg .q-summary')) manageQuotes(); } catch {} }
+  // Bible study settings open while the key arrives (or is removed) from another device: show it now.
+  if (r.study && $('#dlg').open && $('#studySettings') && !($('#studySettings input[type=password]') || {}).value) {
+    try { renderStudySettings($('#studySettings'), () => openSettings('study')); } catch {}
+  }
   const c = state.current;
   if (c && c.saved && r.changed.includes(c.id) && !state.dirty) {
     if (state.metas.some(m => m.id === c.id)) { state.current = null; await openEntry(c.id, { keepMode: true }); }

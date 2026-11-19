@@ -323,7 +323,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
   handle('study:prayers', () => vault.getStudy().prayers);
   handle('study:setPrayers', list => vault.setStudy({ prayers: list }).prayers);
 
-  return { or, lib };
+  return { or, lib, shareKey };
 }
 
 module.exports = { registerStudy, STUDY_CATEGORY };

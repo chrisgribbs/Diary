@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.7 — Your AI key reaches every device
+_19 November 2026_
+
+**Fixed**
+
+- Bible study: the OpenRouter key didn’t reach your other devices unless you’d first opened Bible study on the device that had it. Now it’s shared as soon as the journal is unlocked and with every sync, and an open Bible study settings page updates as soon as the key arrives.
+
 ## 1.33.6 — Enter your AI key once
 _19 November 2026_
 

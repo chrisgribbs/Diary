@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.7', date: '2026-11-19', title: 'Your AI key reaches every device',
+    fixed: [
+      'Bible study: the OpenRouter key didn’t reach your other devices unless you’d first opened Bible study on the device that had it. Now it’s shared as soon as the journal is unlocked and with every sync, and an open Bible study settings page updates as soon as the key arrives.',
+    ],
+  },
+  {
     v: '1.33.6', date: '2026-11-19', title: 'Enter your AI key once',
     improved: [
       'Bible study: your OpenRouter key now syncs. Enter it once and every device you sign in to has it after its next sync, so there’s no pasting it on each phone and PC. It travels inside your encrypted journal and sync, never in plain text. If a device already has the key, it shares it the first time it opens this version. Removing the key in Settings removes it from every device.',

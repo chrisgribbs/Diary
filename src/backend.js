@@ -175,10 +175,10 @@ function createBackend(platform) {
   // ---------- the journal ----------
   const startBackupSoon = () => setTimeout(() => backups.maybeRun('unlock').catch(() => {}), 5000);
   handle('vault:status', () => ({ exists: vault.exists(), unlocked: vault.isUnlocked(), dataDir: DATA_DIR, trust: trust.status() }));
-  handle('vault:create', pw => { vault.create(pw); return true; });
+  handle('vault:create', pw => { vault.create(pw); shareStudyKey(); return true; });
   handle('vault:unlock', pw => {
     const ok = vault.unlock(pw);
-    if (ok) { try { trust.refresh(vault.key); } catch {} startBackupSoon(); }
+    if (ok) { try { trust.refresh(vault.key); } catch {} startBackupSoon(); shareStudyKey(); }
     return ok;
   });
   handle('vault:unlockTrusted', () => {
@@ -188,6 +188,7 @@ function createBackend(platform) {
     if (!key) return false;
     vault.unlockWithKey(key);
     startBackupSoon();
+    shareStudyKey();
     return true;
   });
   handle('vault:setTrust', mode => trust.save(mode, vault.key));
@@ -382,6 +383,11 @@ function createBackend(platform) {
   // ---------- Bible study (src/study) ----------
   const study = registerStudy({ handle, vault, send, readSettings, deviceDir: DEVICE_DIR, libraryDir: platform.libraryDir || null, fetch: (...a) => platform.fetch(...a), secretStore, appVersion: APP_VERSION,
     openRouterBase: platform.openRouterBase || null, libraryRelease: platform.libraryRelease || null });
+  // The OpenRouter key syncs with the journal: share this device's key (or take the journal's) whenever the journal
+  // is opened, and before and after every sync, so it reaches the other devices without visiting Bible study first.
+  function shareStudyKey() { try { if (vault.isUnlocked()) study.shareKey(); } catch {} }
+  const runSync = sync.run.bind(sync);
+  sync.run = async (...a) => { shareStudyKey(); try { return await runSync(...a); } finally { shareStudyKey(); } };
 
   // ---------- the prayer bell ----------
   handle('prayer:upcoming', days => prayer.upcoming(readSettings(), new Date(), Math.min(60, Math.max(1, +days || 30))));

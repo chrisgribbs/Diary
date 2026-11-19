@@ -249,10 +249,10 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   const old = createBackend({ dataDir: oldDir, deviceDir: oldDev, tmpDir: tmp, canProtect: () => false, testTrust: true, fetch: fakeFetch, send: () => {}, openRouterBase: 'https://openrouter.test/api/v1' });
   const callOld = async (name, ...args) => { const r = await old.call(name, args); if (!r.ok) throw new Error(r.error); return r.value; };
   await callOld('vault:create', 'secret123');
-  assert.equal((await callOld('study:status')).key, true);
   const { Vault } = require('../src/vault');
   const peek = new Vault(oldDir); peek.unlock('secret123');
-  assert.equal(peek.getStudy().aiKey.k, 'sk-or-v1-goodkey1234567890', 'an existing key is put in the journal, to sync');
+  assert.equal(peek.getStudy().aiKey.k, 'sk-or-v1-goodkey1234567890', 'an existing key is put in the journal when it opens, without visiting Bible study');
+  assert.equal((await callOld('study:status')).key, true);
   // Removing it on one device removes it on the others.
   await call2('study:forgetKey');
   assert.equal((await call2('study:status')).key, false);
