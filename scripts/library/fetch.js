@@ -73,6 +73,14 @@ const CROSSWIRE = [
   { id: 'robertson', module: 'RWP' },
 ];
 
+// ---- Direct downloads from the publisher (openly licensed, not public domain: the licence is checked by hand)
+const DIRECT = [
+  { id: 'tosn', url: 'https://tyndaleopenresources.com/wp-content/themes/tyndale-openresources/files/tyndale_open-studynotes.zip', file: 'tyndale_open-studynotes.zip',
+    title: 'Tyndale Open Study Notes', rights: 'CC BY-SA 4.0 (tyndaleopenresources.com)' },
+  { id: 'tobd', url: 'https://tyndaleopenresources.com/wp-content/themes/tyndale-openresources/files/TyndaleOpenBibleDictionary.zip', file: 'TyndaleOpenBibleDictionary.zip',
+    title: 'Tyndale Open Bible Dictionary', rights: 'CC BY-SA 4.0 (tyndaleopenresources.com)' },
+];
+
 function csvRows(text) {
   const rows = []; let row = [], f = '', q = false;
   for (let i = 0; i < text.length; i++) {
@@ -147,6 +155,15 @@ function csvRows(text) {
       save(c.id, `${c.module}.zip`, zip, { site: 'crosswire', url: `https://crosswire.org/sword/modules/ModInfo.jsp?modName=${c.module}`, title: c.module, rights: 'see module .conf' });
       console.log(`crosswire ${c.module}: ${zip.length} bytes`);
     } catch (e) { console.log(`crosswire ${c.module} failed:`, e.message); }
+  }
+
+  // Direct
+  for (const d of DIRECT.filter(d => wanted(d.id))) {
+    try {
+      const buf = await get(d.url, { as: 'buffer' });
+      save(d.id, d.file, buf, { site: 'tyndaleopenresources.com', url: d.url, title: d.title, rights: d.rights });
+      console.log(`direct ${d.id}: ${buf.length} bytes`);
+    } catch (e) { console.log(`direct ${d.id} failed:`, e.message); }
   }
 
   fs.writeFileSync(path.join(OUT, 'index.json'), JSON.stringify(index, null, 1));
