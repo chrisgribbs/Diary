@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.6 — Enter your AI key once
+_19 November 2026_
+
+**Improved**
+
+- Bible study: your OpenRouter key now syncs. Enter it once and every device you sign in to has it after its next sync, so there’s no pasting it on each phone and PC. It travels inside your encrypted journal and sync, never in plain text. If a device already has the key, it shares it the first time it opens this version. Removing the key in Settings removes it from every device.
+
 ## 1.33.5 — Teaching Study, and Barclay one click away
 _19 November 2026_
 

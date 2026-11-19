@@ -43,14 +43,24 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
   };
 
   // ---------- key, model, spending ----------
-  handle('study:status', () => ({
+  // The key is entered once and synced (inside the encrypted study file) to every device signed in to this journal.
+  // Each device also keeps a protected copy of its own. Whichever changed last wins: a new key, or a removal.
+  const shareKey = () => {
+    let shared;
+    try { shared = vault.getStudy().aiKey; } catch { return; }   // locked
+    const local = or._key();
+    if (!shared.u) { if (local) vault.setStudy({ aiKey: { k: local } }); return; }   // first time: share the key this device has
+    if (shared.k && shared.k !== local) or.storeKey(shared.k);
+    else if (!shared.k && local) or.forget();
+  };
+  handle('study:status', () => (shareKey(), {
     key: or.hasKey(), ...settings(), models: MODELS, modes: Object.entries(prompts.MODES).map(([id, m]) => ({ id, label: m.label, about: m.about })),
     lengths: Object.entries(prompts.LENGTHS).map(([id, l]) => ({ id, label: l.label, words: l.words })),
     library: lib.installed(), hasPacks: lib.hasPacks(), meaning: !!lib.embedModel(), month: or.month(), downloading: lib.downloading,
   }));
-  handle('study:setKey', async key => { const info = await or.setKey(key); return { key: true, ...info }; });
-  handle('study:forgetKey', () => or.forget());
-  handle('study:account', () => or.status());
+  handle('study:setKey', async key => { const info = await or.setKey(key); try { vault.setStudy({ aiKey: { k: or._key() } }); } catch {} return { key: true, ...info }; });
+  handle('study:forgetKey', () => { or.forget(); try { vault.setStudy({ aiKey: { k: '' } }); } catch {} return true; });
+  handle('study:account', () => (shareKey(), or.status()));
 
   // ---------- library packs ----------
   handle('study:offer', () => lib.available());
@@ -117,6 +127,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
     return [pick[0], pick[1], 0, pick[1], 0];
   };
   handle('study:pick', async input => {
+    shareKey();
     input = input || {};
     const text = String(input.text || '').slice(0, 2000);
     if (input.kind === 'ref') {
@@ -154,6 +165,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
 
   // ---------- sources (no AI) ----------
   handle('study:sources', async (passage, opts = {}) => {
+    shareKey();
     const p = passageOf(passage.ref);
     const list = await retrieve(lib, embedder(), { ref: p.ref, passageText: p.passageText, topic: passage.topic || '', mode: opts.mode || 'devotional', length: 'extended' }, { budget: 80000 });
     return { ...p, sources: list, hasPacks: lib.hasPacks() };
@@ -195,6 +207,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
    * Streams the text as it's written (event study:delta, requestId, piece) and returns the finished study.
    */
   handle('study:generate', async (req, requestId) => {
+    shareKey();
     req = req || {};
     const s = settings();
     const mode = prompts.MODES[req.mode] ? req.mode : s.mode;
@@ -244,6 +257,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
 
   // A follow-up question about a study: new sources for the question, the same checks, kept with the study.
   handle('study:ask', async (studyId, question, requestId) => {
+    shareKey();
     question = String(question || '').trim().slice(0, 1500);
     if (!question) throw new Error('Write a question first.');
     const st = vault.getStudy();

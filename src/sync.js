@@ -332,7 +332,7 @@ class Sync {
     const before = vault.studyForSync();
     vault.applySyncedStudy(p);
     const after = vault.studyForSync();
-    out.study = JSON.stringify([before.bookmarks, before.prayers]) !== JSON.stringify([after.bookmarks, after.prayers]);
+    out.study = JSON.stringify([before.bookmarks, before.prayers, before.aiKey]) !== JSON.stringify([after.bookmarks, after.prayers, after.aiKey]);
     // If the merge added anything of ours, our "updated" moved on and step 2 sends it back.
     st.items[STUDY] = { f: file.id, r: file.version, u: after.updated === String(p.updated || '') ? after.updated : (st.items[STUDY] ? st.items[STUDY].u : '') };
   }

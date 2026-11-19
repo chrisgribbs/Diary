@@ -278,7 +278,11 @@ class Vault {
     if (s.gone && typeof s.gone === 'object' && !Array.isArray(s.gone)) {
       for (const [k, v] of Object.entries(s.gone).slice(-1000)) if (/^(b|p):.{1,40}$/.test(k) && /^\d{4}-\d{2}-\d{2}T/.test(String(v))) gone[k] = String(v).slice(0, 30);
     }
-    return { history, bookmarks, prayers, gone };
+    // The OpenRouter key, so it's entered once and every signed-in device has it. Kept here, inside the encrypted
+    // journal, and synced inside the encrypted study file. k '' with a time means it was removed (on every device).
+    const ak = s.aiKey && typeof s.aiKey === 'object' ? s.aiKey : {};
+    const aiKey = { k: /^sk-or-[\w-]{10,200}$/.test(ak.k || '') ? ak.k : '', u: /^\d{4}-\d{2}-\d{2}T/.test(String(ak.u || '')) ? String(ak.u).slice(0, 30) : '' };
+    return { history, bookmarks, prayers, gone, aiKey };
   }
   /** Stamp changed bookmarks and prayers with the time, and note removed ones (for sync). */
   static stampStudy(before, after, now) {
@@ -291,13 +295,14 @@ class Vault {
       for (const id of old.keys()) if (!still.has(id)) gone[`${kind}:${id}`] = now;
     }
     after.gone = gone;
+    after.aiKey = after.aiKey.k === before.aiKey.k ? before.aiKey : { k: after.aiKey.k, u: now };
     return after;
   }
   /** Bookmarks and the prayer list, for sync (your study history stays on each device). */
   studyForSync() {
     const meta = this.getMeta();
     const st = this.getStudy();
-    return { bookmarks: st.bookmarks, prayers: st.prayers, gone: st.gone, updated: meta.studySynced || '' };
+    return { bookmarks: st.bookmarks, prayers: st.prayers, gone: st.gone, aiKey: st.aiKey, updated: meta.studySynced || '' };
   }
   /**
    * Bookmarks and prayers from another device, merged item by item: an item on either device is kept unless it was
@@ -307,7 +312,7 @@ class Vault {
   applySyncedStudy(p) {
     this._requireKey();
     const mine = this.getStudy();
-    const theirs = Vault.cleanStudy({ bookmarks: p.bookmarks, prayers: p.prayers, gone: p.gone });
+    const theirs = Vault.cleanStudy({ bookmarks: p.bookmarks, prayers: p.prayers, gone: p.gone, aiKey: p.aiKey });
     const gone = { ...mine.gone };
     for (const [k, v] of Object.entries(theirs.gone)) if (!gone[k] || v > gone[k]) gone[k] = v;
     const merge = (kind, a, b) => {
@@ -320,8 +325,9 @@ class Vault {
     };
     const bookmarks = merge('b', mine.bookmarks, theirs.bookmarks);
     const prayers = merge('p', mine.prayers, theirs.prayers);
-    const sig = st => JSON.stringify([st.bookmarks.map(x => x.id + x.u).sort(), st.prayers.map(x => x.id + x.u).sort(), Object.keys(st.gone).sort()]);
-    const merged = { history: mine.history, bookmarks, prayers, gone };
+    const aiKey = theirs.aiKey.u > mine.aiKey.u ? theirs.aiKey : mine.aiKey;   // the newer key (or removal) wins
+    const sig = st => JSON.stringify([st.bookmarks.map(x => x.id + x.u).sort(), st.prayers.map(x => x.id + x.u).sort(), Object.keys(st.gone).sort(), st.aiKey.u]);
+    const merged = { history: mine.history, bookmarks, prayers, gone, aiKey };
     const same = sig(merged) === sig(theirs);
     this._writeMeta({ study: Vault.cleanStudy(merged), studySynced: same ? String(p.updated || '') : new Date().toISOString() });
     return merged;
@@ -332,7 +338,7 @@ class Vault {
     const before = this.getStudy();
     const now = new Date().toISOString();
     const study = Vault.stampStudy(before, Vault.cleanStudy({ ...before, ...patch }), now);
-    const changed = JSON.stringify([study.bookmarks, study.prayers, study.gone]) !== JSON.stringify([before.bookmarks, before.prayers, before.gone]);
+    const changed = JSON.stringify([study.bookmarks, study.prayers, study.gone, study.aiKey]) !== JSON.stringify([before.bookmarks, before.prayers, before.gone, before.aiKey]);
     this._writeMeta({ study, studyUpdated: now, ...(changed ? { studySynced: now } : {}) });
     return study;
   }

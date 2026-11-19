@@ -47,8 +47,16 @@ class OpenRouter {
   }
 
   _read() { try { return JSON.parse(fs.readFileSync(this.file, 'utf8')); } catch { return {}; } }
-  _write(d) { fs.writeFileSync(this.file, JSON.stringify(d)); }
-  _key() { const d = this._read(); if (!d.key) return ''; try { return this.unprotect(d.key) || ''; } catch { return ''; } }
+  _write(d) { fs.mkdirSync(require('path').dirname(this.file), { recursive: true }); fs.writeFileSync(this.file, JSON.stringify(d)); }
+  _key() {
+    if (this.mem) return this.mem;   // a synced key on a device that can't protect one: kept in memory only
+    const d = this._read(); if (!d.key) return ''; try { return this.unprotect(d.key) || ''; } catch { return ''; }
+  }
+  /** Keep a key that's already been checked (one that came by sync), without asking OpenRouter again. */
+  storeKey(key) {
+    this.mem = '';
+    if (this.available()) { const d = this._read(); d.key = this.protect(key); this._write(d); } else this.mem = key;
+  }
   hasKey() { return !!this._key(); }
 
   async setKey(key) {
@@ -56,10 +64,11 @@ class OpenRouter {
     if (!/^sk-or-[\w-]{10,200}$/.test(key)) throw new OpenRouterError('That doesn’t look like an OpenRouter key (they start “sk-or-”).', 'key');
     if (!this.available()) throw new OpenRouterError('This device can’t keep a key safely, so it can’t be saved here.', 'store');
     const info = await this._keyInfo(key);   // checks it works before keeping it
+    this.mem = '';
     const d = this._read(); d.key = this.protect(key); this._write(d);
     return info;
   }
-  forget() { try { fs.unlinkSync(this.file); } catch {} return true; }
+  forget() { this.mem = ''; try { fs.unlinkSync(this.file); } catch {} return true; }
 
   _headers(key) {
     return {

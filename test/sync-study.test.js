@@ -99,6 +99,25 @@ const marks = v => v.getStudy().bookmarks.map(b => b.id).sort();
   await both();
   assert.equal([...drive.shared.files.values()].reduce((n, f) => n + f.version, 0), before, 'nothing re-sent');
 
+  // The OpenRouter key: entered on one device, every device has it; a newer key replaces it; removing it removes it everywhere.
+  const KEY1 = 'sk-or-v1-firstkey12345678901234', KEY2 = 'sk-or-v1-secondkey1234567890123';
+  assert.equal(B.vault.getStudy().aiKey.k, '');
+  A.vault.setStudy({ aiKey: { k: KEY1 } });
+  await both();
+  assert.equal(B.vault.getStudy().aiKey.k, KEY1, 'the key reaches the other device');
+  assert.ok(!drive.shared.files.size || ![...drive.shared.files.values()].some(f => f.data.toString('latin1').includes('firstkey')), 'never in Drive in the clear');
+  await wait(5);
+  B.vault.setStudy({ aiKey: { k: KEY2 } });
+  await both();
+  assert.equal(A.vault.getStudy().aiKey.k, KEY2, 'a newer key wins');
+  const prayersBefore = texts(A.vault);
+  await wait(5);
+  A.vault.setStudy({ aiKey: { k: '' } });
+  await both();
+  assert.equal(B.vault.getStudy().aiKey.k, '', 'removed on every device');
+  assert.ok(B.vault.getStudy().aiKey.u, 'the removal is remembered, so an older copy can’t bring it back');
+  assert.deepEqual(texts(B.vault), prayersBefore, 'prayers untouched');
+
   for (const d of [A, B]) { d.sync.stop && d.sync.stop(); fs.rmSync(d.dir, { recursive: true, force: true }); }
   console.log('study sync tests passed');
 })().catch(e => { console.error(e); process.exit(1); });

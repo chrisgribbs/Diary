@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.6', date: '2026-11-19', title: 'Enter your AI key once',
+    improved: [
+      'Bible study: your OpenRouter key now syncs. Enter it once and every device you sign in to has it after its next sync, so there’s no pasting it on each phone and PC. It travels inside your encrypted journal and sync, never in plain text. If a device already has the key, it shares it the first time it opens this version. Removing the key in Settings removes it from every device.',
+    ],
+  },
+  {
     v: '1.33.5', date: '2026-11-19', title: 'Teaching Study, and Barclay one click away',
     new: [
       'Bible study: a new Teaching Study style, for when you want to understand a passage rather than sit with it. It explains what the words meant to the people who first heard them, brings in the history and customs behind them, opens up one Greek or Hebrew word properly, and sets out what the passage teaches as clear numbered points. It’s written fresh from WellWrite’s free commentary library, in plain, warm English. Choose it from the style list when you start a study.',

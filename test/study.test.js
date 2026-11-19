@@ -237,6 +237,29 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   await call('study:setKey', 'sk-or-v1-goodkey1234567890');
   assert.equal((await call('study:status')).key, true);
 
+  // The key travels with the journal: another device opening the same (synced) journal has it without typing it.
+  const other = createBackend({ dataDir, deviceDir: path.join(tmp, 'device2'), tmpDir: tmp, canProtect: () => false, testTrust: true, fetch: fakeFetch, send: () => {}, openRouterBase: 'https://openrouter.test/api/v1' });
+  const call2 = async (name, ...args) => { const r = await other.call(name, args); if (!r.ok) throw new Error(r.error); return r.value; };
+  await call2('vault:unlock', 'secret123');
+  assert.equal((await call2('study:status')).key, true, 'a second device picks up the key from the journal');
+  // A device that had a key before keys were synced shares it the first time.
+  const oldDir = path.join(tmp, 'journal-old'), oldDev = path.join(tmp, 'device-old');
+  fs.mkdirSync(oldDev, { recursive: true });
+  fs.copyFileSync(path.join(tmp, 'device', 'openrouter.json'), path.join(oldDev, 'openrouter.json'));
+  const old = createBackend({ dataDir: oldDir, deviceDir: oldDev, tmpDir: tmp, canProtect: () => false, testTrust: true, fetch: fakeFetch, send: () => {}, openRouterBase: 'https://openrouter.test/api/v1' });
+  const callOld = async (name, ...args) => { const r = await old.call(name, args); if (!r.ok) throw new Error(r.error); return r.value; };
+  await callOld('vault:create', 'secret123');
+  assert.equal((await callOld('study:status')).key, true);
+  const { Vault } = require('../src/vault');
+  const peek = new Vault(oldDir); peek.unlock('secret123');
+  assert.equal(peek.getStudy().aiKey.k, 'sk-or-v1-goodkey1234567890', 'an existing key is put in the journal, to sync');
+  // Removing it on one device removes it on the others.
+  await call2('study:forgetKey');
+  assert.equal((await call2('study:status')).key, false);
+  assert.equal((await call('study:status')).key, false, 'removed everywhere');
+  await call('study:setKey', 'sk-or-v1-goodkey1234567890');
+  assert.equal((await call2('study:status')).key, true, 'and adding it again reaches the others');
+
   const pick = await call('study:pick', { kind: 'ref', text: 'Matt 11:28-30' });
   assert.equal(pick.label, 'Matthew 11:28â€“30');
   assert.ok(pick.passageText.includes('my burden is light'));

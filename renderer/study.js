@@ -477,16 +477,16 @@ async function renderStudySettings(box, reopen) {
     catch (x) { say(x.message, true); diag('Bible study key not saved: ' + x.message); saveBtn.disabled = false; }
   };
   const keyRow = s.key
-    ? el('div', { class: 'row st-keyrow' }, el('div', {}, 'OpenRouter key', el('small', {}, 'Saved on this device only, protected by ' + (ANDROID ? 'Android' : 'Windows') + '.')),
+    ? el('div', { class: 'row st-keyrow' }, el('div', {}, 'OpenRouter key', el('small', {}, 'Saved in your encrypted journal, so every device you sign in to has it after it syncs.')),
       el('div', { class: 'btns' },
         el('button', { type: 'button', class: 'btn-plain', onclick: async () => {
           say('Asking OpenRouter…');
           const a = await api.studyAccount();
           say(a.error || (a.limit != null ? `Used $${a.usage.toFixed(2)} of this key’s $${a.limit.toFixed(2)} limit.` : `Used $${(a.usage || 0).toFixed(2)} in all with this key.`), !!a.error);
         } }, 'Check credit'),
-        el('button', { type: 'button', class: 'btn-link danger', onclick: async () => { await api.studyForgetKey(); renderStudySettings(box, reopen); } }, 'Remove')),
+        el('button', { type: 'button', class: 'btn-link danger', title: 'Removes the key from every device', onclick: async () => { await api.studyForgetKey(); renderStudySettings(box, reopen); } }, 'Remove')),
       keyNote)
-    : el('div', { class: 'row st-keyrow' }, el('div', {}, 'OpenRouter key', el('small', {}, 'Create one at openrouter.ai, add a few dollars of credit, and paste it here. It’s kept on this device only.')),
+    : el('div', { class: 'row st-keyrow' }, el('div', {}, 'OpenRouter key', el('small', {}, 'Create one at openrouter.ai, add a few dollars of credit, and paste it here. It’s kept in your encrypted journal and synced, so you only enter it once.')),
       el('div', { class: 'st-row' }, keyInput, saveBtn),
       el('button', { type: 'button', class: 'btn-link small', onclick: () => api.openExternal('https://openrouter.ai/keys') }, 'Get a key'),
       keyNote);
