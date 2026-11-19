@@ -5,6 +5,14 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.1', date: '2026-11-19', title: 'WellWrite opens on phones again',
+    fixed: [
+      'Android: 1.33.0 closed as soon as it opened. A line in the new Bible study used a kind of letter-matching the phone app’s engine can’t do, so the engine couldn’t start. That’s rewritten, and Bible study’s accent handling (Greek too) now works the same on phones as on Windows. Your journal was never touched.',
+      'If WellWrite’s engine ever can’t start on a phone again, it says so, with a button to get the newest version, instead of closing.',
+      'Behind the scenes: every release is now opened on an Android emulator first, and the phone app is only published if it opens and saves an entry there.',
+    ],
+  },
+  {
     v: '1.33.0', date: '2026-11-19', title: 'Bible study',
     new: [
       'A Study tab in the Bible. Choose a passage (or tap verses in the reader and choose Study), today’s reading, a theme, something on your mind, or Surprise me, and WellWrite writes a study of it: the passage, its background, Greek and Hebrew words, commentary, what it means for today, a contemplative reflection, two or three questions for your journal and a closing prayer.',

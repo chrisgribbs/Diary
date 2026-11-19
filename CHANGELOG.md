@@ -2,6 +2,15 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.1 — WellWrite opens on phones again
+_19 November 2026_
+
+**Fixed**
+
+- Android: 1.33.0 closed as soon as it opened. A line in the new Bible study used a kind of letter-matching the phone app’s engine can’t do, so the engine couldn’t start. That’s rewritten, and Bible study’s accent handling (Greek too) now works the same on phones as on Windows. Your journal was never touched.
+- If WellWrite’s engine ever can’t start on a phone again, it says so, with a button to get the newest version, instead of closing.
+- Behind the scenes: every release is now opened on an Android emulator first, and the phone app is only published if it opens and saves an entry there.
+
 ## 1.33.0 — Bible study
 _19 November 2026_
 
