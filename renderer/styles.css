@@ -1326,3 +1326,9 @@ body.listening .readview { padding-bottom: 96px; }
   .st-links { flex-wrap: wrap; gap: 12px 18px; }
 }
 .st-share { margin: 10px 0 16px; padding: 10px 14px; border-left: 3px solid var(--foil); font: italic 400 15px/1.5 var(--serif); color: var(--ink); max-height: 40vh; overflow: auto; }
+
+/* Android: the engine couldn't start (see android.js) */
+.engine-failed { position: fixed; inset: 0; z-index: 1000; background: var(--paper); color: var(--ink); padding: 48px 24px; overflow: auto; }
+.engine-failed h2 { margin: 0 0 12px; }
+.engine-failed p { line-height: 1.5; }
+.engine-failed pre { white-space: pre-wrap; font-size: 12px; color: var(--pencil); margin-top: 24px; }

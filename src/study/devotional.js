@@ -11,6 +11,7 @@
  *   study:history, study:get, study:save, study:forget, study:clearHistory
  *   study:bookmarks, study:bookmark, study:prayers, study:setPrayers
  */
+const { NOT_WORD } = require('./text');   // not \p{L}: the Android engine has no Unicode tables
 const path = require('path');
 const crypto = require('crypto');
 const bible = require('../bible');
@@ -182,7 +183,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
 
   // ---------- writing a study ----------
   const inBible = phrase => {
-    const words = String(phrase).replace(/[^\p{L}\p{N}' ]+/gu, ' ').trim().split(/\s+/);
+    const words = String(phrase).replace(NOT_WORD, ' ').trim().split(/\s+/);
     if (words.length < 4) return false;
     const r = bible.search('web', `"${words.slice(0, 8).join(' ')}"`, 1);
     return r.total > 0;

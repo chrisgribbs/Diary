@@ -150,9 +150,16 @@ jobs:
             echo "::error title=Publish failed::$msg"; exit 1
           }
 
+  phone-check:
+    # The phone app on an emulator first: it must open, make a journal and save an entry, without crashing.
+    # (1.33.0 shipped an engine that couldn't load on phones, which no desktop test could see.)
+    uses: ./.github/workflows/android-check.yml
+    secrets: inherit
+
   android:
     # After the Windows build, so the release already exists; adds WellWrite-<version>.apk to it.
-    needs: [relay, windows]
+    # Only if the phone check passed.
+    needs: [relay, windows, phone-check]
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

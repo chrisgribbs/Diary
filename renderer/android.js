@@ -54,6 +54,20 @@
   const app = (op, args = {}) => request('N', { op, ...args });
   native.postMessage('H');   // hello: lets the app reply to this page
 
+  // WellWrite's engine couldn't start (a fault in an update): say so plainly, with the way to the latest version,
+  // instead of a journal that won't open. Your journal itself is untouched.
+  on('engine:failed', why => {
+    const box = document.createElement('div');
+    box.className = 'engine-failed';
+    box.innerHTML = '<h2>WellWrite couldn’t start</h2><p>Something in this version of WellWrite stops it starting on this phone. Your journal is safe: nothing has been changed or lost.</p>'
+      + '<p>Please install the newest version. If this keeps happening, send Chris the words below.</p>'
+      + '<button type="button" class="btn-ink">Get the newest version</button><pre></pre>';
+    box.querySelector('pre').textContent = String(why || '');
+    box.querySelector('button').onclick = () => app('openUrl', { url: 'https://github.com/chrisgribbs/Diary/releases/latest' }).catch(() => {});
+    const show = () => document.body.append(box);
+    if (document.body) show(); else document.addEventListener('DOMContentLoaded', show);
+  });
+
   // ---------- files ----------
   /** Let the person pick a file; resolves to a File or null. */
   function pickFile(accept) {

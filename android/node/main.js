@@ -11,7 +11,8 @@ const crypto = require('crypto');
 
 // In the app, src/ sits beside this file; in the repository it's two folders up.
 const SRC = fs.existsSync(path.join(__dirname, 'src', 'backend.js')) ? './src' : '../../src';
-const { createBackend, stripActive } = require(SRC + '/backend');
+// (Loaded in start(), so that if it can't load, the phone shows why instead of WellWrite closing.)
+let createBackend, stripActive;
 
 const RELEASES = 'https://api.github.com/repos/chrisgribbs/Diary/releases/latest';
 
@@ -20,6 +21,7 @@ const RELEASES = 'https://api.github.com/repos/chrisgribbs/Diary/releases/latest
  * dirs: { files, cache }  the app's private folders
  */
 function start(transport, dirs, opts = {}) {
+  ({ createBackend, stripActive } = require(SRC + '/backend'));
   const ascii = s => s.replace(/[\u007f-￿]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
   const toPage = obj => transport.send('P' + ascii(JSON.stringify(obj)));
   const toApp = obj => transport.send('N' + ascii(JSON.stringify(obj)));
@@ -176,6 +178,24 @@ if (require.main === module) {
   const bridge = process._linkedBinding('rn_bridge');
   const listeners = [];
   bridge.registerChannel('wellwrite', (_ch, msg) => listeners.forEach(fn => fn(msg)));
-  start({ send: s => bridge.sendMessage('wellwrite', s), onMessage: fn => listeners.push(fn) },
-    { files: process.argv[2], cache: process.argv[3] });
+  const send = s => bridge.sendMessage('wellwrite', s);
+  // Node runs inside the app here: an error nobody caught would close WellWrite. Note it and carry on.
+  process.on('uncaughtException', e => console.error('WellWrite engine: uncaught', e && e.stack || e));
+  process.on('unhandledRejection', e => console.error('WellWrite engine: unhandled', e && e.stack || e));
+  try {
+    start({ send, onMessage: fn => listeners.push(fn) }, { files: process.argv[2], cache: process.argv[3] });
+  } catch (e) {
+    // The engine couldn't start (as when 1.33.0 couldn't load on phones): answer every request with why, and tell
+    // the page, which says so and offers the update, rather than WellWrite closing as it opens.
+    console.error('WellWrite engine: could not start', e && e.stack || e);
+    const why = String((e && e.message) || e).slice(0, 300);
+    const ascii = s => s.replace(/[\u007f-\uffff]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
+    listeners.push(raw => {
+      let m; try { m = JSON.parse(raw); } catch { return; }
+      if (typeof m.id !== 'number') return;
+      send('P' + ascii(JSON.stringify({ id: m.id, r: { ok: false, error: 'WellWrite couldn’t start: ' + why } })));
+    });
+    send('P' + ascii(JSON.stringify({ ev: 'engine:failed', args: [why] })));
+    send('Y');
+  }
 }

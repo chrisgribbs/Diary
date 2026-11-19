@@ -15,6 +15,7 @@
  *
  * Built in, with no download: the 147 classics of Christian formation already in WellWrite (src/readings/classics.json).
  */
+const { deaccent } = require('./text');   // not normalize(): the Android engine has no Unicode tables
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -38,7 +39,7 @@ function stem(w) {
 }
 /** Words worth searching on: lower case, no accents, no common little words, plain stems. */
 function tokenize(text) {
-  return String(text).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  return deaccent(text).toLowerCase()
     .split(/[^a-z]+/).filter(w => w.length > 2 && !STOP.has(w)).map(stem);
 }
 

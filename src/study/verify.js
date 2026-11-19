@@ -14,8 +14,10 @@
 const { PARTS } = require('./prompts');
 
 // Letters only, lower case, no accents, Greek final sigma made ordinary, quotes and dashes made plain.
-const flat = s => String(s).normalize('NFD').replace(/[̀-֑ͯ-ׇ]/g, '').toLowerCase()
-  .replace(/ς/g, 'σ').replace(/[‘’`´]/g, "'").replace(/[“”«»„]/g, '"').replace(/[^\p{L}\p{N}']+/gu, ' ').trim();
+// (Not normalize() or \p{L}: the Android engine has no Unicode tables; see text.js.)
+const { deaccent, NOT_WORD } = require('./text');
+const flat = s => deaccent(s).toLowerCase()
+  .replace(/ς/g, 'σ').replace(/[‘’`´]/g, "'").replace(/[“”«»„]/g, '"').replace(NOT_WORD, ' ').trim();
 
 const STOCK = ['lean into', 'journey', 'unpack', 'hold space', 'season of life', 'in this space', 'tapestry', 'delve', 'let go and let god', 'god-sized'];
 
