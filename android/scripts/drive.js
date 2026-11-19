@@ -83,6 +83,22 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
   });
   log('library:', JSON.stringify(libTry));
   check(!!libTry.download && !libTry.downloadError, 'a Bible study library pack downloads on the phone');
+  // The same from Settings → Bible study, pressing Download as a person would.
+  await page.evaluate(() => window.wellwrite.studyRemovePack('history'));
+  await page.evaluate(() => openSettings('study')); await page.waitForTimeout(3000);
+  await shot('study-settings');
+  const libText = async () => page.evaluate(() => { const b = document.querySelector('#studySettings'); return b ? b.innerText.replace(/\s+/g, ' ').slice(-900) : 'no #studySettings'; });
+  log('library section:', await libText());
+  const dl = page.locator('#studySettings button', { hasText: /^Download/ }).first();
+  log('download buttons:', await page.locator('#studySettings button', { hasText: /^Download/ }).count());
+  if (await dl.count()) {
+    await dl.scrollIntoViewIfNeeded(); await shot('study-download-before');
+    await dl.click(); await page.waitForTimeout(1500); await shot('study-download-during');
+    log('after tap:', await libText());
+    await page.waitForTimeout(25000); await shot('study-download-after');
+    log('after 25s:', await libText());
+  }
+  await page.evaluate(() => { document.querySelectorAll('dialog[open]').forEach(d => d.close()); });
   const exp = await page.evaluate(() => window.wellwrite.version());
   check(exp.platform === 'android', 'version ' + exp.version);
 
