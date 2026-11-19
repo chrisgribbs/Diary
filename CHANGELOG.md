@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.9 — Study the verse of the day
+_19 November 2026_
+
+**New**
+
+- The verse of the day has a Study button. It opens Bible study on that verse, ready to write a study or read what the commentaries say.
+
 ## 1.33.8 — Bible study settings scroll on phones
 _19 November 2026_
 

@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.9', date: '2026-11-19', title: 'Study the verse of the day',
+    new: [
+      'The verse of the day has a Study button. It opens Bible study on that verse, ready to write a study or read what the commentaries say.',
+    ],
+  },
+  {
     v: '1.33.8', date: '2026-11-19', title: 'Bible study settings scroll on phones',
     fixed: [
       'Phones: Settings → Bible study wouldn’t scroll, so the library downloads further down couldn’t be reached. Long settings sections now scroll on a phone.',

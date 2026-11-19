@@ -2176,6 +2176,7 @@ function verseCard(v, iso, where) {
     v.copyright ? el('p', { class: 'q-copy fold', title: 'Show the full copyright notice', onclick: e => e.currentTarget.classList.toggle('open') }, v.copyright) : null,
     el('div', { class: 'q-actions' },
       btn('Write about this', () => writeAboutQuote({ text: v.text, author: v.ref, source: v.translation }, iso), 'q-btn primary'),
+      btn('Study', () => studyPassage({ kind: 'ref', text: v.ref })),   // Bible study on this verse (renderer/study.js)
       btn(state.bible && state.bible.state.plan ? 'Today’s reading' : 'Reading plans', () => { state.bibleTab = 'plan'; setMode('bible'); }),
       btn('Hide today', () => { hideQuoteFor('v' + iso); refreshQuote(); }, 'q-btn subtle')));
 }

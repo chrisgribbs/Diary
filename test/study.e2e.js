@@ -276,6 +276,10 @@ function run() {
       assert.equal(await js(`return document.querySelector('.st-jrow input').checked`), false, 'nothing is ticked for you');
       await shot('s8-personal');
 
+      // The verse of the day's Study button opens Bible study on that verse.
+      await js(`const c = verseCard({ text: 'Be content with what you have.', ref: 'Hebrews 13:5', translation: 'web' }, '2026-11-19', 'top'); document.body.append(c); [...c.querySelectorAll('button')].find(b => b.textContent === 'Study').click(); setTimeout(() => c.remove(), 100);`);
+      assert.ok(await until(`study.passage && study.passage.label === 'Hebrews 13:5' && state.mode === 'bible' && state.bibleTab === 'study'`), 'the verse card opens a study on its verse');
+
       // Phone width
       win.webContents.enableDeviceEmulation({ screenPosition: 'desktop', screenSize: { width: 393, height: 852 }, viewSize: { width: 393, height: 852 }, deviceScaleFactor: 1, viewPosition: { x: 0, y: 0 }, scale: 1 });
       await wait(800);
