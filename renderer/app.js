@@ -86,7 +86,7 @@ const state = {
 
 /* ---------- sanitising ---------- */
 const ALLOWED = {
-  ALLOWED_TAGS: ['p', 'div', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'strike', 'del', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'li', 'hr', 'a', 'img', 'mark', 'sub', 'sup', 'code', 'pre', 'span'],
+  ALLOWED_TAGS: ['p', 'div', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'strike', 'del', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'li', 'hr', 'a', 'img', 'mark', 'sub', 'sup', 'code', 'pre', 'span', 'details', 'summary'],
   ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'data-ink'],   // data-ink: the pen strokes of a handwritten page (ink.js)
   ALLOW_DATA_ATTR: false,
   ADD_URI_SAFE_ATTR: ['data-ink'],   // not a link: its value is checked in the hook below

@@ -211,7 +211,7 @@ function run() {
       assert.ok(await until(`document.querySelector('.st-question')`, 15000), 'study shown');
       assert.equal(await text('.st-title'), 'The yoke that fits');
       assert.match(await text('.st-lead'), /carpenter/);
-      assert.equal(await js(`return document.querySelectorAll('.st-part').length`), 6, 'parts to explore');
+      assert.equal(await js(`return document.querySelectorAll('.st-part:not(.st-sources)').length`), 6, 'parts to explore');
       assert.match(await text('.st-q'), /What am I carrying today/);
       assert.ok(!/Do you feel tired/.test(await text('.st-question')), 'a yes/no question was rewritten');
       assert.ok(await js(`return document.querySelectorAll('.st-cite').length > 2`), 'source labels are buttons');
@@ -250,10 +250,16 @@ function run() {
       assert.ok(await until(`[...document.querySelectorAll('.st-actions button')].some(b => b.textContent === 'Write the study')`));
       await click('.st-actions button', 'Write the study');
       assert.ok(await until(`document.querySelector('.st-title') && document.querySelector('.st-title').textContent === 'An invitation to the weary' && document.querySelector('.st-question')`, 15000), 'teaching study shown');
-      assert.equal(await js(`return document.querySelectorAll('.st-part').length`), 4, 'background, words, lessons, living it');
-      assert.ok(await js(`return [...document.querySelectorAll('.st-part')].every(d => d.open)`), 'a teaching study opens out to read');
+      assert.equal(await js(`return document.querySelectorAll('.st-part:not(.st-sources)').length`), 4, 'background, words, lessons, living it');
+      assert.ok(await js(`return [...document.querySelectorAll('.st-part:not(.st-sources)')].every(d => d.open) && !document.querySelector('details.st-sources').open`), 'a teaching study opens out to read');
       assert.ok(await js(`return [...document.querySelectorAll('.st-part summary')].some(s => s.textContent === 'What the passage teaches')`));
       assert.match(await text('.st-barclay'), /Barclay’s Daily Study Bible on Matthew 11/);
+      // Sources fold away, in the study and in the copy saved to the journal (printed open).
+      assert.match(await text('details.st-sources summary'), /^Sources \(\d+\)$/);
+      const savedHtml = await js(`return studyHtml(study.current, '')`);
+      assert.match(savedHtml, /<details><summary>Sources \(\d+\)<\/summary><ol>/);
+      assert.ok(!/Public domain\. Public domain\./.test(savedHtml), 'the credit says public domain once');
+      assert.ok(await js(`return clean('<details><summary>Sources (2)</summary><ol><li>x</li></ol></details>').includes('<summary>')`), 'journal entries keep a folded section');
       await shot('s7b-teaching');
       await js(`[...document.querySelectorAll('.st-part summary')].find(s => s.textContent === 'What the passage teaches').scrollIntoView();`);
       await shot('s7c-teaching-lessons');

@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.10 — Shorter study pages
+_20 November 2026_
+
+**Improved**
+
+- Bible study: the sources fold away under “Sources” so a study ends with the study. Tap to see them. Studies saved to your journal fold their sources the same way, and print or export with them open. Each credit now says “Public domain” once, not twice.
+
 ## 1.33.9 — Study the verse of the day
 _19 November 2026_
 

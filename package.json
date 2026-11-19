@@ -1,7 +1,7 @@
 {
   "name": "wellwrite",
   "productName": "WellWrite",
-  "version": "1.33.9",
+  "version": "1.33.10",
   "description": "A private, encrypted desktop journal",
   "main": "main.js",
   "author": "Chris Gribble",

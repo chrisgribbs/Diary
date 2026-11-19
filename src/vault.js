@@ -866,7 +866,9 @@ class Vault {
       const d = new Date(e.date + 'T00:00:00');
       const when = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + (e.time ? ', ' + e.time : '');
       const cat = cats.get(e.category);
-      const html = sanitize(e.html).replace(/<a href="wellwrite:entry\/[^"]*"[^>]*>([\s\S]*?)<\/a>/g, '<span class="x">$1</span>');
+      const html = sanitize(e.html).replace(/<a href="wellwrite:entry\/[^"]*"[^>]*>([\s\S]*?)<\/a>/g, '<span class="x">$1</span>')
+        // A folded section (a study's sources) is printed open.
+        .replace(/<details[^>]*>/g, '<div>').replace(/<\/details>/g, '</div>').replace(/<summary[^>]*>/g, '<h3>').replace(/<\/summary>/g, '</h3>');
       return `<article><p class="d">${esc(when)}${cat ? ` <span class="c" style="color:${cat.color}">${esc(cat.name)}</span>` : ''}</p>${e.title ? `<h2>${esc(e.title)}</h2>` : ''}` +
         `${e.tags.length ? `<p class="t">${e.tags.map(t => '#' + esc(t)).join(' ')}</p>` : ''}<div>${html}</div></article>`;
     }).join('\n');

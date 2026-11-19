@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.10', date: '2026-11-20', title: 'Shorter study pages',
+    improved: [
+      'Bible study: the sources fold away under “Sources” so a study ends with the study. Tap to see them. Studies saved to your journal fold their sources the same way, and print or export with them open. Each credit now says “Public domain” once, not twice.',
+    ],
+  },
+  {
     v: '1.33.9', date: '2026-11-19', title: 'Study the verse of the day',
     new: [
       'The verse of the day has a Study button. It opens Bible study on that verse, ready to write a study or read what the commentaries say.',

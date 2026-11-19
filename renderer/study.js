@@ -318,7 +318,8 @@ function sourceRow(src, n, { bookmarks } = {}) {
       el('p', { class: 'q-copy' }, src.credit || '', src.licence === 'public-domain' ? ' · Public domain' : '', src.url ? ' · ' : '', src.url ? el('button', { type: 'button', class: 'btn-link small', onclick: () => api.openExternal(src.url) }, 'Source') : null)));
 }
 function drawStudySources(list, _show) {
-  const box = el('section', { class: 'st-sources' }, el('h3', {}, 'Sources'));
+  // Folded away until wanted: the list is long and the study should end with the study.
+  const box = el('details', { class: 'st-sources st-part' }, el('summary', {}, list && list.length ? `Sources (${list.length})` : 'Sources'));
   if (!list || !list.length) { box.append(el('p', { class: 'st-small' }, 'No commentary was found for this passage, so the study keeps to the text itself.')); return box; }
   api.studyBookmarks().then(bm => { const set = new Set(bm.map(b => b.id)); box.querySelectorAll('.st-star').forEach((s, i) => { if (set.has(list[i].id)) s.classList.add('on'); }); }).catch(() => {});
   box.append(...list.map((s, i) => sourceRow(s, i + 1)));
@@ -367,7 +368,8 @@ function studyHtml(c, reflection) {
     `<p><small>${esc(modeLabel)} · ${esc(c.label)}</small></p>`,
     `<blockquote>${esc(c.passageText).replace(/\n/g, '<br>')}<br>— ${esc(c.label)} (World English Bible)</blockquote>`,
     ...parts.sections.filter(s => s.heading).map(s => `<h3>${esc(s.heading)}</h3>${mdHtml(s.text)}`),
-    c.sources.length ? `<h3>Sources</h3><ol>${c.sources.map(s => `<li>${esc(s.author)}, <em>${esc(s.work)}</em>${s.year ? ` (${s.year})` : ''}${s.section ? `, ${esc(s.section)}` : ''}. ${esc(s.credit || '')}${s.licence === 'public-domain' ? ' Public domain.' : ''}</li>`).join('')}</ol>` : '',
+    // Sources fold away in the entry too (tap "Sources" to open them).
+    c.sources.length ? `<details><summary>Sources (${c.sources.length})</summary><ol>${c.sources.map(s => { const credit = String(s.credit || ''); return `<li>${esc(s.author)}, <em>${esc(s.work)}</em>${s.year ? ` (${s.year})` : ''}${s.section ? `, ${esc(s.section)}` : ''}. ${esc(credit)}${s.licence === 'public-domain' && !/public domain\.?\s*$/i.test(credit) ? ' Public domain.' : ''}</li>`; }).join('')}</ol></details>` : '',
     `<p><small>Written with AI (${esc(c.model)}) from these sources, ${esc(new Date(c.at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }))}.</small></p>`,
   ].join('');
 }
