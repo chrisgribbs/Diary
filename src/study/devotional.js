@@ -38,7 +38,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
   const embedder = () => {
     const e = lib.embedModel();
     if (!e || !or.hasKey()) return null;
-    return async text => (await or.embed([text], { model: e.model, dimensions: e.dims }))[0];
+    return async text => (await or.embed([text], { model: e.model }))[0];   // same model and size as the packs were built with
   };
 
   // ---------- key, model, spending ----------
