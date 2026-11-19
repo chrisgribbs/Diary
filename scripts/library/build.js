@@ -46,15 +46,27 @@ async function embedder() {
     for (const s of CONF.sources.filter(x => x.pack === pack.id)) {
       const parser = require(`./parsers/${s.parser}`);
       let sections = [];
-      for (const f of s.files) {
+      const seen = new Set();   // parsers marked dedupe: the same text in another scan of the same volume is skipped
+      const files = s.files.flatMap(f => f.endsWith('/*') ? fs.readdirSync(path.join(RAW, f.slice(0, -2))).filter(n => n.endsWith('.txt') && !(s.skip || []).some(k => n.includes(k))).sort().map(n => `${f.slice(0, -2)}/${n}`) : [f]);
+      for (const f of files) {
         const file = path.join(RAW, f);
         if (!fs.existsSync(file)) { lines.push(`- ${s.id}: missing ${f}`); continue; }
-        try { sections.push(...parser(fs.readFileSync(file, 'utf8'), { file: f, source: s })); }
+        try {
+          for (const x of parser(parser.binary ? fs.readFileSync(file) : fs.readFileSync(file, 'utf8'), { file: f, source: s })) {
+            if (parser.dedupe) { if (seen.has(x.key)) continue; seen.add(x.key); }
+            delete x.key;
+            sections.push(x);
+          }
+        }
         catch (e) { lines.push(`- ${s.id}: ${f} failed: ${e.message}`); }
       }
       sources[s.id] = { author: s.author, work: s.work, year: s.year, licence: s.licence, credit: s.credit, url: s.url, caveat: s.caveat || '' };
       const tagged = sections.filter(x => x.refs && x.refs.length).length;
-      const parts = chunk(sections.map(x => ({ ...x, src: s.id, cat: x.cat || s.category })));
+      let parts = chunk(sections.map((x, n) => ({ ...x, src: s.id, cat: x.cat || s.category, _n: n })));
+      // Chapters tagged from their heading (Edersheim): only a chapter's first passage keeps the chapter's verses,
+      // so one long chapter doesn't fill the list for a passage it covers in a paragraph.
+      if (s.refsFromHead) { const seenN = new Set(); parts = parts.map(p => { if (seenN.has(p._n)) return { ...p, refs: [] }; seenN.add(p._n); return p; }); }
+      parts = parts.map(({ _n, ...p }) => p);
       passages.push(...parts);
       lines.push(`- ${s.author}, *${s.work}*: ${sections.length} sections (${tagged} tagged with verses), ${parts.length} passages`);
     }

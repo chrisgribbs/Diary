@@ -27,7 +27,16 @@ async function retrieve(lib, embed, q, { budget } = {}) {
   // Keyword matches count only when they share several telling words with the passage and are near the best match.
   const allWords = lib.byWords([q.passageText, q.topic, q.question].filter(Boolean).join(' '), 80);
   const bestWords = allWords.length ? allWords[0].score : 0;
-  const words = allWords.filter(h => h.hits >= 2 && h.score >= bestWords * 0.45);
+  // When the verses have commentary of their own, keyword matches add more noise than light: then only the spiritual
+  // classics come in that way (for the modes that want them). When the verses have little, stricter matches fill in.
+  const onVerses = byRef.filter(h => h.score >= 0.3).length;
+  const contemplativeMode = mode.wants.includes('contemplative');
+  let classics = 0, others = 0;
+  const words = allWords.filter(h => {
+    if (h.score < bestWords * 0.45) return false;
+    if (h.cat === 'contemplative') return (contemplativeMode || onVerses < 3) && h.hits >= 2 && classics++ < (contemplativeMode ? 3 : 2);
+    return onVerses < 3 && h.hits >= 6 && others++ < 3;
+  });
   let meaning = [];
   if (embed) {
     try {

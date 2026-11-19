@@ -1,10 +1,302 @@
 {
   "version": 1,
   "packs": [
-    { "id": "devotional", "name": "Devotional and contemplative", "about": "F. B. Meyer’s daily readings, and the seven classics: à Kempis, Brother Lawrence, Teresa, John of the Cross, Julian, Augustine and The Cloud of Unknowing." },
-    { "id": "commentary", "name": "Commentaries", "about": "Maclaren’s Expositions, The Expositor’s Bible and Hastings’ Great Texts of the Bible." },
-    { "id": "greek", "name": "Greek word studies", "about": "Vincent’s Word Studies and Robertson’s Word Pictures (Matthew to Paul’s letters)." },
-    { "id": "history", "name": "History and background", "about": "Edersheim’s Life and Times of Jesus the Messiah." }
+    {
+      "id": "devotional",
+      "name": "Devotional and contemplative",
+      "about": "F. B. Meyer’s daily readings, with seven classics of prayer: à Kempis, Brother Lawrence, Teresa, John of the Cross, Julian, Augustine and The Cloud of Unknowing."
+    },
+    {
+      "id": "commentary",
+      "name": "Commentaries",
+      "about": "Hastings’ Great Texts of the Bible: expositions full of illustration."
+    },
+    {
+      "id": "greek",
+      "name": "Greek word studies",
+      "about": "Robertson’s Word Pictures (Matthew to Paul’s letters) and Vincent’s Word Studies."
+    },
+    {
+      "id": "history",
+      "name": "History and background",
+      "about": "Edersheim’s Life and Times of Jesus the Messiah."
+    }
   ],
-  "sources": []
+  "sources": [
+    {
+      "id": "robertson",
+      "pack": "greek",
+      "category": "greek",
+      "parser": "sword-commentary",
+      "files": [
+        "robertson/RWP.zip"
+      ],
+      "books": [
+        39,
+        40,
+        41,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56
+      ],
+      "author": "A. T. Robertson",
+      "work": "Word Pictures in the New Testament",
+      "year": 1930,
+      "licence": "public-domain",
+      "credit": "A. T. Robertson, Word Pictures in the New Testament, vols. 1–4 (Richard R. Smith, 1930–31). Public domain. Text from the CrossWire SWORD module RWP. Volumes 5–6 (John, Hebrews, the General Epistles, Revelation) are left out while still in US copyright.",
+      "url": "https://crosswire.org/sword/modules/ModInfo.jsp?modName=RWP",
+      "caveat": "Greek is printed without accents and occasionally drops a final letter; explain the word rather than copying the Greek exactly. Robertson's grammar is solid; some textual and historical judgements are a century old."
+    },
+    {
+      "id": "vincent",
+      "pack": "greek",
+      "category": "greek",
+      "parser": "verse-notes-ocr",
+      "files": [
+        "vincent/wordstudiesinnew01vinc.txt",
+        "vincent/wordstudiesinnew02vinc.txt",
+        "vincent/wordstudiesinnew03vinc.txt",
+        "vincent/wordstudiesinnew04vinc.txt"
+      ],
+      "volumes": {
+        "vincent/wordstudiesinnew01vinc.txt": [
+          39,
+          40,
+          41,
+          43,
+          59,
+          60,
+          58,
+          64
+        ],
+        "vincent/wordstudiesinnew02vinc.txt": [
+          42,
+          61,
+          62,
+          63,
+          65
+        ],
+        "vincent/wordstudiesinnew03vinc.txt": [
+          44,
+          45,
+          46,
+          48,
+          49,
+          50,
+          56
+        ],
+        "vincent/wordstudiesinnew04vinc.txt": [
+          51,
+          52,
+          47,
+          53,
+          54,
+          55,
+          57
+        ]
+      },
+      "author": "Marvin R. Vincent",
+      "work": "Word Studies in the New Testament",
+      "year": 1887,
+      "licence": "public-domain",
+      "credit": "Marvin R. Vincent, Word Studies in the New Testament, 4 vols. (Charles Scribner’s Sons, 1887–1900; this printing 1900–01). Public domain. Scanned text from archive.org (Princeton Theological Seminary Library).",
+      "url": "https://archive.org/details/wordstudiesinnew01vinc",
+      "caveat": "Scanned text: the Greek words in it are often garbled by the scan, so never quote Greek from Vincent; use his English explanations. A few notes may be tagged to a neighbouring verse."
+    },
+    {
+      "id": "meyer",
+      "pack": "devotional",
+      "category": "devotional",
+      "parser": "meyer",
+      "files": [
+        "meyer/throughbibledayb0000revf.txt",
+        "meyer/throughbibledayb0000unse.txt",
+        "meyer/throughbibledayb0004unse.txt",
+        "meyer/throughbibledayb0000revf_l8b4.txt",
+        "meyer/throughbibledayb0006unse.txt",
+        "meyer/throughbibledayb0007unse.txt"
+      ],
+      "author": "F. B. Meyer",
+      "work": "Through the Bible Day by Day",
+      "year": 1914,
+      "licence": "public-domain",
+      "credit": "F. B. Meyer, Through the Bible Day by Day, vols. I, II and IV–VII (American Sunday-School Union, 1914–18). Public domain. Scanned text from archive.org.",
+      "url": "https://archive.org/details/throughbibledayb0000revf_l8b4",
+      "caveat": "Written for daily devotion in 1914–18; warm and direct, and of its time on some questions."
+    },
+    {
+      "id": "hastings",
+      "pack": "commentary",
+      "category": "exposition",
+      "parser": "hastings",
+      "files": [
+        "hastings/*"
+      ],
+      "skip": [
+        "children",
+        "q4s6"
+      ],
+      "author": "James Hastings (ed.)",
+      "work": "The Great Texts of the Bible",
+      "year": 1910,
+      "licence": "public-domain",
+      "credit": "James Hastings (ed.), The Great Texts of the Bible, 20 vols. (T. & T. Clark; Charles Scribner’s Sons, 1910–15). Public domain. Scanned text from archive.org.",
+      "url": "https://archive.org/search?query=great+texts+of+the+bible+hastings",
+      "caveat": "Edwardian preaching, rich in illustration and quotation from other writers; some views of science, society and other faiths are of their time. Quotations inside it are from the writers Hastings cites, so name them when you use them."
+    },
+    {
+      "id": "kempis",
+      "pack": "devotional",
+      "category": "contemplative",
+      "parser": "chapters",
+      "files": [
+        "kempis/imitationofchris00benhrich.txt"
+      ],
+      "part": "^BOOK\\s+[IVX]+\\.?$",
+      "author": "Thomas à Kempis",
+      "work": "The Imitation of Christ",
+      "year": 1886,
+      "licence": "public-domain",
+      "credit": "Thomas à Kempis, The Imitation of Christ, translated by William Benham (1886). Public domain. Scanned text from archive.org.",
+      "url": "https://archive.org/details/imitationofchris00benhrich",
+      "caveat": ""
+    },
+    {
+      "id": "lawrence",
+      "pack": "devotional",
+      "category": "contemplative",
+      "parser": "chapters",
+      "files": [
+        "lawrence/brotherlawrencep00lawr.txt"
+      ],
+      "heading": "^\\s*((?:FIRST|SECOND|THIRD|FOURTH|FIFTH|SIXTH|SEVENTH|EIGHTH|NINTH|TENTH|ELEVENTH|TWELFTH|THIRTEENTH|FOURTEENTH|FIFTEENTH|SIXTEENTH)\\s+(?:CONVERSATION|LETTER))\\s*$",
+      "dropLines": "^\\s*\\W*\\s*\\d*\\s*(CONVERSATIONS|LETTERS)\\s*\\S{0,3}\\s*$",
+      "author": "Brother Lawrence",
+      "work": "The Practice of the Presence of God",
+      "year": 1895,
+      "licence": "public-domain",
+      "credit": "Brother Lawrence, The Practice of the Presence of God: conversations and letters (Fleming H. Revell, 1895). Public domain. Scanned text from archive.org.",
+      "url": "https://archive.org/details/brotherlawrencep00lawr",
+      "caveat": ""
+    },
+    {
+      "id": "teresa",
+      "pack": "devotional",
+      "category": "contemplative",
+      "parser": "chapters",
+      "files": [
+        "teresa/interiorcastleor00tere.txt"
+      ],
+      "part": "^THE (FIRST|SECOND|THIRD|FOURTH|FIFTH|SIXTH|SEVENTH) MANSIONS?$",
+      "author": "Teresa of Ávila",
+      "work": "The Interior Castle",
+      "year": 1921,
+      "licence": "public-domain",
+      "credit": "Teresa of Ávila, The Interior Castle, or The Mansions, translated by the Benedictines of Stanbrook, revised by Benedict Zimmerman, 3rd ed. (Thomas Baker, 1921). Public domain in the US. Scanned text from archive.org.",
+      "url": "https://archive.org/details/interiorcastleor00tere",
+      "caveat": "The scan lost the Second Mansions."
+    },
+    {
+      "id": "johncross",
+      "pack": "devotional",
+      "category": "contemplative",
+      "parser": "chapters",
+      "files": [
+        "johncross/darknightofsoulc00john.txt"
+      ],
+      "restartParts": [
+        "Book I",
+        "Book II"
+      ],
+      "author": "John of the Cross",
+      "work": "The Dark Night of the Soul",
+      "year": 1916,
+      "licence": "public-domain",
+      "credit": "John of the Cross, The Dark Night of the Soul, translated by David Lewis, 4th ed. revised by Benedict Zimmerman (Thomas Baker, 1916). Public domain in the US. Scanned text from archive.org.",
+      "url": "https://archive.org/details/darknightofsoulc00john",
+      "caveat": ""
+    },
+    {
+      "id": "julian",
+      "pack": "devotional",
+      "category": "contemplative",
+      "parser": "chapters",
+      "files": [
+        "julian/RevelationsOfDivineLove.txt"
+      ],
+      "author": "Julian of Norwich",
+      "work": "Revelations of Divine Love",
+      "year": 1901,
+      "licence": "public-domain",
+      "credit": "Julian of Norwich, Revelations of Divine Love, edited by Grace Warrack (Methuen, 1901). Public domain. Scanned text from archive.org.",
+      "url": "https://archive.org/details/RevelationsOfDivineLove",
+      "caveat": ""
+    },
+    {
+      "id": "augustine",
+      "pack": "devotional",
+      "category": "contemplative",
+      "parser": "chapters",
+      "files": [
+        "augustine/confessionsofsau00auguuoft.txt"
+      ],
+      "single": "Confessions",
+      "startAt": "^\\s*BOOK I\\.\\s*$",
+      "author": "Augustine of Hippo",
+      "work": "Confessions",
+      "year": 1838,
+      "licence": "public-domain",
+      "credit": "Augustine, Confessions, translated by E. B. Pusey (Oxford, 1838). Public domain. Scanned text from archive.org.",
+      "url": "https://archive.org/details/confessionsofsau00auguuoft",
+      "caveat": ""
+    },
+    {
+      "id": "cloud",
+      "pack": "devotional",
+      "category": "contemplative",
+      "parser": "chapters",
+      "files": [
+        "cloud/bookofcontemplat00unde.txt"
+      ],
+      "heading": "^\\s*([A-Z]+(?: AND [A-Z]+)?) CHAPTER\\s*$",
+      "labelSuffix": " chapter",
+      "author": "The Cloud of Unknowing",
+      "work": "The Cloud of Unknowing",
+      "year": 1922,
+      "licence": "public-domain",
+      "credit": "The Cloud of Unknowing, edited by Evelyn Underhill, 2nd ed. (John M. Watkins, 1922). Public domain in the US. Scanned text from archive.org.",
+      "url": "https://archive.org/details/bookofcontemplat00unde",
+      "caveat": "Middle English lightly modernised by Underhill; some words are archaic."
+    },
+    {
+      "id": "edersheim",
+      "pack": "history",
+      "category": "history",
+      "parser": "chapters",
+      "files": [
+        "edersheim/lifetimesofjesus01ederuoft.txt",
+        "edersheim/lifetimesofjesus02ederuoft.txt"
+      ],
+      "part": "^BOOK\\s+[IVXLT]+\\.?",
+      "refsFromHead": true,
+      "author": "Alfred Edersheim",
+      "work": "The Life and Times of Jesus the Messiah",
+      "year": 1883,
+      "licence": "public-domain",
+      "credit": "Alfred Edersheim, The Life and Times of Jesus the Messiah, 2 vols., 8th ed. (Longmans, Green, 1899; first published 1883). Public domain. Scanned text from archive.org (University of Toronto).",
+      "url": "https://archive.org/details/lifetimesofjesus01ederuoft",
+      "caveat": "Written in 1883. Edersheim often reads later rabbinic writings (the Talmud and Midrash, compiled centuries after Jesus) back into first-century practice, and some of his judgements about Judaism reflect his time; say so when drawing on him for Jewish custom."
+    }
+  ]
 }

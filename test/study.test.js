@@ -35,6 +35,32 @@ assert.ok(chunks.length >= 3, 'a long section is split');
 for (const c of chunks.slice(0, -1)) assert.ok(c.text.length / 4 <= 820, 'chunks stay near 800 tokens');
 assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('… ') || c.text.startsWith('Paragraph') : true));
 
+// ---------- library parsers, on samples shaped like the scans ----------
+{
+  const meyer = require('../scripts/library/parsers/meyer');
+  const m = meyer(`38. Woe or Welcome.\n\n\nMatthew 11: 20-30. The voice of upbraiding, vs. 20-24.\nThe Judge weeps as he pronounces the doom of those\nwho reject him. They would have crowned him king,\nbut refused to repent. See John 6:15. These cities did\nnot crucify him.\n\n34 THROUGH THE BIBLE DAY BY DAY\n\nThe voice of pleading mercy, vs. 28-30. The invitation is to commit and submit.\n\n\n39. The Right Use of the Sabbath.\n\n\nMatthew 12: 1-14. The Pharisees had introduced a large number of minute and absurd restrictions on Sabbath observance, so our Lord set himself to recover the day.`);
+  assert.equal(m.length, 2);
+  assert.deepEqual(m[0].refs, [[39, 11, 20, 11, 30]]);
+  assert.ok(m[0].section.startsWith('Woe or Welcome'));
+  assert.ok(!m[0].text.includes('THROUGH THE BIBLE'), 'page heads are dropped');
+  const hastings = require('../scripts/library/parsers/hastings');
+  const body = 'THERE were several reasons which made this gracious invitation specially appropriate to the age. '.repeat(12);
+  const h = hastings(`LITERATURE.\nSmith (J.), Sermons, 12.\n\n\nTHE GREAT INVITATION.\n\n\nCome unto me, all ye that labour and are heavy laden, and I will give\nyou rest.—Matt. xi. 28.\n\n\n${body}\n\nLITERATURE.\nJones (A.), More Sermons.\n\n\nSpiritual  Wrestling.\n\nAnd  Jacob  was  left  alone ;  and  there  wrestled  a  man  with  him  until  the\nbreaking  of  the  day.— Gen.  xxxii.  24.\n\n${body}`);
+  assert.equal(h.length, 2, 'both heading styles are found');
+  assert.deepEqual(h[0].refs, [[39, 11, 28, 11, 28]]);
+  assert.deepEqual(h[1].refs, [[0, 32, 24, 32, 24]]);
+  assert.ok(!h[0].text.includes('Jones'), 'the next reading list is not part of the text');
+  const chapters = require('../scripts/library/parsers/chapters');
+  const para = 'The soul that would find God must first find itself, and walk in quietness. '.repeat(25);
+  const c = chapters(`CONTENTS\nChapter I. Of the soul . . . . 3\nChapter II. Of prayer . . . . 9\n\nBOOK I.\n\nCHAPTER I.\n\nOf the soul\n\n${para}\n\nCHAPTER II.\n\nOf prayer\n\n${para}\n\nBOOK II.\n\nCHAPTER I.\n\nOf rest\n\n${para}`, { source: { part: '^BOOK\\s+[IVX]+\\.?$' } });
+  assert.deepEqual(c.map(x => x.section), ['Book I, Chapter I: Of the soul', 'Book I, Chapter II: Of prayer', 'Book II, Chapter I: Of rest']);
+  const vincent = require('../scripts/library/parsers/verse-notes-ocr');
+  const v = vincent(`VOLUME I.\n\nTHE GOSPEL ACCORDING TO MATTHEW.\n\nCHAPTER XI.\n\n2. Two of his disciples (6vo). But the correct reading is by. He sent by his disciples.\n\n3. Thou. Emphatic. Art thou the Coming One, a current phrase for the Messiah.\n\n64 WORD STUDIES IN THE NEW TESTAMENT. [Cu. XI.\n\n5. The lame walk. Tyndale, the halt go; the blind receive their sight.`, { file: 'v1', source: { volumes: { v1: [39] } } });
+  assert.equal(v.length, 1);
+  assert.deepEqual(v[0].refs, [[39, 11, 2, 11, 5]]);
+  assert.ok(!v[0].text.includes('WORD STUDIES'), 'running heads are dropped');
+}
+
 (async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wellwrite-study-'));
   const libDir = path.join(tmp, 'device', 'library');

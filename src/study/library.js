@@ -146,7 +146,10 @@ class Library {
         if (best > 0) out.push({ pack: p.id, i, score: best, src: row[0], cat: row[1] });
       });
     }
-    return out.sort((a, b) => b.score - a.score).slice(0, limit);
+    // A long text cut into many passages mustn't crowd out the others: at most 8 from any one work.
+    out.sort((a, b) => b.score - a.score || a.i - b.i);
+    const per = new Map();
+    return out.filter(h => { const k = h.pack + h.src; const n = per.get(k) || 0; per.set(k, n + 1); return n < 8; }).slice(0, limit);
   }
 
   /** Passages sharing the most telling words with the query (each word weighted by how rare it is). */

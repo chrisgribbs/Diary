@@ -18,6 +18,7 @@ function stripGutenberg(t) {
 /** OCR clean-up for archive.org text: page numbers, running heads, broken hyphenation, stray marks. */
 function cleanOcr(t) {
   return String(t).replace(/\r/g, '')
+    .replace(/^.*Digitized by (?:Google|the Internet Archive|tine Internet|Microsoft).*$/gim, '')
     .replace(/^\s*\d{1,4}\s*$/gm, '')                       // page numbers on their own line
     .replace(/^[A-Z .,'’;:-]{4,60}\s+\d{1,4}\s*$/gm, '')    // running heads with page numbers
     .replace(/^\s*\d{1,4}\s+[A-Z .,'’;:-]{4,60}$/gm, '')
@@ -69,3 +70,38 @@ function refsIn(text, book = null) {
 }
 
 module.exports = { stripGutenberg, cleanOcr, unwrap, sectionsByHeadings, refsIn, tidy };
+
+/** Files in a .zip (stored or deflated), as { name: Buffer }. Enough for CrossWire modules; no library needed. */
+function unzip(buf) {
+  const zlib = require('zlib');
+  const out = {};
+  // The central directory lists every file with its sizes (local headers may leave them out).
+  const end = buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06]));
+  if (end < 0) throw new Error('not a zip file');
+  const count = buf.readUInt16LE(end + 10);
+  let p = buf.readUInt32LE(end + 16);
+  for (let i = 0; i < count; i++) {
+    const method = buf.readUInt16LE(p + 10), csize = buf.readUInt32LE(p + 20), nlen = buf.readUInt16LE(p + 28), xlen = buf.readUInt16LE(p + 30), clen = buf.readUInt16LE(p + 32), local = buf.readUInt32LE(p + 42);
+    const name = buf.subarray(p + 46, p + 46 + nlen).toString('utf8');
+    const lstart = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
+    const data = buf.subarray(lstart, lstart + csize);
+    if (!name.endsWith('/')) out[name] = method === 0 ? Buffer.from(data) : zlib.inflateRawSync(data);
+    p += 46 + nlen + xlen + clen;
+  }
+  return out;
+}
+module.exports.unzip = unzip;
+
+/** OSIS/ThML markup to plain text: Greek kept, catch-words in bold, notes and tags dropped. */
+function osisText(s) {
+  return String(s)
+    .replace(/<note\b[\s\S]*?<\/note>/g, '')
+    .replace(/<catchWord>([\s\S]*?)<\/catchWord>/g, '**$1**')
+    .replace(/<div[^>]*type="paragraph"[^>]*\/>/g, '\n\n')
+    .replace(/<lb\s*\/?>/g, '\n')
+    .replace(/<title>([\s\S]*?)<\/title>/g, '\n\n$1\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+module.exports.osisText = osisText;
