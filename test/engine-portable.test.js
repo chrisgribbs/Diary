@@ -13,7 +13,7 @@ walk(path.join(ROOT, 'src')); files.push(path.join(ROOT, 'android', 'node', 'mai
 const ALLOWED = [/String\(password\)\.normalize\('NFKC'\)/];
 const problems = [];
 for (const f of files) {
-  fs.readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+  fs.readFileSync(f, 'utf8').split(/\r?\n/).forEach((line, i) => {   // (Windows checks out files with CRLF)
     const code = line.replace(/\/\*.*?\*\//g, '').replace(/\/\/.*$/, '').replace(/^\s*\*.*$/, '');   // not comments
     if (ALLOWED.some(r => r.test(code))) return;
     if (/\\[pP]\{/.test(code)) problems.push(`${path.relative(ROOT, f)}:${i + 1}  \\p{…} in a regular expression (won't load on Android)`);
