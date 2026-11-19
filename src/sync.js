@@ -15,6 +15,8 @@
  *  - The first time a device syncs it has no history, so for an entry on both sides the newer one wins.
  *  - Your quotes sync too ("quotes"): your own in full; for the built-in collections (on every device already) just
  *    your favourites, edits and deletions. The most recent change wins; a device's first sync merges instead.
+ *  - Bible study bookmarks and your prayer list sync too ("study"), merged item by item, so something added on each
+ *    device is kept and a removal isn't undone. Your study history stays on each device (saved studies are entries).
  *  - Settings and week pictures stay per device.
  */
 const fs = require('fs');
@@ -25,6 +27,7 @@ const { ID_RE, sameEntry, _internal: { seal, open, wrapDataKey, unwrapDataKey } 
 const KEY_FILE = 'sync-key';
 const CATS = 'categories';
 const QUOTES = 'quotes';
+const STUDY = 'study';      // Bible study bookmarks and prayer list (merged item by item)
 const GONE = '§deleted';
 const QUIET_MS = 4000;              // after you stop typing
 const EVERY_MS = 3 * 60 * 1000;     // and every few minutes
@@ -155,7 +158,13 @@ class Sync {
       this._status();
       let result = null;
       try {
-        do { this.again = false; result = await this._once(); } while (this.again && this.vault.isUnlocked());
+        // Another pass can follow straight on; what each pass changed is added up, so none of it goes unannounced.
+        do {
+          this.again = false;
+          const r = await this._once();
+          if (!result || !r) result = result || r;
+          else for (const k of Object.keys(r)) result[k] = Array.isArray(r[k]) ? [...new Set([...result[k], ...r[k]])] : typeof r[k] === 'boolean' ? result[k] || r[k] : (result[k] || 0) + r[k];
+        } while (this.again && this.vault.isUnlocked());
         this.last = { at: new Date().toISOString(), error: '', code: '' };
         if (this.st) { this.st.last = this.last.at; this._write(); }
       } catch (e) {
@@ -164,7 +173,7 @@ class Sync {
         this.running = null;
         this._status();
       }
-      if (result && (result.changed.length || result.copies.length || result.categories || result.quotes)) this.send('sync:changed', result);
+      if (result && (result.changed.length || result.copies.length || result.categories || result.quotes || result.study)) this.send('sync:changed', result);
       return result;
     })();
     return this.running;
@@ -175,7 +184,7 @@ class Sync {
     const st = this.st, vault = this.vault, drive = this.drive;
     if (!st || !st.on || !vault.isUnlocked()) return null;
     const key = this._key();
-    const out = { changed: [], copies: [], removed: [], categories: false, quotes: false, sent: 0, tidied: 0 };
+    const out = { changed: [], copies: [], removed: [], categories: false, quotes: false, study: false, sent: 0, tidied: 0 };
     const save = () => { if (this.vault.isUnlocked() && this.st === st) this._write(); };
     try {
       // Copies kept "(from another device)" that say exactly the same as another entry: tidied away (and so, below,
@@ -208,6 +217,7 @@ class Sync {
         if (!payload) { try { payload = await readPayload(file); } catch { continue; } }   // not ours, or damaged: leave it
         if (name === CATS) this._applyCategories(payload, file, out);
         else if (name === QUOTES) this._applyQuotes(payload, file, out);
+        else if (name === STUDY) this._applyStudy(payload, file, out);
         else if (name.startsWith('e-') && ID_RE.test(name.slice(2)) && payload.id === name.slice(2)) this._applyEntry(name, payload, file, out);
         save();
       }
@@ -241,6 +251,14 @@ class Sync {
       if (q.updated && (!st.items[QUOTES] || st.items[QUOTES].u !== q.updated)) {
         await this._put(QUOTES, q, out);
         st.items[QUOTES].u = q.updated;
+        save();
+      }
+      let sy = vault.studyForSync();
+      // Bookmarks or prayers from before they synced: send them once (merged with anything already on Drive).
+      if (!sy.updated && (sy.bookmarks.length || sy.prayers.length) && !byName.has(STUDY)) { vault.setStudy({}); vault._writeMeta({ studySynced: new Date().toISOString() }); sy = vault.studyForSync(); }
+      if (sy.updated && (!st.items[STUDY] || st.items[STUDY].u !== sy.updated)) {
+        await this._put(STUDY, sy, out);
+        st.items[STUDY].u = sy.updated;
         save();
       }
       return out;
@@ -307,6 +325,16 @@ class Sync {
     const theirs = String(p.updated || '');
     if (theirs > mine && Array.isArray(p.categories)) { vault.setCategories(p.categories, theirs); out.categories = true; }
     st.items[CATS] = { f: file.id, r: file.version, u: theirs >= mine ? theirs : (st.items[CATS] ? st.items[CATS].u : '') };
+  }
+
+  _applyStudy(p, file, out) {
+    const st = this.st, vault = this.vault;
+    const before = vault.studyForSync();
+    vault.applySyncedStudy(p);
+    const after = vault.studyForSync();
+    out.study = JSON.stringify([before.bookmarks, before.prayers]) !== JSON.stringify([after.bookmarks, after.prayers]);
+    // If the merge added anything of ours, our "updated" moved on and step 2 sends it back.
+    st.items[STUDY] = { f: file.id, r: file.version, u: after.updated === String(p.updated || '') ? after.updated : (st.items[STUDY] ? st.items[STUDY].u : '') };
   }
 
   _applyQuotes(p, file, out) {

@@ -269,15 +269,71 @@ class Vault {
       thread: (Array.isArray(h.thread) ? h.thread : []).slice(-30).map(t => ({ role: t.role === 'assistant' ? 'assistant' : 'user', content: str(t.content, 8000) })),
       topic: str(h.topic, 300), usage: { cost: +(h.usage && h.usage.cost) || 0 },
     }));
-    const bookmarks = (Array.isArray(s.bookmarks) ? s.bookmarks : []).slice(0, 500).map(b => ({ id: str(b.id, 40), author: str(b.author, 120), work: str(b.work, 200), section: str(b.section, 200), text: str(b.text, 6000), at: str(b.at, 30), credit: str(b.credit, 300) })).filter(b => b.id);
-    const prayers = (Array.isArray(s.prayers) ? s.prayers : []).slice(0, 500).map(p => ({ id: str(p.id, 40), text: str(p.text, 1000), note: str(p.note, 2000), at: str(p.at, 30), done: str(p.done, 30) })).filter(p => p.id && p.text.trim());
-    return { history, bookmarks, prayers };
+    const uniq = list => { const seen = new Set(); return list.filter(x => !seen.has(x.id) && seen.add(x.id)); };
+    // u: when the item last changed (for sync, which merges item by item).
+    const bookmarks = uniq((Array.isArray(s.bookmarks) ? s.bookmarks : []).slice(0, 500).map(b => ({ id: str(b.id, 40), author: str(b.author, 120), work: str(b.work, 200), section: str(b.section, 200), text: str(b.text, 6000), at: str(b.at, 30), credit: str(b.credit, 300), u: str(b.u, 30) })).filter(b => b.id));
+    const prayers = uniq((Array.isArray(s.prayers) ? s.prayers : []).slice(0, 500).map(p => ({ id: str(p.id, 40), text: str(p.text, 1000), note: str(p.note, 2000), at: str(p.at, 30), done: str(p.done, 30), u: str(p.u, 30) })).filter(p => p.id && p.text.trim()));
+    // Bookmarks and prayers removed, and when, so a removal on one device isn't undone by another's older copy.
+    const gone = {};
+    if (s.gone && typeof s.gone === 'object' && !Array.isArray(s.gone)) {
+      for (const [k, v] of Object.entries(s.gone).slice(-1000)) if (/^(b|p):.{1,40}$/.test(k) && /^\d{4}-\d{2}-\d{2}T/.test(String(v))) gone[k] = String(v).slice(0, 30);
+    }
+    return { history, bookmarks, prayers, gone };
+  }
+  /** Stamp changed bookmarks and prayers with the time, and note removed ones (for sync). */
+  static stampStudy(before, after, now) {
+    const strip = x => { const { u, ...rest } = x; return JSON.stringify(rest); };
+    const gone = { ...before.gone };
+    for (const [kind, key] of [['b', 'bookmarks'], ['p', 'prayers']]) {
+      const old = new Map(before[key].map(x => [x.id, x]));
+      after[key] = after[key].map(x => { const o = old.get(x.id); delete gone[`${kind}:${x.id}`]; return o && strip(o) === strip(x) ? { ...x, u: o.u } : { ...x, u: now }; });
+      const still = new Set(after[key].map(x => x.id));
+      for (const id of old.keys()) if (!still.has(id)) gone[`${kind}:${id}`] = now;
+    }
+    after.gone = gone;
+    return after;
+  }
+  /** Bookmarks and the prayer list, for sync (your study history stays on each device). */
+  studyForSync() {
+    const meta = this.getMeta();
+    const st = this.getStudy();
+    return { bookmarks: st.bookmarks, prayers: st.prayers, gone: st.gone, updated: meta.studySynced || '' };
+  }
+  /**
+   * Bookmarks and prayers from another device, merged item by item: an item on either device is kept unless it was
+   * removed after it last changed; where both have it, the newer change wins. If the result has anything the other
+   * device lacks, it's marked as changed now, so sync sends it back.
+   */
+  applySyncedStudy(p) {
+    this._requireKey();
+    const mine = this.getStudy();
+    const theirs = Vault.cleanStudy({ bookmarks: p.bookmarks, prayers: p.prayers, gone: p.gone });
+    const gone = { ...mine.gone };
+    for (const [k, v] of Object.entries(theirs.gone)) if (!gone[k] || v > gone[k]) gone[k] = v;
+    const merge = (kind, a, b) => {
+      const by = new Map();
+      for (const x of [...a, ...b]) { const o = by.get(x.id); if (!o || String(x.u) > String(o.u)) by.set(x.id, x); }
+      const out = [...by.values()].filter(x => !(gone[`${kind}:${x.id}`] && gone[`${kind}:${x.id}`] >= String(x.u)));
+      for (const x of out) if (gone[`${kind}:${x.id}`]) delete gone[`${kind}:${x.id}`];
+      // in the order you'd expect: newest first
+      return out.sort((x, y) => String(y.at).localeCompare(String(x.at)));
+    };
+    const bookmarks = merge('b', mine.bookmarks, theirs.bookmarks);
+    const prayers = merge('p', mine.prayers, theirs.prayers);
+    const sig = st => JSON.stringify([st.bookmarks.map(x => x.id + x.u).sort(), st.prayers.map(x => x.id + x.u).sort(), Object.keys(st.gone).sort()]);
+    const merged = { history: mine.history, bookmarks, prayers, gone };
+    const same = sig(merged) === sig(theirs);
+    this._writeMeta({ study: Vault.cleanStudy(merged), studySynced: same ? String(p.updated || '') : new Date().toISOString() });
+    return merged;
   }
   getStudy() { this._requireKey(); return Vault.cleanStudy(this.getMeta().study); }
   setStudy(patch) {
     this._requireKey();
-    const study = Vault.cleanStudy({ ...this.getStudy(), ...patch });
-    this._writeMeta({ study, studyUpdated: new Date().toISOString() });
+    const before = this.getStudy();
+    const now = new Date().toISOString();
+    const study = Vault.stampStudy(before, Vault.cleanStudy({ ...before, ...patch }), now);
+    const changed = JSON.stringify([study.bookmarks, study.prayers, study.gone]) !== JSON.stringify([before.bookmarks, before.prayers, before.gone]);
+    this._writeMeta({ study, studyUpdated: now, ...(changed ? { studySynced: now } : {}) });
     return study;
   }
 

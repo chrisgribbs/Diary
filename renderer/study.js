@@ -422,6 +422,8 @@ async function studyBookmarksDialog() {
   });
 }
 
+let studyPrayersRefresh = null;
+if (api.onSyncChanged) api.onSyncChanged(r => { if (r && r.study && studyPrayersRefresh) studyPrayersRefresh(); });
 async function studyPrayerList() {
   let list = [];
   try { list = await api.studyPrayers(); } catch (x) { toast(x.message); return; }
@@ -429,6 +431,8 @@ async function studyPrayerList() {
     f.classList.add('page');
     const box = el('div', { class: 'st-prayers' });
     const save = async () => { try { list = await api.studySetPrayers(list); } catch (x) { toast(x.message); } draw(); };
+    // A change from another device while the list is open: show it.
+    studyPrayersRefresh = async () => { if (!box.isConnected) { studyPrayersRefresh = null; return; } try { list = await api.studyPrayers(); draw(); } catch {} };
     const input = el('input', { type: 'text', class: 'st-input', placeholder: 'Someone or something to pray for', maxlength: 1000,
       onkeydown: e => { if (e.key === 'Enter') { e.preventDefault(); add(); } } });
     const add = () => { const t = input.value.trim(); if (!t) return; list = [{ id: 'p' + Date.now().toString(36), text: t, note: '', at: todayISO(), done: '' }, ...list]; input.value = ''; save(); };

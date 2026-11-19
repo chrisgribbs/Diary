@@ -125,7 +125,7 @@ function createBackend(platform) {
     vault[fn] = (...a) => { const r = orig(...a); if (vault.isUnlocked()) { sync.st = null; sync.start(); } return r; };
   }
   { const orig = vault.lock.bind(vault); vault.lock = () => { sync.stop(); orig(); }; }
-  for (const fn of ['save', 'remove', 'setCategories', 'recategorize', 'setQuotes']) {
+  for (const fn of ['save', 'remove', 'setCategories', 'recategorize', 'setQuotes', 'setStudy']) {
     const orig = vault[fn].bind(vault);
     vault[fn] = (...a) => { const r = orig(...a); sync.touch(); return r; };
   }
