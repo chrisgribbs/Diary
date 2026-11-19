@@ -1,6 +1,7 @@
 'use strict';
 /**
- * The Bible study library: public-domain commentaries and spiritual classics, searched on this device.
+ * The Bible study library: public-domain commentaries and spiritual classics, and Tyndale's openly licensed (CC BY-SA)
+ * study notes and Bible dictionary, searched on this device.
  *
  * It comes in packs (built by scripts/library, attached to the GitHub release "library-v1"), downloaded when you
  * first use Bible study and kept in <device folder>/library. They are public texts, so they're not encrypted, not

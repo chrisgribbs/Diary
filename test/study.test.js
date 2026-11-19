@@ -54,6 +54,33 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   const para = 'The soul that would find God must first find itself, and walk in quietness. '.repeat(25);
   const c = chapters(`CONTENTS\nChapter I. Of the soul . . . . 3\nChapter II. Of prayer . . . . 9\n\nBOOK I.\n\nCHAPTER I.\n\nOf the soul\n\n${para}\n\nCHAPTER II.\n\nOf prayer\n\n${para}\n\nBOOK II.\n\nCHAPTER I.\n\nOf rest\n\n${para}`, { source: { part: '^BOOK\\s+[IVX]+\\.?$' } });
   assert.deepEqual(c.map(x => x.section), ['Book I, Chapter I: Of the soul', 'Book I, Chapter II: Of prayer', 'Book II, Chapter I: Of rest']);
+  // Tyndale Open Resources: Tyndale's own zip of XML, notes grouped by chapter, dictionary tagged only with a few verses.
+  const tyndale = require('../scripts/library/parsers/tyndale');
+  assert.deepEqual(tyndale.osisRef('Matt.11.28-30'), [39, 11, 28, 11, 30]);
+  assert.deepEqual(tyndale.osisRef('Gen.1.1-2.3'), [0, 1, 1, 2, 3]);
+  assert.deepEqual(tyndale.osisRef('1Jn.4.18'), [61, 4, 18, 4, 18]);
+  assert.equal(tyndale.osisRef('Xyz.1.1'), null);
+  assert.equal(tyndale.textOf('<p class="sn-text"><span class="sn-ref"><a href="?bref=Matt.11.28">11:28</a></span> <span class="sn-excerpt">Come to me</span> &amp; rest.</p>'), '11:28 Come to me & rest.');
+  const zipOf = entries => {   // a plain zip (stored, not compressed), enough for the parser's reader
+    const parts = [], central = []; let off = 0;
+    for (const [name, text] of Object.entries(entries)) {
+      const data = Buffer.from(text), nm = Buffer.from(name), crc = require('zlib').crc32(data);
+      const h = Buffer.alloc(30); h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt32LE(crc, 14); h.writeUInt32LE(data.length, 18); h.writeUInt32LE(data.length, 22); h.writeUInt16LE(nm.length, 26);
+      const c = Buffer.alloc(46); c.writeUInt32LE(0x02014b50, 0); c.writeUInt16LE(20, 4); c.writeUInt16LE(20, 6); c.writeUInt32LE(crc, 16); c.writeUInt32LE(data.length, 20); c.writeUInt32LE(data.length, 24); c.writeUInt16LE(nm.length, 28); c.writeUInt32LE(off, 42);
+      parts.push(h, nm, data); central.push(c, nm); off += 30 + nm.length + data.length;
+    }
+    const cd = Buffer.concat(central), e = Buffer.alloc(22); e.writeUInt32LE(0x06054b50, 0); e.writeUInt16LE(central.length / 2, 8); e.writeUInt16LE(central.length / 2, 10); e.writeUInt32LE(cd.length, 12); e.writeUInt32LE(off, 16);
+    return Buffer.concat([...parts, cd, e]);
+  };
+  const note = (r, t) => `<item name="${r}" typename="StudyNote" product="TyndaleOpenStudyNotes"><refs>${r}</refs><body><p class="sn-text">${t}</p></body></item>`;
+  const tn = tyndale(zipOf({ 'Tyndale Open Study Notes/StudyNotes.xml': `<items>${note('Matt.11.28', 'Come to me: an invitation.')}${note('Matt.11.29', 'yoke: a wooden frame.')}${note('Matt.12.1', 'Sabbath.')}</items>` }), { source: { kind: 'notes' } });
+  assert.deepEqual(tn.map(x => x.section), ['Notes on Matthew 11:28â€“29', 'Notes on Matthew 12:1'], 'notes grouped by chapter');
+  assert.equal(tn[0].text, 'Come to me: an invitation.\n\nyoke: a wooden frame.');
+  const art = (n, cites) => `<item typename="Article" name="${n}_Article_TyndaleOpenBibleDictionary"><title>${n}</title><body><p class="h1">${n.toUpperCase()}</p><p class="fl">${'A place of some importance in the Bible. '.repeat(4)}${cites.map(c => `<a href="?bref=${c}">x</a>`).join(' ')}</p></body></item>`;
+  const td = tyndale(zipOf({ 'Articles/M.xml': `<items>${art('Magdala', ['Matt.15.39'])}${art('Moses', ['Exod.2.1', 'Exod.3.1', 'Num.12.3', 'Deut.34.5', 'Heb.11.23'])}</items>` }), { source: { kind: 'dictionary' } });
+  assert.deepEqual(td.map(x => [x.section, x.refs.length]), [['Magdala', 1], ['Moses', 0]], 'a long survey is found by meaning, not every verse it cites');
+  assert.ok(td[0].text.startsWith('Magdala\n\nA place'));
+
   const vincent = require('../scripts/library/parsers/verse-notes-ocr');
   const v = vincent(`VOLUME I.\n\nTHE GOSPEL ACCORDING TO MATTHEW.\n\nCHAPTER XI.\n\n2. Two of his disciples (6vo). But the correct reading is by. He sent by his disciples.\n\n3. Thou. Emphatic. Art thou the Coming One, a current phrase for the Messiah.\n\n64 WORD STUDIES IN THE NEW TESTAMENT. [Cu. XI.\n\n5. The lame walk. Tyndale, the halt go; the blind receive their sight.`, { file: 'v1', source: { volumes: { v1: [39] } } });
   assert.equal(v.length, 1);

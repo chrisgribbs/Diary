@@ -4090,7 +4090,7 @@ function openSettings(section) {
         bibleVersionControls(() => openSettings('bible')),
         row('Reading plans', 'Read through the Bible, the New Testament, the Gospels or the Psalms.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); state.bibleTab = 'plan'; setMode('bible'); } }, 'Open reading plans'))),
 
-      panel('study', 'Bible study', 'Studies written by AI from public-domain commentaries and classics, through your own OpenRouter account. Your journal is never sent unless you allow it here.',
+      panel('study', 'Bible study', 'Studies written by AI from public-domain commentaries and classics and Tyndale’s open study notes, through your own OpenRouter account. Your journal is never sent unless you allow it here.',
         el('div', { id: 'studySettings' }, el('p', {}, 'Checking…'))),
 
       panel('privacy', 'Privacy & lock', 'Your journal is encrypted with your password. When it locks, your writing is hidden.',

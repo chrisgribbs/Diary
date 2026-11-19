@@ -541,7 +541,7 @@ async function renderStudySettings(box, reopen) {
       check(s.journal, v => set({ studyJournal: v }))),
     row('This month', `${plural(s.month.requests, 'request')} from this device.`, el('span', {}, `about $${s.month.usd.toFixed(2)}`)),
     el('h3', {}, 'The library'),
-    el('p', { class: 'set-intro' }, 'Public-domain commentaries and classics, downloaded once and searched on this device. Robertson’s volumes on John, Hebrews, the General Epistles and Revelation are left out while they’re still in copyright in the United States.'),
+    el('p', { class: 'set-intro' }, 'Public-domain commentaries and classics, and Tyndale’s openly licensed study notes and Bible dictionary, downloaded once and searched on this device. Robertson’s volumes on John, Hebrews, the General Epistles and Revelation are left out while they’re still in copyright in the United States.'),
     lib,
     el('h3', {}, 'Your studies'),
     row('Study history', 'The last 50 studies, encrypted with your journal. Studies saved to your journal stay there.',

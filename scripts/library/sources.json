@@ -20,6 +20,16 @@
       "id": "history",
       "name": "History and background",
       "about": "Edersheim’s Life and Times of Jesus the Messiah."
+    },
+    {
+      "id": "notes",
+      "name": "Study notes",
+      "about": "Tyndale Open Study Notes (2022): modern study notes on every book, with theme articles, profiles of Bible people and book introductions. Openly licensed (CC BY-SA 4.0)."
+    },
+    {
+      "id": "dictionary",
+      "name": "Bible dictionary",
+      "about": "Tyndale Open Bible Dictionary (2023): articles on the people, places, customs and ideas of the Bible. Openly licensed (CC BY-SA 4.0)."
     }
   ],
   "sources": [
@@ -297,6 +307,40 @@
       "credit": "Alfred Edersheim, The Life and Times of Jesus the Messiah, 2 vols., 8th ed. (Longmans, Green, 1899; first published 1883). Public domain. Scanned text from archive.org (University of Toronto).",
       "url": "https://archive.org/details/lifetimesofjesus01ederuoft",
       "caveat": "Written in 1883. Edersheim often reads later rabbinic writings (the Talmud and Midrash, compiled centuries after Jesus) back into first-century practice, and some of his judgements about Judaism reflect his time; say so when drawing on him for Jewish custom."
+    },
+    {
+      "id": "tosn",
+      "pack": "notes",
+      "category": "exposition",
+      "parser": "tyndale",
+      "kind": "notes",
+      "files": [
+        "tosn/tyndale_open-studynotes.zip"
+      ],
+      "author": "Tyndale House Publishers",
+      "work": "Tyndale Open Study Notes",
+      "year": 2022,
+      "licence": "CC BY-SA 4.0",
+      "credit": "Tyndale Open Study Notes, © 2022 Tyndale House Publishers, licensed under CC BY-SA 4.0 (creativecommons.org/licenses/by-sa/4.0). Adapted from Tyndale Open Study Notes: formatting removed and short notes grouped by chapter. The original work by Tyndale House Publishers is available for free at http://www.tyndaleopenresources.com.",
+      "url": "https://tyndaleopenresources.com/",
+      "caveat": "Modern evangelical study notes keyed to the New Living Translation: phrases they quote from the passage are NLT wording, which can differ from the World English Bible text being studied."
+    },
+    {
+      "id": "tobd",
+      "pack": "dictionary",
+      "category": "history",
+      "parser": "tyndale",
+      "kind": "dictionary",
+      "files": [
+        "tobd/TyndaleOpenBibleDictionary.zip"
+      ],
+      "author": "Tyndale House Publishers",
+      "work": "Tyndale Open Bible Dictionary",
+      "year": 2023,
+      "licence": "CC BY-SA 4.0",
+      "credit": "Tyndale Open Bible Dictionary, © 2023 Tyndale House Publishers, licensed under CC BY-SA 4.0 (creativecommons.org/licenses/by-sa/4.0). Adapted from Tyndale Open Bible Dictionary: formatting, pictures and maps removed. The original work by Tyndale House Publishers is available for free at http://www.tyndaleopenresources.com.",
+      "url": "https://tyndaleopenresources.com/",
+      "caveat": "A Bible dictionary keyed to the New Living Translation: names and quoted phrases follow the NLT, which can differ from the World English Bible."
     }
   ]
 }
