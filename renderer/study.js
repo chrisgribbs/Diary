@@ -283,6 +283,7 @@ function drawStudy(body) {
       reflection,
       el('div', { class: 'st-actions' }, saveBtn,
         c.entryId ? el('button', { type: 'button', class: 'btn-plain', onclick: () => { setMode('journal'); openEntry(c.entryId); } }, 'Open in journal') : null)) : null,
+    (c.flags || []).some(f => f.kind === 'cut') ? el('p', { class: 'rv-note warn' }, 'The AI stopped before it finished, so the end of this study is missing. Try again, or choose a shorter length.') : null,
     drawStudySources(c.sources, showSource),
     drawAsk(c),
     el('p', { class: 'st-foot' }, `Written with AI (${c.model}) from the sources above. `,
@@ -296,6 +297,7 @@ function checkSummary(flags) {
   if (n('word')) bits.push(`${plural(n('word'), 'Greek or Hebrew word')} wasn’t in the sources and ${n('word') === 1 ? 'is' : 'are'} marked`);
   if (n('label')) bits.push('a reference to a missing source was removed');
   if (n('questions')) bits.push('the journal questions were rewritten to keep them open');
+  if (n('cut')) bits.push('the AI stopped before it finished, so the end is missing (ask again, or try a shorter length)');
   return bits.length ? `Checked: ${bits.join('; ')}.` : 'Quotations and Greek and Hebrew words were checked against the sources.';
 }
 
@@ -338,7 +340,10 @@ function drawAsk(c) {
     try {
       const r = await api.studyAsk(c.id, q, study.asking.rid);
       live.removeAttribute('id');
-      live.replaceChildren(...mdNodes(r.answer), r.sources.length ? el('p', { class: 'q-copy' }, 'From: ', r.sources.map(s => `${s.author}, ${s.work}`).join('; ')) : null);
+      const works = [...new Set(r.sources.map(s => `${s.author}, ${s.work}`))];
+      const cut = (r.flags || []).find(f => f.kind === 'cut');
+      live.replaceChildren(...mdNodes(r.answer), cut ? el('p', { class: 'rv-note warn' }, cut.text) : null,
+        works.length ? el('p', { class: 'q-copy' }, 'From: ', works.join('; ')) : null);
       c.thread = [...(c.thread || []), { role: 'user', content: q }, { role: 'assistant', content: r.answer }];
     } catch (x) { live.replaceChildren(el('p', { class: 'rv-note warn' }, x.message)); }
     finally { study.asking = false; send.disabled = false; }

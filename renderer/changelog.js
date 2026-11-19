@@ -5,6 +5,13 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.3', date: '2026-11-19', title: 'Bible study answers finish properly',
+    fixed: [
+      'Bible study: answers to “Ask about this passage” could stop mid-sentence. The default AI (DeepSeek Flash) thinks before it writes, and the thinking was using up the words allowed for the answer. It’s now asked to think lightly, each answer and study is allowed far more room, and if an answer is ever cut short WellWrite says so instead of leaving it hanging.',
+      'Bible study: the “From:” line under an answer listed the same book several times. Each book now appears once.',
+    ],
+  },
+  {
     v: '1.33.2', date: '2026-11-19', title: 'Saving your OpenRouter key',
     fixed: [
       'Settings → Bible study: pressing Save on your OpenRouter key could seem to do nothing. If OpenRouter turned the key down, or couldn’t be reached, the message appeared behind the Settings window where it couldn’t be seen. Now it shows right under the key box (“Checking your key with OpenRouter…”, then what happened), and the check gives up after 20 seconds rather than waiting for ever. Library downloads and Check credit report there too.',

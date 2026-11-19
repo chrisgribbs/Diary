@@ -111,14 +111,19 @@ class OpenRouter {
 
   /**
    * One chat request. Streams when onDelta is given (each new piece of text as it arrives).
-   * Returns { text, model, usage: { prompt, completion, cost } }.
+   * Returns { text, model, usage: { prompt, completion, cost }, cut }.
+   * cut is true when the answer stopped early: the word limit ran out (finish_reason
+   * "length") or the stream ended without OpenRouter's closing "[DONE]".
+   * Thinking models (DeepSeek Flash, for one) spend part of max_tokens thinking before
+   * they write, so we ask for light thinking and leave the rest for the answer.
    */
-  async chat({ model, messages, maxTokens = 3000, temperature = 0.7, onDelta, signal, privateHosts = true }) {
+  async chat({ model, messages, maxTokens = 3000, temperature = 0.7, onDelta, signal, privateHosts = true, reasoning = 'low' }) {
     const key = this._need();
     if (!MODEL_RE.test(model || '')) model = DEFAULT_MODEL;
     const body = {
       model, messages, max_tokens: maxTokens, temperature, stream: !!onDelta,
       usage: { include: true },
+      ...(reasoning ? { reasoning: { effort: reasoning, exclude: true } } : {}),
       ...(privateHosts ? { provider: { data_collection: 'deny' } } : {}),
     };
     let res;
@@ -131,22 +136,26 @@ class OpenRouter {
     if (!onDelta) {
       const j = await res.json();
       if (j.error) throw explain(j.error.code || 500, j);
-      const text = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
+      const c0 = (j.choices && j.choices[0]) || {};
+      const text = (c0.message && c0.message.content) || '';
       const usage = OpenRouter.usageOf(j.usage);
       this._count(usage.cost);
-      return { text, model: j.model || model, usage };
+      return { text, model: j.model || model, usage, cut: c0.finish_reason === 'length' };
     }
     // Server-sent events: lines "data: {...}", comments ": OPENROUTER PROCESSING", and "data: [DONE]".
-    let text = '', usage = { prompt: 0, completion: 0, cost: 0 }, got = model, buf = '';
+    let text = '', usage = { prompt: 0, completion: 0, cost: 0 }, got = model, buf = '', finish = null, done = false;
     const handleLine = line => {
       if (!line.startsWith('data:')) return;
       const data = line.slice(5).trim();
-      if (!data || data === '[DONE]') return;
+      if (data === '[DONE]') { done = true; return; }
+      if (!data) return;
       let j; try { j = JSON.parse(data); } catch { return; }
       if (j.error) throw explain(j.error.code || 500, j);
       if (j.model) got = j.model;
       const piece = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
       if (piece) { text += piece; onDelta(piece, text); }
+      const fr = j.choices && j.choices[0] && j.choices[0].finish_reason;
+      if (fr) finish = fr;
       if (j.usage) usage = OpenRouter.usageOf(j.usage);
     };
     const decoder = new TextDecoder();
@@ -170,7 +179,7 @@ class OpenRouter {
       throw new OpenRouterError('The connection to OpenRouter was lost part-way. Try again.', 'offline');
     }
     this._count(usage.cost);
-    return { text, model: got, usage };
+    return { text, model: got, usage, cut: finish === 'length' || (!done && !finish) };
   }
 
   /** Embeddings for one or more texts: arrays of numbers, in order. */

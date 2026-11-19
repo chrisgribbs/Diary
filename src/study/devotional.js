@@ -93,7 +93,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
     const s = settings();
     if (or.hasKey()) {
       try {
-        const r = await or.chat({ model: s.model, maxTokens: 30, temperature: 0.4, privateHosts: s.privateHosts, messages: [
+        const r = await or.chat({ model: s.model, maxTokens: 600, temperature: 0.4, privateHosts: s.privateHosts, messages: [
           { role: 'system', content: 'You suggest one Bible passage for reflection. Reply with only its reference in the form "Book chapter:verse-verse", 3 to 15 verses long, nothing else.' },
           { role: 'user', content: String(text).slice(0, 1500) },
         ] });
@@ -218,11 +218,12 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
         privateHosts: s.privateHosts, signal: ctrl.signal, onDelta: piece => send('study:delta', rid, piece),
       });
       let { md, flags, questionProblems: probs } = verify(res.text, { sources, passageText: p.passageText, extra: journal.map(j => j.excerpt), inBible });
+      if (res.cut) flags.push({ kind: 'cut', text: 'The AI stopped before it finished, so the end is missing. Ask again, or try a shorter length.' });
       let cost = res.usage.cost;
       if (probs.length) {   // once, ask for questions that keep the rules
         try {
           const qs = questionsOf(md);
-          const fix = await or.chat({ model: s.model, messages: prompts.questionFixMessages(p.label, p.passageText, qs, probs), maxTokens: 400, temperature: 0.6, privateHosts: s.privateHosts, signal: ctrl.signal });
+          const fix = await or.chat({ model: s.model, messages: prompts.questionFixMessages(p.label, p.passageText, qs, probs), maxTokens: 1500, temperature: 0.6, privateHosts: s.privateHosts, signal: ctrl.signal });
           cost += fix.usage.cost;
           const better = fix.text.split('\n').map(l => l.match(/^\s*\d+[.)]\s+(.+)$/)).filter(Boolean).map(m => m[1].trim());
           if (better.length >= 2 && better.filter(q => !questionProblems(q).length).length >= better.length - 1) { md = replaceQuestions(md, better); flags.push({ kind: 'questions', text: 'Questions rewritten to keep them open.' }); }
@@ -255,8 +256,9 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
     running.set(rid, ctrl);
     try {
       const res = await or.chat({ model: s.model, messages: prompts.askMessages({ ref: h.label, passageText: h.passageText, mode: h.mode, translation: 'WEB' }, h.thread, question, sources),
-        maxTokens: 900, temperature: 0.6, privateHosts: s.privateHosts, signal: ctrl.signal, onDelta: piece => send('study:delta', rid, piece) });
+        maxTokens: 3000, temperature: 0.6, privateHosts: s.privateHosts, signal: ctrl.signal, onDelta: piece => send('study:delta', rid, piece) });
       const { md, flags } = verify(res.text, { sources, passageText: h.passageText, inBible });
+      if (res.cut) flags.push({ kind: 'cut', text: 'The AI stopped before it finished, so the end is missing. Ask again, or try a shorter length.' });
       const fresh = vault.getStudy();
       const item = fresh.history.find(x => x.id === studyId);
       if (item) {

@@ -187,8 +187,21 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   assert.equal(streamed, res.text);
   assert.equal(res.usage.cost, 0.0012);
   assert.deepEqual(calls[calls.length - 1].body.provider, { data_collection: 'deny' }, 'asks for hosts that keep nothing');
+  assert.deepEqual(calls[calls.length - 1].body.reasoning, { effort: 'low', exclude: true }, 'thinking models are asked to think lightly, so the answer gets the words');
+  assert.equal(res.cut, false, 'a finished answer is not marked cut');
   assert.equal(or.month().requests, 1);
   assert.ok(Math.abs(or.month().usd - 0.0012) < 1e-9);
+  // An answer that runs out of words, and a stream that ends without [DONE], are both marked cut.
+  const sse = lines => { const enc = new TextEncoder(); const b = lines.map(l => enc.encode(l)); let i = 0; return { ok: true, status: 200, body: { getReader: () => ({ read: async () => (i < b.length ? { done: false, value: b[i++] } : { done: true }) }) } }; };
+  const ran = new OpenRouter({ file: path.join(tmp, 'or.json'), protect: s => 'p:' + s, unprotect: s => s.slice(2), usageFile: path.join(tmp, 'u2.json'),
+    fetch: async () => sse([`data: ${JSON.stringify({ choices: [{ delta: { content: 'The psalm complains about a' }, finish_reason: 'length' }] })}\n\n`, 'data: [DONE]\n\n']) });
+  assert.equal((await ran.chat({ model: 'x/y', messages: [], onDelta: () => {} })).cut, true, 'finish_reason length is cut');
+  const lost = new OpenRouter({ file: path.join(tmp, 'or.json'), protect: s => 'p:' + s, unprotect: s => s.slice(2), usageFile: path.join(tmp, 'u3.json'),
+    fetch: async () => sse([`data: ${JSON.stringify({ choices: [{ delta: { content: 'The psalm complains about a' } }] })}\n\n`]) });
+  assert.equal((await lost.chat({ model: 'x/y', messages: [], onDelta: () => {} })).cut, true, 'a stream with no ending is cut');
+  const plain = new OpenRouter({ file: path.join(tmp, 'or.json'), protect: s => 'p:' + s, unprotect: s => s.slice(2), usageFile: path.join(tmp, 'u4.json'),
+    fetch: async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: 'half' }, finish_reason: 'length' }], usage: {} }) }) });
+  assert.equal((await plain.chat({ model: 'x/y', messages: [] })).cut, true, 'cut without streaming too');
   // A connection that never answers: Save gives up and says so, rather than waiting for ever.
   const hung = new OpenRouter({ file: path.join(tmp, 'hung.json'), protect: s => s, unprotect: s => s, fetch: (u, o) => new Promise((_, rej) => o.signal.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' })))) });
   hung.keyTimeout = 50;

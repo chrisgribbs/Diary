@@ -2,6 +2,14 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.3 — Bible study answers finish properly
+_19 November 2026_
+
+**Fixed**
+
+- Bible study: answers to “Ask about this passage” could stop mid-sentence. The default AI (DeepSeek Flash) thinks before it writes, and the thinking was using up the words allowed for the answer. It’s now asked to think lightly, each answer and study is allowed far more room, and if an answer is ever cut short WellWrite says so instead of leaving it hanging.
+- Bible study: the “From:” line under an answer listed the same book several times. Each book now appears once.
+
 ## 1.33.2 — Saving your OpenRouter key
 _19 November 2026_
 

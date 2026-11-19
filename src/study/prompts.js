@@ -12,9 +12,9 @@
  */
 
 const LENGTHS = {
-  short: { words: 600, label: 'Short', maxTokens: 1800 },
-  standard: { words: 1200, label: 'Standard', maxTokens: 3200 },
-  extended: { words: 2500, label: 'Extended', maxTokens: 6000 },
+  short: { words: 600, label: 'Short', maxTokens: 4000 },
+  standard: { words: 1200, label: 'Standard', maxTokens: 7000 },
+  extended: { words: 2500, label: 'Extended', maxTokens: 12000 },
 };
 
 // The parts of a study, in order. The Scripture reading and the sources are added by WellWrite itself (so the
