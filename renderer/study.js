@@ -455,18 +455,32 @@ async function renderStudySettings(box, reopen) {
   const check = (val, on) => { const c = el('input', { type: 'checkbox', onchange: e => on(e.target.checked) }); c.checked = val; return c; };
   const set = async patch => { await updateSetting(patch); };
 
-  // key
-  const keyInput = el('input', { type: 'password', class: 'st-input', placeholder: 'sk-or-…', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'OpenRouter key' });
+  // key. Results show here, under the box: Settings sits above the page, so a toast would be hidden behind it.
+  const keyNote = el('p', { class: 'st-keynote', role: 'status', 'aria-live': 'polite' });
+  const say = (text, warn) => { keyNote.textContent = text; keyNote.classList.toggle('warn', !!warn); };
+  const keyInput = el('input', { type: 'password', class: 'st-input', placeholder: 'sk-or-v1-…', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'OpenRouter key',
+    onkeydown: e => { if (e.key === 'Enter') { e.preventDefault(); saveKey(); } } });
+  const saveBtn = el('button', { type: 'button', class: 'btn-ink', onclick: () => saveKey() }, 'Save');
+  const saveKey = async () => {
+    if (!keyInput.value.trim()) { say('Paste your key into the box first.', true); keyInput.focus(); return; }
+    saveBtn.disabled = true; say('Checking your key with OpenRouter…');
+    try { await api.studySetKey(keyInput.value); toast('Key saved'); renderStudySettings(box, reopen); }
+    catch (x) { say(x.message, true); diag('Bible study key not saved: ' + x.message); saveBtn.disabled = false; }
+  };
   const keyRow = s.key
-    ? row('OpenRouter key', 'Saved on this device only, protected by ' + (ANDROID ? 'Android' : 'Windows') + '.', el('div', { class: 'btns' },
-      el('button', { type: 'button', class: 'btn-plain', onclick: async () => { const a = await api.studyAccount(); toast(a.error || (a.limit != null ? `Used $${a.usage.toFixed(2)} of $${a.limit.toFixed(2)}` : `Used $${(a.usage || 0).toFixed(2)} in all`)); } }, 'Check credit'),
-      el('button', { type: 'button', class: 'btn-link danger', onclick: async () => { await api.studyForgetKey(); renderStudySettings(box, reopen); } }, 'Remove')))
+    ? el('div', { class: 'row st-keyrow' }, el('div', {}, 'OpenRouter key', el('small', {}, 'Saved on this device only, protected by ' + (ANDROID ? 'Android' : 'Windows') + '.')),
+      el('div', { class: 'btns' },
+        el('button', { type: 'button', class: 'btn-plain', onclick: async () => {
+          say('Asking OpenRouter…');
+          const a = await api.studyAccount();
+          say(a.error || (a.limit != null ? `Used $${a.usage.toFixed(2)} of this key’s $${a.limit.toFixed(2)} limit.` : `Used $${(a.usage || 0).toFixed(2)} in all with this key.`), !!a.error);
+        } }, 'Check credit'),
+        el('button', { type: 'button', class: 'btn-link danger', onclick: async () => { await api.studyForgetKey(); renderStudySettings(box, reopen); } }, 'Remove')),
+      keyNote)
     : el('div', { class: 'row st-keyrow' }, el('div', {}, 'OpenRouter key', el('small', {}, 'Create one at openrouter.ai, add a few dollars of credit, and paste it here. It’s kept on this device only.')),
-      el('div', { class: 'st-row' }, keyInput, el('button', { type: 'button', class: 'btn-ink', onclick: async e => {
-        e.target.disabled = true;
-        try { await api.studySetKey(keyInput.value); toast('Key saved'); renderStudySettings(box, reopen); } catch (x) { toast(x.message); e.target.disabled = false; }
-      } }, 'Save')),
-      el('button', { type: 'button', class: 'btn-link small', onclick: () => api.openExternal('https://openrouter.ai/keys') }, 'Get a key'));
+      el('div', { class: 'st-row' }, keyInput, saveBtn),
+      el('button', { type: 'button', class: 'btn-link small', onclick: () => api.openExternal('https://openrouter.ai/keys') }, 'Get a key'),
+      keyNote);
 
   // model
   const known = s.models.some(m => m.id === s.model);
@@ -495,8 +509,10 @@ async function renderStudySettings(box, reopen) {
         : el('button', { type: 'button', class: 'btn-plain', onclick: async e => {
           e.target.disabled = true; e.target.textContent = 'Starting…';
           studyDownloading = { pack: p.id, label: e.target };
-          try { await api.studyDownload(p.id); toast(`${p.name} downloaded`); } catch (x) { toast(x.message); }
-          studyDownloading = null; drawLib();
+          let msg = '';
+          try { await api.studyDownload(p.id); toast(`${p.name} downloaded`); } catch (x) { msg = x.message; diag('Bible study library download: ' + x.message); }
+          studyDownloading = null; await drawLib();
+          if (msg) lib.prepend(el('p', { class: 'st-keynote warn', role: 'status' }, `${p.name}: ${msg}`));
         } }, p.installed ? `Update (${mb(size)})` : `Download (${mb(size)})`);
       rows.push(row(p.name, p.about, btn));
     }

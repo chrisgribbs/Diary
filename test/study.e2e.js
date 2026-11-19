@@ -147,7 +147,10 @@ function run() {
       await js(`openSettings('study');`);
       assert.ok(await until(`document.querySelector('#studySettings .st-keyrow')`), 'key box shown');
       await js(`const i = document.querySelector('#studySettings input[type=password]'); i.value = 'sk-or-v1-wrong000000000000'; [...document.querySelectorAll('#studySettings button')].find(b => b.textContent === 'Save').click();`);
-      assert.ok(await until(`[...document.querySelectorAll('.toast, #toast')].some(t => /didn’t accept/.test(t.textContent))`), 'a wrong key is refused');
+      assert.ok(await until(`/didn’t accept/.test((document.querySelector('#studySettings .st-keynote') || {}).textContent || '')`), 'a wrong key is refused, and says so');
+      // The message shows inside Settings (which sits above the page, hiding any toast).
+      assert.ok(await js(`const n = document.querySelector('#studySettings .st-keynote'); const r = n.getBoundingClientRect(); const top = document.elementFromPoint(r.left + 4, r.top + r.height / 2); return r.height > 0 && (top === n || n.contains(top));`), 'the message can be seen');
+      await shot('s2a-wrong-key');
       await js(`const i = document.querySelector('#studySettings input[type=password]'); i.value = 'sk-or-v1-e2etestkey1234567890'; [...document.querySelectorAll('#studySettings button')].find(b => b.textContent === 'Save').click();`);
       assert.ok(await until(`[...document.querySelectorAll('#studySettings button')].some(b => b.textContent === 'Check credit')`), 'key saved');
       assert.ok(await until(`[...document.querySelectorAll('#studySettings .st-lib button')].some(b => /Download/.test(b.textContent))`), 'library offered');

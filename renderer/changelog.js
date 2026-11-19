@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.2', date: '2026-11-19', title: 'Saving your OpenRouter key',
+    fixed: [
+      'Settings → Bible study: pressing Save on your OpenRouter key could seem to do nothing. If OpenRouter turned the key down, or couldn’t be reached, the message appeared behind the Settings window where it couldn’t be seen. Now it shows right under the key box (“Checking your key with OpenRouter…”, then what happened), and the check gives up after 20 seconds rather than waiting for ever. Library downloads and Check credit report there too.',
+    ],
+  },
+  {
     v: '1.33.1', date: '2026-11-19', title: 'WellWrite opens on phones again',
     fixed: [
       'Android: 1.33.0 closed as soon as it opened. A line in the new Bible study used a kind of letter-matching the phone app’s engine can’t do, so the engine couldn’t start. That’s rewritten, and Bible study’s accent handling (Greek too) now works the same on phones as on Windows. Your journal was never touched.',

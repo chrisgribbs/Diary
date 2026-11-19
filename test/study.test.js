@@ -189,6 +189,10 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   assert.deepEqual(calls[calls.length - 1].body.provider, { data_collection: 'deny' }, 'asks for hosts that keep nothing');
   assert.equal(or.month().requests, 1);
   assert.ok(Math.abs(or.month().usd - 0.0012) < 1e-9);
+  // A connection that never answers: Save gives up and says so, rather than waiting for ever.
+  const hung = new OpenRouter({ file: path.join(tmp, 'hung.json'), protect: s => s, unprotect: s => s, fetch: (u, o) => new Promise((_, rej) => o.signal.addEventListener('abort', () => rej(Object.assign(new Error('aborted'), { name: 'AbortError' })))) });
+  hung.keyTimeout = 50;
+  await assert.rejects(hung.setKey('sk-or-v1-goodkey1234567890'), /didnâ€™t answer within 20 seconds/);
   const noFetch = new OpenRouter({ file: path.join(tmp, 'none.json'), protect: s => s, unprotect: s => s, fetch: fakeFetch });
   await assert.rejects(noFetch.chat({ model: 'x/y', messages: [] }), /Add your OpenRouter key/);
   const broke = new OpenRouter({ file: path.join(tmp, 'or.json'), protect: s => 'p:' + s, unprotect: s => s.slice(2), fetch: async () => ({ ok: false, status: 402, json: async () => ({ error: { message: 'Insufficient credits' } }) }) });

@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.2 — Saving your OpenRouter key
+_19 November 2026_
+
+**Fixed**
+
+- Settings → Bible study: pressing Save on your OpenRouter key could seem to do nothing. If OpenRouter turned the key down, or couldn’t be reached, the message appeared behind the Settings window where it couldn’t be seen. Now it shows right under the key box (“Checking your key with OpenRouter…”, then what happened), and the check gives up after 20 seconds rather than waiting for ever. Library downloads and Check credit report there too.
+
 ## 1.33.1 — WellWrite opens on phones again
 _19 November 2026_
 

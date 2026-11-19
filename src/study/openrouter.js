@@ -29,7 +29,7 @@ class OpenRouterError extends Error {
 /** A plain message for what went wrong. */
 function explain(status, body) {
   const said = (body && body.error && (body.error.message || body.error)) || '';
-  if (status === 401) return new OpenRouterError('OpenRouter didn’t accept your key. Check it in Settings → Bible study.', 'key');
+  if (status === 401) return new OpenRouterError('OpenRouter didn’t accept your key. Check it was copied whole (it starts “sk-or-v1-”) and hasn’t been deleted at openrouter.ai.', 'key');
   if (status === 402) return new OpenRouterError('Your OpenRouter account is out of credit. Add some at openrouter.ai, then try again.', 'credit');
   if (status === 429) return new OpenRouterError('OpenRouter is busy or you’ve reached a limit. Wait a minute and try again.', 'rate');
   if (status === 404 && /data policy|endpoints found/i.test(String(said))) return new OpenRouterError('No host for this model meets the privacy setting (don’t keep data). Choose another model, or change the setting in Settings → Bible study.', 'privacy');
@@ -72,8 +72,13 @@ class OpenRouter {
 
   async _keyInfo(key) {
     let res;
-    try { res = await this.fetchImpl(this.base + '/key', { headers: this._headers(key) }); }
-    catch { throw new OpenRouterError('Couldn’t reach OpenRouter. Check your connection.', 'offline'); }
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), this.keyTimeout || 20000);   // never leave Save waiting forever
+    try { res = await this.fetchImpl(this.base + '/key', { headers: this._headers(key), signal: ctrl.signal }); }
+    catch (e) {
+      throw new OpenRouterError(ctrl.signal.aborted ? 'OpenRouter didn’t answer within 20 seconds. Check your connection and try again.'
+        : `Couldn’t reach OpenRouter (${(e && (e.message || e.code)) || 'no connection'}). Check your connection.`, 'offline');
+    } finally { clearTimeout(timer); }
     let body = null; try { body = await res.json(); } catch {}
     if (!res.ok) throw explain(res.status, body);
     const d = (body && body.data) || {};
