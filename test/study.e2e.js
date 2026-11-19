@@ -86,7 +86,7 @@ const server = http.createServer((req, res) => {
         return json(200, { choices: [{ message: { content: 'Matthew 11:28-30' } }], usage: {} });
       }
       res.writeHead(200, { 'content-type': 'text/event-stream' });
-      const text = /Answer the reader/.test(b.messages[1].content)
+      const text = /the reader’s question/.test(b.messages[1].content)
         ? 'To a crowd worn down by rules, a yoke meant the law [S1]. Jesus offers his own instead: a teacher who walks beside them.'
         : STUDY;
       const pieces = text.match(/[\s\S]{1,40}/g);

@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.4', date: '2026-11-19', title: 'More thoughtful Bible studies',
+    improved: [
+      'Bible study: studies and follow-up answers are now more considered. The AI is given time to think the passage through properly before it writes, with plenty of room left for the answer itself, and follow-up answers can run to several unhurried paragraphs (about 400 to 700 words) rather than a short reply. A study still costs only about a cent or two.',
+    ],
+  },
+  {
     v: '1.33.3', date: '2026-11-19', title: 'Bible study answers finish properly',
     fixed: [
       'Bible study: answers to “Ask about this passage” could stop mid-sentence. The default AI (DeepSeek Flash) thinks before it writes, and the thinking was using up the words allowed for the answer. It’s now asked to think lightly, each answer and study is allowed far more room, and if an answer is ever cut short WellWrite says so instead of leaving it hanging.',

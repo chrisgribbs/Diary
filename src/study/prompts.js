@@ -12,9 +12,9 @@
  */
 
 const LENGTHS = {
-  short: { words: 600, label: 'Short', maxTokens: 4000 },
-  standard: { words: 1200, label: 'Standard', maxTokens: 7000 },
-  extended: { words: 2500, label: 'Extended', maxTokens: 12000 },
+  short: { words: 600, label: 'Short', maxTokens: 12000 },
+  standard: { words: 1200, label: 'Standard', maxTokens: 16000 },
+  extended: { words: 2500, label: 'Extended', maxTokens: 24000 },
 };
 
 // The parts of a study, in order. The Scripture reading and the sources are added by WellWrite itself (so the
@@ -176,7 +176,7 @@ function studyMessages(study, sources) {
 /** A follow-up question in the conversation about a study. */
 function askMessages(study, history, question, sources) {
   const intro = `We are studying ${study.ref} together (${(MODES[study.mode] || MODES.devotional).label}). The passage (${study.translation || 'WEB'}):\n"""\n${study.passageText}\n"""`;
-  const rules = 'Answer the reader’s question in a few short paragraphs (under 300 words), in the same voice, from the sources below. Cite them with their labels. If the sources don’t cover something, say so rather than guessing. If the question is personal, don’t advise or fix: reflect, and you may end with one honest, open question. Plain prose, no headings.';
+  const rules = 'Take time with the reader’s question. Answer in unhurried, thoughtful paragraphs (about 400 to 700 words; longer only if the question truly needs it), in the same voice, from the sources below. Cite them with their labels. If the sources don’t cover something, say so rather than guessing. If the question is personal, don’t advise or fix: reflect, and you may end with one honest, open question. Plain prose, no headings.';
   const msgs = [{ role: 'system', content: SYSTEM }, { role: 'user', content: `${intro}\n\n${rules}\n\nSources:\n${sourceBlock(sources)}` }, { role: 'assistant', content: 'I have the passage and the sources.' }];
   for (const h of (history || []).slice(-8)) msgs.push({ role: h.role === 'assistant' ? 'assistant' : 'user', content: String(h.content).slice(0, 4000) });
   msgs.push({ role: 'user', content: question });
@@ -194,4 +194,9 @@ function questionFixMessages(ref, passageText, questions, problems) {
 /** The text to embed for semantic search: the passage, plus what the reader is asking or bringing. */
 const searchText = (study, extra = '') => [study.ref, study.passageText, study.topic, extra].filter(Boolean).join('\n').slice(0, 4000);
 
-module.exports = { SYSTEM, MODES, PARTS, LENGTHS, studyMessages, askMessages, questionFixMessages, sourceBlock, searchText };
+// How hard thinking models (DeepSeek Flash, for one) think before writing a study or an answer.
+// "high" gives a considered response; the word allowances above leave plenty of room after it.
+// Small helper requests (picking a passage, mending questions) still think lightly.
+const THINKING = 'high';
+
+module.exports = { SYSTEM, MODES, PARTS, LENGTHS, THINKING, studyMessages, askMessages, questionFixMessages, sourceBlock, searchText };

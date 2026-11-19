@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.4 — More thoughtful Bible studies
+_19 November 2026_
+
+**Improved**
+
+- Bible study: studies and follow-up answers are now more considered. The AI is given time to think the passage through properly before it writes, with plenty of room left for the answer itself, and follow-up answers can run to several unhurried paragraphs (about 400 to 700 words) rather than a short reply. A study still costs only about a cent or two.
+
 ## 1.33.3 — Bible study answers finish properly
 _19 November 2026_
 

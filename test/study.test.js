@@ -189,6 +189,7 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   assert.deepEqual(calls[calls.length - 1].body.provider, { data_collection: 'deny' }, 'asks for hosts that keep nothing');
   assert.deepEqual(calls[calls.length - 1].body.reasoning, { effort: 'low', exclude: true }, 'thinking models are asked to think lightly, so the answer gets the words');
   assert.equal(res.cut, false, 'a finished answer is not marked cut');
+  assert.ok(prompts.LENGTHS.short.maxTokens >= 12000 && prompts.THINKING === 'high', 'studies get room to think and to write');
   assert.equal(or.month().requests, 1);
   assert.ok(Math.abs(or.month().usd - 0.0012) < 1e-9);
   // An answer that runs out of words, and a stream that ends without [DONE], are both marked cut.

@@ -214,7 +214,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
     try {
       const study = { ref: p.label, passageText: p.passageText, translation: p.translation, mode, length, topic, concern, journal };
       const res = await or.chat({
-        model: s.model, messages: prompts.studyMessages(study, sources), maxTokens: prompts.LENGTHS[length].maxTokens, temperature: 0.7,
+        model: s.model, messages: prompts.studyMessages(study, sources), maxTokens: prompts.LENGTHS[length].maxTokens, temperature: 0.7, reasoning: prompts.THINKING,
         privateHosts: s.privateHosts, signal: ctrl.signal, onDelta: piece => send('study:delta', rid, piece),
       });
       let { md, flags, questionProblems: probs } = verify(res.text, { sources, passageText: p.passageText, extra: journal.map(j => j.excerpt), inBible });
@@ -256,7 +256,7 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
     running.set(rid, ctrl);
     try {
       const res = await or.chat({ model: s.model, messages: prompts.askMessages({ ref: h.label, passageText: h.passageText, mode: h.mode, translation: 'WEB' }, h.thread, question, sources),
-        maxTokens: 3000, temperature: 0.6, privateHosts: s.privateHosts, signal: ctrl.signal, onDelta: piece => send('study:delta', rid, piece) });
+        maxTokens: 12000, temperature: 0.6, reasoning: prompts.THINKING, privateHosts: s.privateHosts, signal: ctrl.signal, onDelta: piece => send('study:delta', rid, piece) });
       const { md, flags } = verify(res.text, { sources, passageText: h.passageText, inBible });
       if (res.cut) flags.push({ kind: 'cut', text: 'The AI stopped before it finished, so the end is missing. Ask again, or try a shorter length.' });
       const fresh = vault.getStudy();
