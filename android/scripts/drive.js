@@ -71,6 +71,18 @@ const check = (ok, what) => { log(ok ? 'PASS' : 'FAIL', what); if (!ok) failures
   await page.evaluate(() => window.wellwrite.setTrust('trust'));
   check((await page.evaluate(() => window.wellwrite.status())).trust.mode === 'trust', 'remember-my-password can be switched on');
 
+  // Bible study's library: the commentary packs download from the GitHub release and unpack on the phone.
+  const libTry = await page.evaluate(async () => {
+    const out = {};
+    try { const o = await window.wellwrite.studyOffer(); out.offer = (o.packs || []).map(p => p.id + (p.installed ? '*' : '')).join(' ') || ('none ' + (o.error || '')); }
+    catch (e) { out.offerError = e.message; }
+    try { const t = Date.now(); const r = await window.wellwrite.studyDownload('history'); out.download = (r && r.id) + ' ' + (r && r.passages) + ' in ' + Math.round((Date.now() - t) / 1000) + 's'; }
+    catch (e) { out.downloadError = e.message; }
+    try { const pk = await window.wellwrite.studyPick({ kind: 'ref', text: 'Luke 2:1-7' }); const s = await window.wellwrite.studySources(pk, {}); out.sources = (s && s.length) || JSON.stringify(s).slice(0, 200); } catch (e) { out.sourcesError = e.message; }
+    return out;
+  });
+  log('library:', JSON.stringify(libTry));
+  check(!!libTry.download && !libTry.downloadError, 'a Bible study library pack downloads on the phone');
   const exp = await page.evaluate(() => window.wellwrite.version());
   check(exp.platform === 'android', 'version ' + exp.version);
 
