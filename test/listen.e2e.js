@@ -108,7 +108,7 @@ app.whenReady().then(async () => {
   // The reader's bar on a phone: one line, short book name, no second Search, nothing cut off.
   await js(`setReaderPos(51, 5); renderBibleView();`); await wait(900);
   const bar = await js(`const b = document.querySelector('.rd-bar'), ref = document.querySelector('.rd-ref');
-    const shown = [...b.children].filter(e => getComputedStyle(e).display !== 'none');
+    const shown = [...b.children].flatMap(e => getComputedStyle(e).display === 'contents' ? [...e.children] : [e]).filter(e => getComputedStyle(e).display !== 'none');
     return { h: Math.round(b.getBoundingClientRect().height), find: getComputedStyle(document.querySelector('.rd-find')).display,
       ref: document.querySelector('.rd-ref-short').textContent, cut: ref.scrollWidth > ref.clientWidth + 1,
       tops: new Set(shown.map(e => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2))).size }`);

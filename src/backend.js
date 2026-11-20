@@ -24,7 +24,7 @@ const ROOT = path.join(__dirname, '..');
 const APP_VERSION = require('../package.json').version;
 
 const DEFAULT_SETTINGS = {
-  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, classicsReadings: true, prayersReadings: true, dailyPrayer: true, shareName: '', readingsFile: '', weekPictures: true, shownBoth: true,
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, readingFont: 'newsreader', spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, classicsReadings: true, prayersReadings: true, dailyPrayer: true, shareName: '', readingsFile: '', weekPictures: true, shownBoth: true,
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
   // the prayer bell (prayer.js), per device
   prayerBell: false, prayerTimes: {}, prayerHoursOn: {}, prayerDays: 'every', prayerSound: 'bell', prayerMutedOn: '', startWithWindows: false, prayerTrayTold: false,
@@ -33,6 +33,7 @@ const DEFAULT_SETTINGS = {
 };
 const CHOICES = {
   theme: ['system', 'light', 'dark'],
+  readingFont: ['newsreader', 'literata', 'source-serif', 'garamond', 'lora', 'atkinson'],
   backupEvery: ['daily', 'weekly', 'close'],
   backupKeep: [5, 10, 30, 0],
   dailyCard: ['quote', 'verse', 'both', 'none'],

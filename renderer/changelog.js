@@ -5,6 +5,18 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.13', date: '2026-11-21', title: 'Choose your reading font',
+    new: [
+      'A choice of reading font, in Settings → General: Newsreader (the original), Literata, Source Serif, Garamond, Lora or Atkinson Hyperlegible. It changes the text of your journal, the Bible, quotes and your studies, with a preview as you choose. The fonts come with the app, so they work offline.',
+    ],
+    improved: [
+      'The Bible reader’s toolbar is tidier on Windows: the chapter and its arrows are one control, and Listen, the version and Search are matching buttons.',
+    ],
+    fixed: [
+      'The copyright notice under the verse of the day (for versions like The Message) no longer squeezes into a narrow column over the card. It shows one line, and the whole notice when tapped.',
+    ],
+  },
+  {
     v: '1.33.12', date: '2026-11-20', title: 'Studies that keep going, and say what they’re doing',
     improved: [
       'Bible study: a study keeps writing when you leave it, whether you switch to another part of WellWrite, switch to another app, or the journal locks. When you come back it carries on where it is, or shows the finished study if it’s done (it’s saved to Your studies either way).',

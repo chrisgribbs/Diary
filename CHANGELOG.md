@@ -2,6 +2,21 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.13 — Choose your reading font
+_21 November 2026_
+
+**New**
+
+- A choice of reading font, in Settings → General: Newsreader (the original), Literata, Source Serif, Garamond, Lora or Atkinson Hyperlegible. It changes the text of your journal, the Bible, quotes and your studies, with a preview as you choose. The fonts come with the app, so they work offline.
+
+**Improved**
+
+- The Bible reader’s toolbar is tidier on Windows: the chapter and its arrows are one control, and Listen, the version and Search are matching buttons.
+
+**Fixed**
+
+- The copyright notice under the verse of the day (for versions like The Message) no longer squeezes into a narrow column over the card. It shows one line, and the whole notice when tapped.
+
 ## 1.33.12 — Studies that keep going, and say what they’re doing
 _20 November 2026_
 

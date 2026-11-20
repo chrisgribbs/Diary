@@ -306,6 +306,20 @@ function run() {
       assert.notEqual(await js(`return study.view`), 'study', 'shown once, not every time');
       assert.equal(await js(`return study.current.id`), shown);
 
+      // A copyright notice under the day's verse: one full-width line, the whole notice when tapped (it once caught
+      // the sidebar's .fold rule and became an 18 px column).
+      const qc = await js(`const c = verseCard({ text: 'Every good gift is from above.', ref: 'James 1:17', translation: 'msg', copyright: 'THE MESSAGE copyright © 1993, 2002, 2018 by Eugene H. Peterson. All rights reserved. Used by permission of NavPress. Represented by Tyndale House Publishers.' }, '2026-11-21', 'empty'); (document.querySelector('#bibleBody') || document.body).prepend(c); const q = c.querySelector('.q-copy'); const one = q.getBoundingClientRect().height; q.click(); await new Promise(r => setTimeout(r, 100)); const r = { w: q.getBoundingClientRect().width, card: c.getBoundingClientRect().width, one, open: q.getBoundingClientRect().height }; c.remove(); return r;`);
+      assert.ok(qc.w > qc.card * 0.8 && qc.one < 20 && qc.open > qc.one, 'the copyright notice spans the card: ' + JSON.stringify(qc));
+
+      // Reading font: the setting changes the serif everywhere, and the fonts load (they ship with the app).
+      await js(`await updateSetting({ readingFont: 'literata' });`);
+      assert.match(await js(`return getComputedStyle(document.documentElement).getPropertyValue('--serif')`), /Literata/);
+      assert.ok(await js(`await document.fonts.load("italic 19px 'Literata'"); await document.fonts.load("19px 'Atkinson Hyperlegible Next'"); return document.fonts.check("19px 'Literata'") && document.fonts.check("19px 'Atkinson Hyperlegible Next'")`), 'the fonts are bundled');
+      await js(`openSettings('general');`); await wait(500);
+      await shot('s14-reading-font');
+      assert.match(await text('#fontPreview'), /long reading on screens/);
+      await js(`document.querySelector('#dlg').close(); await updateSetting({ readingFont: 'newsreader' });`);
+
       // The verse of the day's Study button opens Bible study on that verse.
       await js(`const c = verseCard({ text: 'Be content with what you have.', ref: 'Hebrews 13:5', translation: 'web' }, '2026-11-19', 'top'); document.body.append(c); [...c.querySelectorAll('button')].find(b => b.textContent === 'Study').click(); setTimeout(() => c.remove(), 100);`);
       assert.ok(await until(`study.passage && study.passage.label === 'Hebrews 13:5' && state.mode === 'bible' && state.bibleTab === 'study'`), 'the verse card opens a study on its verse');

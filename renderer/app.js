@@ -78,7 +78,7 @@ const state = {
   verseCache: {},
   weekAt: null,         // a day in the week shown on the weekly page (null = this week)
   pictures: {},         // week picture key -> data URL ('' = none), loaded as needed
-  settings: { autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, spellcheck: true },
+  settings: { autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, readingFont: 'newsreader', spellcheck: true },
   lastActivity: Date.now(),
   unlocked: false,
   dataDir: '',
@@ -2173,7 +2173,7 @@ function verseCard(v, iso, where) {
     el('blockquote', {}, v.text),
     el('figcaption', {}, '— ' + v.ref + ' ', versionButton(v.translation)),
     // The version's copyright notice: one line, tap for all of it.
-    v.copyright ? el('p', { class: 'q-copy fold', title: 'Show the full copyright notice', onclick: e => e.currentTarget.classList.toggle('open') }, v.copyright) : null,
+    v.copyright ? el('p', { class: 'q-copy q-fold', title: 'Show the full copyright notice', onclick: e => e.currentTarget.classList.toggle('open') }, v.copyright) : null,
     el('div', { class: 'q-actions' },
       btn('Write about this', () => writeAboutQuote({ text: v.text, author: v.ref, source: v.translation }, iso), 'q-btn primary'),
       btn('Study', () => studyPassage({ kind: 'ref', text: v.ref })),   // Bible study on this verse (renderer/study.js)
@@ -2927,12 +2927,13 @@ async function renderReader(body, { verse = 0, to = 0 } = {}) {
 
   body.replaceChildren(...[
     el('div', { class: 'rd-bar' },
-      el('button', { type: 'button', class: 'rd-arrow', title: prev ? label(prev) : '', disabled: !prev, onclick: () => prev && go(prev) }, '‹'),
+      el('span', { class: 'rd-pos' },   // ‹ Psalm 48 › as one control
+      el('button', { type: 'button', class: 'rd-arrow', title: prev ? label(prev) : '', 'aria-label': 'Previous chapter', disabled: !prev, onclick: () => prev && go(prev) }, '‹'),
       el('button', { type: 'button', class: 'rd-ref', id: 'rdRef', 'aria-label': label(pos) + ', choose a book and chapter', onclick: () => bookPicker(pos, go) },
         el('span', { class: 'rd-ref-long' }, label(pos)),
         el('span', { class: 'rd-ref-short' }, `${BOOK_ABBR[books[pos.b].name] || bookShort(books[pos.b].name)} ${pos.c}`),
         el('span', { class: 'chev' }, ' ▾')),
-      el('button', { type: 'button', class: 'rd-arrow', title: next ? label(next) : '', disabled: !next, onclick: () => next && go(next) }, '›'),
+      el('button', { type: 'button', class: 'rd-arrow', title: next ? label(next) : '', 'aria-label': 'Next chapter', disabled: !next, onclick: () => next && go(next) }, '›')),
       el('span', { class: 'rd-gap' }),
       el('button', { type: 'button', class: 'btn-plain rd-listen' + (listen.pos && listen.pos.b === pos.b && listen.pos.c === pos.c ? ' on' : ''), title: 'Listen to this chapter (World English Bible, read aloud)', 'aria-label': 'Listen to ' + label(pos), onclick: () => listenTo(pos) },
         headphones(), el('span', { class: 'rd-listen-t' }, 'Listen')),
@@ -3861,9 +3862,21 @@ window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
 
 /* ---------- settings ---------- */
+// The font for reading and writing (journal, Bible, studies, quotes). Menus and buttons keep Instrument Sans.
+const READING_FONTS = [
+  ['newsreader', 'Newsreader', 'Newsreader', 'Warm and bookish (the original)'],
+  ['literata', 'Literata', 'Literata', 'Made for long reading on screens'],
+  ['source-serif', 'Source Serif', 'Source Serif 4', 'Clean and modern'],
+  ['garamond', 'Garamond', 'EB Garamond', 'Classic, like an old Bible'],
+  ['lora', 'Lora', 'Lora', 'Soft and friendly'],
+  ['atkinson', 'Atkinson Hyperlegible', 'Atkinson Hyperlegible Next', 'Plain, and easiest to read'],
+];
+const readingFamily = id => (READING_FONTS.find(f => f[0] === id) || READING_FONTS[0])[2];
 function applySettings() {
   const s = state.settings;
   document.documentElement.style.setProperty('--write-size', s.fontSize + 'px');
+  const fam = readingFamily(s.readingFont);
+  document.documentElement.style.setProperty('--serif', `'${fam}', Georgia, serif`);
   // On Windows the system follows this setting; on Android the page does it itself.
   if (['light', 'dark'].includes(s.theme)) document.documentElement.dataset.theme = s.theme; else delete document.documentElement.dataset.theme;
   if (typeof syncSystemBars === 'function') syncSystemBars();
@@ -4072,6 +4085,10 @@ function openSettings(section) {
         since ? el('p', { style: 'margin-top:6px' }, `Writing since ${fmt(since, { day: 'numeric', month: 'long', year: 'numeric' })}.`) : null,
         el('h3', {}, 'Writing'),
         row('Theme', null, select(s.theme, [['system', ANDROID ? 'Match phone' : 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
+        row('Reading font', 'For your journal, the Bible and your studies.', select(s.readingFont || 'newsreader', READING_FONTS.map(f => [f[0], f[1]]), v => { updateSetting({ readingFont: v }); const p = $('#fontPreview'); if (p) { p.style.fontFamily = `'${readingFamily(v)}', Georgia, serif`; p.querySelector('small').textContent = READING_FONTS.find(f => f[0] === v)[3]; } })),
+        el('p', { class: 'font-preview', id: 'fontPreview', style: `font-family: '${readingFamily(s.readingFont)}', Georgia, serif` },
+          '“Come to me, all you who labour and are heavily burdened, and I will give you rest.”',
+          el('small', {}, (READING_FONTS.find(f => f[0] === (s.readingFont || 'newsreader')) || READING_FONTS[0])[3])),
         row('Text size', null, size),
         row('Check spelling', ANDROID ? 'Your keyboard’s spelling suggestions.' : 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
         row('Categories', 'Group entries into sections, like a notebook.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageCategories(); } }, 'Edit categories'))),
