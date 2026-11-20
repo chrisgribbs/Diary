@@ -118,6 +118,29 @@ const marks = v => v.getStudy().bookmarks.map(b => b.id).sort();
   assert.ok(B.vault.getStudy().aiKey.u, 'the removal is remembered, so an older copy can’t bring it back');
   assert.deepEqual(texts(B.vault), prayersBefore, 'prayers untouched');
 
+  // The book: written on one device, on the other after a sync; chapter by chapter, a removal stays removed.
+  const Book = require('../src/book');
+  let ch1 = '', ch2 = '';
+  A.vault.updateBook(b => { b.info.title = 'The Word among us'; const c = Book.cleanChapter({ title: 'In the beginning', passage: 'John 1:1-18', html: '<p>In the beginning was the Word.</p>' }); ch1 = c.id; b.chapters.push(c); });
+  await both();
+  assert.equal(B.vault.getBook().info.title, 'The Word among us');
+  assert.equal(B.vault.getBook().chapters[0].words, 6, 'the chapter arrives');
+  assert.ok(![...drive.shared.files.values()].some(f => f.data.toString('latin1').includes('In the beginning')), 'never in Drive in plain text');
+  await wait(5);
+  B.vault.updateBook(b => { const c = Book.cleanChapter({ title: 'The wedding at Cana', passage: 'John 2:1-11' }); ch2 = c.id; b.chapters.push(c); });
+  await wait(5);
+  A.vault.updateBook(b => { b.chapters[0].html += '<p>And the Word became flesh.</p>'; });
+  await both(); await both();
+  for (const v of [A.vault, B.vault]) {
+    const bk = v.getBook();
+    assert.deepEqual(Book.ordered(bk).map(c => c.title), ['In the beginning', 'The wedding at Cana'], 'both chapters, in order, on both');
+    assert.equal(bk.chapters.find(c => c.id === ch1).words, 11, 'the later edit kept');
+  }
+  await wait(5);
+  A.vault.updateBook(b => { b.chapters = b.chapters.filter(c => c.id !== ch2); });
+  await both(); await both();
+  assert.deepEqual(B.vault.getBook().chapters.map(c => c.id), [ch1], 'removed on both');
+
   for (const d of [A, B]) { d.sync.stop && d.sync.stop(); fs.rmSync(d.dir, { recursive: true, force: true }); }
   console.log('study sync tests passed');
 })().catch(e => { console.error(e); process.exit(1); });

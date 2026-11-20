@@ -28,6 +28,7 @@ const KEY_FILE = 'sync-key';
 const CATS = 'categories';
 const QUOTES = 'quotes';
 const STUDY = 'study';      // Bible study bookmarks and prayer list (merged item by item)
+const BOOK = 'book';        // the book you're writing (merged chapter by chapter, src/book.js)
 const GONE = '§deleted';
 const QUIET_MS = 4000;              // after you stop typing
 const EVERY_MS = 3 * 60 * 1000;     // and every few minutes
@@ -184,7 +185,7 @@ class Sync {
     const st = this.st, vault = this.vault, drive = this.drive;
     if (!st || !st.on || !vault.isUnlocked()) return null;
     const key = this._key();
-    const out = { changed: [], copies: [], removed: [], categories: false, quotes: false, study: false, sent: 0, tidied: 0 };
+    const out = { changed: [], copies: [], removed: [], categories: false, quotes: false, study: false, book: false, sent: 0, tidied: 0 };
     const save = () => { if (this.vault.isUnlocked() && this.st === st) this._write(); };
     try {
       // Copies kept "(from another device)" that say exactly the same as another entry: tidied away (and so, below,
@@ -218,6 +219,7 @@ class Sync {
         if (name === CATS) this._applyCategories(payload, file, out);
         else if (name === QUOTES) this._applyQuotes(payload, file, out);
         else if (name === STUDY) this._applyStudy(payload, file, out);
+        else if (name === BOOK) this._applyBook(payload, file, out);
         else if (name.startsWith('e-') && ID_RE.test(name.slice(2)) && payload.id === name.slice(2)) this._applyEntry(name, payload, file, out);
         save();
       }
@@ -259,6 +261,12 @@ class Sync {
       if (sy.updated && (!st.items[STUDY] || st.items[STUDY].u !== sy.updated)) {
         await this._put(STUDY, sy, out);
         st.items[STUDY].u = sy.updated;
+        save();
+      }
+      const bk = vault.bookForSync();
+      if (bk.updated && (!st.items[BOOK] || st.items[BOOK].u !== bk.updated)) {
+        await this._put(BOOK, bk, out);
+        st.items[BOOK].u = bk.updated;
         save();
       }
       return out;
@@ -335,6 +343,15 @@ class Sync {
     out.study = JSON.stringify([before.bookmarks, before.prayers, before.aiKey]) !== JSON.stringify([after.bookmarks, after.prayers, after.aiKey]);
     // If the merge added anything of ours, our "updated" moved on and step 2 sends it back.
     st.items[STUDY] = { f: file.id, r: file.version, u: after.updated === String(p.updated || '') ? after.updated : (st.items[STUDY] ? st.items[STUDY].u : '') };
+  }
+
+  _applyBook(p, file, out) {
+    const st = this.st, vault = this.vault;
+    const before = vault.bookForSync();
+    vault.applySyncedBook(p);
+    const after = vault.bookForSync();
+    out.book = require('./book').signature(before) !== require('./book').signature(after);
+    st.items[BOOK] = { f: file.id, r: file.version, u: after.updated === String(p.updated || '') ? after.updated : (st.items[BOOK] ? st.items[BOOK].u : '') };
   }
 
   _applyQuotes(p, file, out) {

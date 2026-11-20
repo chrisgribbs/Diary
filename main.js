@@ -252,6 +252,20 @@ async function pickBackup() {
 }
 handle('backup:pick', pickBackup);
 
+// The book (Settings → General → Write a book) as a Word document.
+handle('book:export', async () => {
+  const book = vault.getBook();
+  const name = (book.info.title || 'My book').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'My book';
+  const r = await dialog.showSaveDialog(win, {
+    title: 'Export your book as a Word document',
+    defaultPath: path.join(app.getPath('documents'), `${name} (draft ${new Date().toISOString().slice(0, 10)}).docx`),
+    filters: [{ name: 'Word document', extensions: ['docx'] }],
+  });
+  if (r.canceled || !r.filePath) return null;
+  fs.writeFileSync(r.filePath, require('./src/docx').bookDocx(book));
+  return { file: r.filePath };
+});
+
 handle('export:readable', async () => {
   const r = await dialog.showSaveDialog(win, {
     title: 'Export a readable copy',

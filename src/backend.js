@@ -24,7 +24,7 @@ const ROOT = path.join(__dirname, '..');
 const APP_VERSION = require('../package.json').version;
 
 const DEFAULT_SETTINGS = {
-  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, readingFont: 'newsreader', spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, classicsReadings: true, prayersReadings: true, dailyPrayer: true, shareName: '', readingsFile: '', weekPictures: true, shownBoth: true,
+  autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, readingFont: 'newsreader', bookOn: false, spellcheck: true, showQuote: true, dailyCard: 'both', quoteFrom: '', quotePlan: 'christian', builtinReadings: true, classicsReadings: true, prayersReadings: true, dailyPrayer: true, shareName: '', readingsFile: '', weekPictures: true, shownBoth: true,
   backupToGoogle: false, backupToFolder: false, backupDir: '', backupEvery: 'daily', backupKeep: 10, backupNudgeDismissed: false,
   // the prayer bell (prayer.js), per device
   prayerBell: false, prayerTimes: {}, prayerHoursOn: {}, prayerDays: 'every', prayerSound: 'bell', prayerMutedOn: '', startWithWindows: false, prayerTrayTold: false,
@@ -126,7 +126,7 @@ function createBackend(platform) {
     vault[fn] = (...a) => { const r = orig(...a); if (vault.isUnlocked()) { sync.st = null; sync.start(); } return r; };
   }
   { const orig = vault.lock.bind(vault); vault.lock = () => { sync.stop(); orig(); }; }
-  for (const fn of ['save', 'remove', 'setCategories', 'recategorize', 'setQuotes', 'setStudy']) {
+  for (const fn of ['save', 'remove', 'setCategories', 'recategorize', 'setQuotes', 'setStudy', 'updateBook']) {
     const orig = vault[fn].bind(vault);
     vault[fn] = (...a) => { const r = orig(...a); sync.touch(); return r; };
   }
@@ -401,6 +401,43 @@ function createBackend(platform) {
   handle('prayer:bellNow', () => { const k = prayer.hourAt(readSettings()); return { key: k, date: prayer.iso(new Date()), at: Date.now(), ...prayer.bellText(k, new Date()) }; });
   handle('settings:get', () => readSettings());
   handle('settings:set', s => writeSettings(s || {}));
+
+  // ---------- the book (src/book.js) ----------
+  const Book = require('./book');
+  const bookView = b => ({ info: b.info, stats: Book.stats(b),
+    chapters: Book.ordered(b).map(({ html, ...c }) => ({ ...c, snippet: Book.textOf(html).replace(/\s+/g, ' ').trim().slice(0, 160) })) });
+  handle('book:get', () => bookView(vault.getBook()));
+  handle('book:chapter', id => vault.getBook().chapters.find(c => c.id === String(id)) || null);
+  handle('book:setInfo', patch => {
+    patch = patch || {};
+    return bookView(vault.updateBook(b => { for (const k of ['title', 'subtitle', 'goal', 'start', 'due']) if (k in patch) b.info[k] = patch[k]; }));
+  });
+  handle('book:addChapter', (fields, afterId) => {
+    let id = '';
+    const b = vault.updateBook(bk => {
+      const c = Book.cleanChapter({ ...(fields || {}), html: '' });
+      id = c.id; bk.chapters.push(c);
+      const at = bk.info.order.indexOf(String(afterId || ''));
+      if (at >= 0) bk.info.order.splice(at + 1, 0, id); else bk.info.order.push(id);
+    });
+    return { id, book: bookView(b) };
+  });
+  // Saving a chapter returns only the counts, so typing stays light: the chapter's words, the book's words, progress.
+  handle('book:saveChapter', (id, patch) => {
+    patch = patch || {};
+    const b = vault.updateBook(bk => {
+      const c = bk.chapters.find(x => x.id === String(id));
+      if (!c) throw new Error('That chapter is no longer in the book.');
+      for (const k of ['title', 'passage', 'outline', 'status', 'html']) if (k in patch) c[k] = patch[k];
+    });
+    const c = b.chapters.find(x => x.id === String(id));
+    return { words: c.words, u: c.u, stats: Book.stats(b) };
+  });
+  handle('book:removeChapter', id => bookView(vault.updateBook(b => { b.chapters = b.chapters.filter(c => c.id !== String(id)); })));
+  handle('book:move', (id, by) => bookView(vault.updateBook(b => {
+    const o = b.info.order, i = o.indexOf(String(id)), j = i + (by < 0 ? -1 : 1);
+    if (i >= 0 && j >= 0 && j < o.length) [o[i], o[j]] = [o[j], o[i]];
+  })));
 
   // ---------- backups ----------
   handle('backup:import', (file, pw) => vault.importBackup(file, pw));

@@ -5,6 +5,17 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.34.0', date: '2026-11-21', title: 'Write a book',
+    new: [
+      'Write a book (Windows): an optional Book section for writing a book over months. Switch it on in Settings → General → Write a book, and a Book tab appears beside Journal, Bible, Week and Photos (Ctrl+5).',
+      'The Book section shows your progress towards your word goal (50,000 to start with) on a progress bar, with a marker for where an even pace would put you. It shows your words today and this week, how many words a week finish the draft by its due date (six months from the day you start), and whether you’re ahead or behind.',
+      'Plan your book as chapters: a working title, the passage of John it reflects on, an outline, and a status (Planned, Drafting, Revising, Done). Reorder or remove chapters as the book takes shape.',
+      'Write each chapter with its passage beside you: the passage of John is on the left, in your Bible version with its verses marked, and you can look up any other passage there too. Your writing is on the right, saved as you type, with its word count.',
+      'Export your book as a Word document: a title page, then each chapter on a new page with its heading and passage.',
+      'Your book is kept inside your encrypted journal and synced through Google Drive like your entries, chapter by chapter, so it’s backed up. Writing it is on Windows only.',
+    ],
+  },
+  {
     v: '1.33.14', date: '2026-11-21', title: 'The home page fits your phone again',
     fixed: [
       'Phones: the journal’s home page ran off the right of the screen after 1.33.13. The one-line copyright notice under the verse (for versions like The Message) stretched the cards wider than the screen. The cards now always fit, and the notice shortens with “…” until you tap it.',

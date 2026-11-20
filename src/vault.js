@@ -11,6 +11,7 @@
  *  - Nothing readable ever touches the disk while the vault is in use.
  */
 const fs = require('fs');
+const Book = require('./book');
 const path = require('path');
 const crypto = require('crypto');
 
@@ -341,6 +342,41 @@ class Vault {
     const changed = JSON.stringify([study.bookmarks, study.prayers, study.gone, study.aiKey]) !== JSON.stringify([before.bookmarks, before.prayers, before.gone, before.aiKey]);
     this._writeMeta({ study, studyUpdated: now, ...(changed ? { studySynced: now } : {}) });
     return study;
+  }
+
+  // ---------- the book (src/book.js): kept in meta, synced as its own Drive file ----------
+  getBook() { this._requireKey(); return Book.cleanBook(this.getMeta().book); }
+  /**
+   * Change the book with fn(book) (it edits in place). Chapters and details that changed get a new time, today's
+   * total is noted for the week's pace, and the book is marked for sync.
+   */
+  updateBook(fn) {
+    this._requireKey();
+    const before = this.getBook();
+    const draft = JSON.parse(JSON.stringify(before));
+    fn(draft);
+    const now = new Date().toISOString();
+    const after = Book.cleanBook(draft);
+    const was = new Map(before.chapters.map(c => [c.id, c]));
+    const key = c => JSON.stringify([c.title, c.passage, c.outline, c.status, c.html]);
+    for (const c of after.chapters) { const o = was.get(c.id); if (!o || key(o) !== key(c)) c.u = now; }
+    for (const c of before.chapters) if (!after.chapters.some(x => x.id === c.id)) after.gone[c.id] = now;
+    const { u: _u1, ...bi } = before.info, { u: _u2, ...ai } = after.info;
+    if (JSON.stringify(bi) !== JSON.stringify(ai)) after.info.u = now;
+    after.days[Book.localISO()] = Book.total(after);
+    const changed = Book.signature(after) !== Book.signature(before);
+    this._writeMeta({ book: after, ...(changed ? { bookSynced: now } : {}) });
+    return after;
+  }
+  bookForSync() { const meta = this.getMeta(); return { ...this.getBook(), updated: meta.bookSynced || '' }; }
+  /** The book from another device, merged chapter by chapter (src/book.js). Marked changed if ours added anything. */
+  applySyncedBook(p) {
+    this._requireKey();
+    const theirs = Book.cleanBook(p);
+    const merged = Book.mergeBooks(this.getBook(), theirs);
+    const same = Book.signature(merged) === Book.signature(theirs);
+    this._writeMeta({ book: merged, bookSynced: same ? String(p.updated || '') : new Date().toISOString() });
+    return merged;
   }
 
   _writeMeta(patch) {

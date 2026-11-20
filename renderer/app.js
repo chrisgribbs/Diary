@@ -78,7 +78,7 @@ const state = {
   verseCache: {},
   weekAt: null,         // a day in the week shown on the weekly page (null = this week)
   pictures: {},         // week picture key -> data URL ('' = none), loaded as needed
-  settings: { autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, readingFont: 'newsreader', spellcheck: true },
+  settings: { autoLockMinutes: 10, lockOnMinimize: false, theme: 'system', fontSize: 19, readingFont: 'newsreader', bookOn: false, spellcheck: true },
   lastActivity: Date.now(),
   unlocked: false,
   dataDir: '',
@@ -358,12 +358,14 @@ async function lockNow({ auto = false } = {}) {
   if (!state.unlocked) return;
   if (auto && state.signingIn) return;
   await saveNow();
+  if (typeof bookFlush === 'function') await bookFlush();
   state.unlocked = false;
   try { await api.lock(); } catch {}
   // Wipe everything readable from the page.
   state.metas = []; state.current = null; state.categories = []; state.trail = []; state.quotes = []; state.bible = null; state.verseCache = {}; state.pictures = {}; state.weekAt = null; state.photoThumbs = new Map();
   if (typeof study !== 'undefined') Object.assign(study, { view: 'start', passage: null, current: null, live: '', journal: null, reflection: '', writing: null });
-  $('#bibleView').replaceChildren(); $('#quoteView').replaceChildren();
+  $('#bibleView').replaceChildren(); $('#quoteView').replaceChildren(); $('#bookView').replaceChildren();
+  if (typeof bookState !== 'undefined') Object.assign(bookState, { view: 'overview', data: null, chapter: null });
   closePopover();
   $('#body').innerHTML = ''; $('#title').value = ''; $('#tagChips').replaceChildren();
   $('#list').replaceChildren(); $('#calGrid').replaceChildren(); $('#search').value = '';
@@ -2213,6 +2215,7 @@ function renderQuoteSlot() {
 }
 
 function refreshQuote() {
+  if (state.mode === 'book') { if (typeof bookDrawPassage === 'function' && bookState.view === 'chapter') bookDrawPassage(); return; }
   if (state.mode === 'quote') renderQuoteView();
   else if (state.mode === 'bible') renderBibleView();
   else if (state.current) renderQuoteSlot();
@@ -2748,12 +2751,13 @@ async function exportQuotes() {
 /* ---------- views: Journal / Bible / Quote ---------- */
 function setMode(mode) {
   if (mode === 'journal') requestAnimationFrame(() => fitTitle());
-  if (!['journal', 'bible', 'quote', 'photos'].includes(mode)) mode = 'journal';
+  if (!['journal', 'bible', 'quote', 'photos', 'book'].includes(mode) || (mode === 'book' && !bookAvailable())) mode = 'journal';
+  if (state.mode === 'book' && mode !== 'book' && typeof bookFlush === 'function') bookFlush();
   if (state.mode === 'journal' && mode !== 'journal') saveNow();
   state.mode = mode;
   try { localStorage.setItem('mode', mode); } catch {}
   $('#page').dataset.mode = mode;
-  $('#topTitle').textContent = { journal: 'Journal', bible: 'Bible', quote: 'This week', photos: 'Photos' }[mode];
+  $('#topTitle').textContent = { journal: 'Journal', bible: 'Bible', quote: 'This week', photos: 'Photos', book: 'Book' }[mode];
   for (const b of document.querySelectorAll('.modeswitch [data-mode], .tabbar [data-mode]')) {
     const on = b.dataset.mode === mode;
     b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on));
@@ -2763,6 +2767,7 @@ function setMode(mode) {
   if (mode === 'bible') renderBibleView();
   else if (mode === 'quote') renderQuoteView();
   else if (mode === 'photos') renderPhotosView();
+  else if (mode === 'book') renderBookView();
   else if (state.current) renderQuoteSlot(); else showEmpty();
   $('#sheetScroll').scrollTop = 0;
 }
@@ -3871,10 +3876,15 @@ const READING_FONTS = [
   ['lora', 'Lora', 'Lora', 'Soft and friendly'],
   ['atkinson', 'Atkinson Hyperlegible', 'Atkinson Hyperlegible Next', 'Plain, and easiest to read'],
 ];
+const bookAvailable = () => !ANDROID && !!(state.settings && state.settings.bookOn);
 const readingFamily = id => (READING_FONTS.find(f => f[0] === id) || READING_FONTS[0])[2];
 function applySettings() {
   const s = state.settings;
   document.documentElement.style.setProperty('--write-size', s.fontSize + 'px');
+  // The book (Windows only, when it's switched on): its tab beside Journal, Bible, Week and Photos.
+  const bookTab = document.querySelector('.modeswitch [data-mode=book]');
+  if (bookTab) bookTab.hidden = !bookAvailable();
+  if (state.mode === 'book' && !bookAvailable() && state.unlocked) setMode('journal');
   const fam = readingFamily(s.readingFont);
   document.documentElement.style.setProperty('--serif', `'${fam}', Georgia, serif`);
   // On Windows the system follows this setting; on Android the page does it itself.
@@ -4090,6 +4100,7 @@ function openSettings(section) {
           '“Come to me, all you who labour and are heavily burdened, and I will give you rest.”',
           el('small', {}, (READING_FONTS.find(f => f[0] === (s.readingFont || 'newsreader')) || READING_FONTS[0])[3])),
         row('Text size', null, size),
+        ANDROID ? null : row('Write a book', 'Adds a Book section for planning chapters and writing a book beside the Bible, with a word goal and a deadline. Saved in your journal and synced.', check(!!s.bookOn, v => updateSetting({ bookOn: v }))),
         row('Check spelling', ANDROID ? 'Your keyboard’s spelling suggestions.' : 'Underlines misspelled words. Right-click for suggestions.', check(s.spellcheck, v => updateSetting({ spellcheck: v }))),
         row('Categories', 'Group entries into sections, like a notebook.', el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); manageCategories(); } }, 'Edit categories'))),
 
@@ -4479,6 +4490,7 @@ api.onSyncChanged(async r => {
   state.metas = await api.list();
   if (r.categories) { try { state.categories = await api.getCategories(); } catch {} }
   if (r.quotes) { try { state.quotes = await api.getQuotes(); refreshQuote(); if ($('#dlg').open && $('#dlg .q-summary')) manageQuotes(); } catch {} }
+  if (r.book && state.mode === 'book' && typeof bookOnSync === 'function') bookOnSync();
   // Bible study settings open while the key arrives (or is removed) from another device: show it now.
   if (r.study && $('#dlg').open && $('#studySettings') && !($('#studySettings input[type=password]') || {}).value) {
     try { renderStudySettings($('#studySettings'), () => openSettings('study')); } catch {}
@@ -4671,6 +4683,7 @@ document.addEventListener('keydown', e => {
     else if (k === 'k' && body.contains(document.activeElement)) { e.preventDefault(); insertLink(); }
     else if (k === ',') { e.preventDefault(); openSettings(); }
     else if (k === '1' || k === '2' || k === '3' || k === '4') { e.preventDefault(); setMode(['journal', 'bible', 'quote', 'photos'][+k - 1]); }
+    else if (k === '5' && bookAvailable()) { e.preventDefault(); setMode('book'); }
   }
   if (e.key === 'Escape' && !$('#lightbox').hidden) hidePhoto();
 }, true);
