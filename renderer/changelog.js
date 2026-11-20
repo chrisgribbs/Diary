@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.14', date: '2026-11-21', title: 'The home page fits your phone again',
+    fixed: [
+      'Phones: the journal’s home page ran off the right of the screen after 1.33.13. The one-line copyright notice under the verse (for versions like The Message) stretched the cards wider than the screen. The cards now always fit, and the notice shortens with “…” until you tap it.',
+    ],
+  },
+  {
     v: '1.33.13', date: '2026-11-21', title: 'Choose your reading font',
     new: [
       'A choice of reading font, in Settings → General: Newsreader (the original), Literata, Source Serif, Garamond, Lora or Atkinson Hyperlegible. It changes the text of your journal, the Bible, quotes and your studies, with a preview as you choose. The fonts come with the app, so they work offline.',

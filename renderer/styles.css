@@ -579,7 +579,7 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 .page:not([data-mode="journal"]) .toolbar { visibility: hidden; }
 
 /* daily cards (quote / verse) */
-.daily-slot, .quote-slot { display: grid; gap: 14px; margin-bottom: 26px; }
+.daily-slot, .quote-slot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-bottom: 26px; }   /* the column never grows past the page for a long line */
 .quote-slot[hidden], .daily-slot[hidden] { display: none; }
 .empty .daily-slot { text-align: left; margin: 0 0 40px; }
 .quote-card { margin: 0; padding: 16px 20px 12px; border-left: 3px solid var(--foil); background: color-mix(in srgb, var(--foil) 7%, transparent); border-radius: 0 8px 8px 0; }
@@ -1312,7 +1312,9 @@ body.listening .readview { padding-bottom: 96px; }
 }
 
 /* A version's copyright notice under the day's verse: one line, tap for all of it */
-.quote-card .q-copy.q-fold { display: block; width: auto; height: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.quote-card { min-width: 0; max-width: 100%; box-sizing: border-box; }
+/* contain: inline-size stops the one long line widening the card (and the page) before it's cut short */
+.quote-card .q-copy.q-fold { display: block; width: auto; height: auto; contain: inline-size; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .quote-card .q-copy.q-fold.open { white-space: normal; overflow: visible; }
 
 /* ---------- Bible study (renderer/study.js) ---------- */

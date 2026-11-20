@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.14 — The home page fits your phone again
+_21 November 2026_
+
+**Fixed**
+
+- Phones: the journal’s home page ran off the right of the screen after 1.33.13. The one-line copyright notice under the verse (for versions like The Message) stretched the cards wider than the screen. The cards now always fit, and the notice shortens with “…” until you tap it.
+
 ## 1.33.13 — Choose your reading font
 _21 November 2026_
 

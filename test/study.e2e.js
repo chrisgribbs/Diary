@@ -331,6 +331,12 @@ function run() {
       await js(`study.current = (await api.studyGet((await api.studyHistory())[0].id)); study.view = 'study'; state.bibleTab = 'study'; renderBibleView();`);
       assert.ok(await until(`document.querySelector('.st-question')`));
       await shot('s9-phone');
+      // The journal's home on a phone, with a version that carries a long copyright notice (The Message): nothing
+      // may run off the screen (1.33.13's one-line notice widened the cards past it).
+      await js(`setMode('journal'); state.current = null; showEmpty();`); await wait(600);
+      const home = await js(`const host = document.querySelector('#emptyDaily'); host.hidden = false; const c = verseCard({ text: 'So, my very dear friends, don’t get thrown off course. Every desirable and beneficial gift comes out of heaven.', ref: 'James 1:17', translation: 'msg', copyright: 'THE MESSAGE: The Bible in Contemporary Language copyright © 1993, 2002, 2018 by Eugene H. Peterson. All rights reserved. Used by permission of NavPress. Represented by Tyndale House Publishers.' }, '2026-11-21', 'empty'); host.prepend(c); await new Promise(r => setTimeout(r, 300)); const w = innerWidth; const clipped = n => { for (let a = n.parentElement; a; a = a.parentElement) if (/hidden|clip/.test(getComputedStyle(a).overflowX) && a.getBoundingClientRect().right <= w + 1) return true; return false; }; const over = [...document.querySelectorAll('#empty *')].filter(n => n.getClientRects().length && n.getBoundingClientRect().right > w + 1 && !clipped(n)).map(n => n.className || n.tagName).slice(0, 5); return { over, scroll: document.querySelector('#empty').scrollWidth, w, card: Math.round(c.getBoundingClientRect().right) };`);
+      await shot('s9b-phone-home');
+      assert.ok(!home.over.length && home.card <= home.w, 'the journal home fits a phone screen: ' + JSON.stringify(home));
       const overflow = await js(`const w = innerWidth; return [...document.querySelectorAll('.st-card *')].filter(n => n.getClientRects().length && n.getBoundingClientRect().right > w + 1).map(n => n.className || n.tagName).slice(0, 5)`);
       assert.deepEqual(overflow, [], 'nothing runs off a phone screen');
       await js(`document.querySelector('.st-question').scrollIntoView();`);
