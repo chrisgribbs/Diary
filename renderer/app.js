@@ -365,7 +365,7 @@ async function lockNow({ auto = false } = {}) {
   state.metas = []; state.current = null; state.categories = []; state.trail = []; state.quotes = []; state.bible = null; state.verseCache = {}; state.pictures = {}; state.weekAt = null; state.photoThumbs = new Map();
   if (typeof study !== 'undefined') Object.assign(study, { view: 'start', passage: null, current: null, live: '', journal: null, reflection: '', writing: null });
   $('#bibleView').replaceChildren(); $('#quoteView').replaceChildren(); $('#bookView').replaceChildren();
-  if (typeof bookState !== 'undefined') Object.assign(bookState, { view: 'overview', data: null, chapter: null });
+  if (typeof bookState !== 'undefined') Object.assign(bookState, { view: 'overview', data: null, chapter: null, studyId: '', run: null, pane: 'passage' });
   closePopover();
   $('#body').innerHTML = ''; $('#title').value = ''; $('#tagChips').replaceChildren();
   $('#list').replaceChildren(); $('#calGrid').replaceChildren(); $('#search').value = '';

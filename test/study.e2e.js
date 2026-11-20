@@ -311,6 +311,32 @@ function run() {
       const qc = await js(`const c = verseCard({ text: 'Every good gift is from above.', ref: 'James 1:17', translation: 'msg', copyright: 'THE MESSAGE copyright © 1993, 2002, 2018 by Eugene H. Peterson. All rights reserved. Used by permission of NavPress. Represented by Tyndale House Publishers.' }, '2026-11-21', 'empty'); (document.querySelector('#bibleBody') || document.body).prepend(c); const q = c.querySelector('.q-copy'); const one = q.getBoundingClientRect().height; q.click(); await new Promise(r => setTimeout(r, 100)); const r = { w: q.getBoundingClientRect().width, card: c.getBoundingClientRect().width, one, open: q.getBoundingClientRect().height }; c.remove(); return r;`);
       assert.ok(qc.w > qc.card * 0.8 && qc.one < 20 && qc.open > qc.one, 'the copyright notice spans the card: ' + JSON.stringify(qc));
 
+      // The Book section's Study tab: Bible study beside a chapter (studies already written on the passage are there;
+      // a new one can be written from the pane; any of it goes into the chapter's notes).
+      await js(`await updateSetting({ bookOn: true }); await api.bookAddChapter({ title: 'Rest for the weary', passage: 'Matthew 11:28-30', outline: 'Start with the yoke.' }); setMode('book');`);
+      assert.ok(await until(`document.querySelector('.bk-ch')`));
+      await js(`document.querySelector('.bk-ch').click();`);
+      assert.ok(await until(`document.querySelector('.bk-ptab')`));
+      await click('.bk-ptab', 'Study');
+      assert.ok(await until(`document.querySelector('.bk-slist button')`, 5000), 'the studies on this passage are listed');
+      const before = await js(`return document.querySelectorAll('.bk-slist li').length`);
+      await js(`document.querySelector('.bk-slist button').click();`);
+      assert.ok(await until(`document.querySelector('.bk-sbody p')`));
+      await click('.bk-sactions button', 'Add to my notes');
+      for (let t = 0; t < 30 && !/From the study/.test(await js(`return (await api.bookChapter(bookState.chapter.id)).outline`)); t++) await wait(100);
+      assert.match(await js(`return (await api.bookChapter(bookState.chapter.id)).outline`), /^Start with the yoke\.\n\nFrom the study “/);
+      await shot('s15-book-study');
+      await click('.bk-study button', '‹ Studies');
+      assert.ok(await until(`document.querySelector('.bk-snew button')`));
+      await js(`document.querySelector('.bk-snew select').value = 'teaching';`);
+      await click('.bk-snew button', 'Write a study');
+      assert.ok(await until(`document.querySelector('.bk-stitle')`, 15000), 'a new study, written from the pane, opens there');
+      await click('.bk-study button', '‹ Studies');
+      assert.ok(await until(`document.querySelectorAll('.bk-slist li').length === ${before + 1}`), 'and joins the list');
+      await click('.bk-ptab', 'Passage');
+      assert.ok(await until(`/Come to me/.test(document.querySelector('#bkPassage').innerText)`));
+      await js(`await bookFlush(); await updateSetting({ bookOn: false });`);
+
       // Reading font: the setting changes the serif everywhere, and the fonts load (they ship with the app).
       await js(`await updateSetting({ readingFont: 'literata' });`);
       assert.match(await js(`return getComputedStyle(document.documentElement).getPropertyValue('--serif')`), /Literata/);

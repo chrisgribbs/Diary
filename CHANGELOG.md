@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.34.1 — Bible study beside your book
+_21 November 2026_
+
+**New**
+
+- Book: a Study tab beside each chapter. Write a Bible study of the chapter’s passage in any style, read the studies you’ve already written on it, ask follow-up questions, and add a whole study, or just the part you select, to the chapter’s notes. Studies written here are saved to Your studies in the Bible section too.
+
 ## 1.34.0 — Write a book
 _21 November 2026_
 

@@ -12,6 +12,9 @@ const bookState = {
   chapter: null,      // the chapter being written (with its html)
   editing: null,      // { form: 'details' | 'new' } on the overview
   saveTimer: 0, pending: null, saving: null,
+  pane: 'passage',    // the left pane: passage | study
+  studyId: '',        // a study open in the pane
+  run: null,          // a study being written from here: { rid, text, phase, kind: 'study' | 'ask' }
 };
 const BOOK_STATUS = [['planned', 'Planned'], ['drafting', 'Drafting'], ['revising', 'Revising'], ['done', 'Done']];
 const nf = n => Number(n || 0).toLocaleString();
@@ -190,19 +193,25 @@ function drawBookChapter(box) {
       el('span', { class: 'rd-gap' }),
       el('span', { id: 'bkProgress' }, progressBlock(st, info, { compact: true }))),
     el('div', { class: 'bk-split' },
-      el('section', { class: 'bk-passage', id: 'bkPassage', 'aria-label': 'The passage' }),
+      el('section', { class: 'bk-passage', 'aria-label': 'The passage and Bible study' },
+        el('div', { class: 'bk-ptabs', role: 'tablist' },
+          ...[['passage', 'Passage'], ['study', 'Study']].map(([k, l]) => el('button', { type: 'button', role: 'tab', class: 'bk-ptab' + (bookState.pane === k ? ' on' : ''), 'aria-selected': String(bookState.pane === k),
+            onclick: () => { bookState.pane = k; document.querySelectorAll('.bk-ptab').forEach(b => { const on = b.textContent === l; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); }); bookDrawPane(); } }, l))),
+        el('div', { class: 'bk-pane', id: 'bkPassage' })),
       el('section', { class: 'bk-write' },
         el('details', { class: 'bk-outline-box', open: !c.html }, el('summary', {}, 'Outline and notes'), outline),
         tools, editor))));
-  bookDrawPassage();
+  bookDrawPane();
   if (!c.html) setTimeout(() => editor.focus(), 50);
 }
 const countLocal = node => (node.innerText.match(/[^\s—–]+/g) || []).filter(w => /[A-Za-z0-9À-ɏ]/.test(w)).length;
 
+const bookDrawPane = () => (bookState.pane === 'study' ? bookDrawStudy() : bookDrawPassage());
+
 /** The passage pane: any reference (it starts at the chapter's), in your Bible version, the chosen verses marked. */
 async function bookDrawPassage() {
   const pane = $('#bkPassage');
-  if (!pane) return;
+  if (!pane || bookState.pane !== 'passage') return;
   const c = bookState.chapter;
   const refInput = el('input', { class: 'bk-ref', value: bookState.ref, placeholder: 'e.g. John 3:1-21', 'aria-label': 'Passage to show',
     onkeydown: e => { if (e.key === 'Enter') { bookState.ref = refInput.value.trim() || 'John 1'; bookDrawPassage(); } } });
@@ -254,9 +263,128 @@ async function bookDrawPassage() {
     ...parts,
     copyright ? el('p', { class: 'rv-note' }, copyright) : null);
   const first = pane.querySelector('.bk-on');
-  if (first) first.scrollIntoView({ block: 'start' });
-  pane.scrollTop = Math.max(0, pane.scrollTop - 60);
+  const scroller = pane.closest('.bk-passage');
+  if (first && scroller) scroller.scrollTop = Math.max(0, first.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 110);
 }
+
+// ---------- the Study tab beside the page: Bible study on the passage, without leaving the chapter ----------
+const refOverlaps = (a, b) => {
+  if (!Array.isArray(a) || !Array.isArray(b) || a[0] !== b[0]) return false;
+  const lo = r => r[1] * 1000 + (r[2] || 0), hi = r => (r[3] || r[1]) * 1000 + (r[4] || 999);
+  return lo(a) <= hi(b) && lo(b) <= hi(a);
+};
+async function bookDrawStudy() {
+  const pane = $('#bkPassage');
+  if (!pane || bookState.pane !== 'study') return;
+  const draw = (...kids) => { if (bookState.pane === 'study') pane.replaceChildren(el('div', { class: 'bk-study' }, ...kids.filter(Boolean))); };
+  let status, p;
+  try { [status, p] = await Promise.all([api.studyStatus(), api.studyPick({ kind: 'ref', text: bookState.ref })]); }
+  catch (x) { return draw(el('p', { class: 'rv-note warn' }, x.message)); }
+  const label = p && p.label ? p.label : bookState.ref;
+
+  // A study being written (or a question being answered) from here
+  if (bookState.run) {
+    const r = bookState.run;
+    return draw(el('p', { class: 'bk-skick' }, r.kind === 'ask' ? 'Answering your question' : `Writing a study of ${label}`),
+      el('div', { class: 'bk-slive' }, ...mdNodes(r.text || '')),
+      el('p', { class: 'st-small st-pulse bk-sphase' }, r.phase || 'Starting…'),
+      el('button', { type: 'button', class: 'btn-plain', onclick: () => api.studyCancel(r.rid) }, 'Stop'));
+  }
+  // One study, open
+  if (bookState.studyId) {
+    const h = await api.studyGet(bookState.studyId).catch(() => null);
+    if (!h) { bookState.studyId = ''; return bookDrawStudy(); }
+    const body = el('div', { class: 'bk-sbody' });
+    const parts = mdSplit(h.md);
+    for (const sec of parts.sections) { if (sec.heading) body.append(el('h4', {}, sec.heading)); body.append(...mdNodes(sec.text)); }
+    const thread = [];
+    for (let i = 0; i < (h.thread || []).length; i += 2) {
+      const q = h.thread[i], a = h.thread[i + 1];
+      thread.push(el('div', { class: 'bk-sq' }, el('p', { class: 'bk-sq-q' }, q.content), a ? el('div', { class: 'bk-sq-a' }, ...mdNodes(a.content)) : null));
+    }
+    const ask = el('textarea', { rows: '2', placeholder: `Ask about ${h.label}… e.g. “What did this mean to its first hearers?”` });
+    const works = [...new Set((h.sources || []).map(x => `${x.author}, ${x.work}`))];
+    return draw(
+      el('button', { type: 'button', class: 'btn-link', onclick: () => { bookState.studyId = ''; bookDrawStudy(); } }, '‹ Studies'),
+      el('p', { class: 'bk-skick' }, `${(status.modes.find(m => m.id === h.mode) || {}).label || 'Bible study'} · ${h.label}`),
+      el('h3', { class: 'bk-stitle' }, parts.title || h.title),
+      el('div', { class: 'bk-sactions' },
+        el('button', { type: 'button', class: 'btn-plain', title: 'Select some of the study first to add just that', onclick: () => addToNotes(h, body) }, 'Add to my notes'),
+        el('span', { class: 'bk-hint2' }, 'Select text first to add only that.')),
+      body,
+      thread.length ? el('div', { class: 'bk-sthread' }, ...thread) : null,
+      el('div', { class: 'bk-sask' }, ask,
+        el('button', { type: 'button', class: 'btn-ink', onclick: () => askStudy(h, ask.value) }, 'Ask')),
+      works.length ? el('p', { class: 'q-copy' }, 'From: ', works.join('; ')) : null);
+  }
+  // The list: write a new study, or open one already written on this passage
+  if (!status.key) return draw(el('p', { class: 'bk-skick' }, `Bible study · ${label}`),
+    el('p', {}, 'To write a study here, add your OpenRouter key in Settings → Bible study.'),
+    el('button', { type: 'button', class: 'btn-plain', onclick: () => openSettings('study') }, 'Open Bible study settings'));
+  const mode = el('select', {}, ...status.modes.map(m => el('option', { value: m.id }, m.label)));
+  mode.value = status.modes.some(m => m.id === 'teaching') ? 'teaching' : status.modes[0].id;
+  const length = el('select', {}, ...status.lengths.map(l => el('option', { value: l.id }, l.label)));
+  length.value = status.length || 'standard';
+  const mine = (await api.studyHistory().catch(() => [])).filter(x => p && refOverlaps(x.ref, p.ref));
+  draw(
+    el('p', { class: 'bk-skick' }, `Bible study · ${label}`),
+    el('p', { class: 'bk-hint2' }, 'Study the passage beside your chapter. Studies are saved to Your studies in the Bible section too.'),
+    el('div', { class: 'bk-snew' }, mode, length,
+      el('button', { type: 'button', class: 'btn-ink', disabled: !p || !p.ref, onclick: () => writeBookStudy(p, mode.value, length.value) }, 'Write a study')),
+    !status.hasPacks ? el('p', { class: 'rv-note' }, 'Tip: download the commentary library in Settings → Bible study for richer studies.') : null,
+    el('h4', { class: 'bk-shead' }, mine.length ? `Your studies on ${label}` : `No studies on ${label} yet`),
+    mine.length ? el('ul', { class: 'bk-slist' }, ...mine.map(x => el('li', {},
+      el('button', { type: 'button', onclick: () => { bookState.studyId = x.id; bookDrawStudy(); } },
+        el('b', {}, x.title), el('small', {}, `${(status.modes.find(m => m.id === x.mode) || {}).label || ''} · ${x.label} · ${fmt(x.at.slice(0, 10), { day: 'numeric', month: 'short', year: 'numeric' })}`))))) : null);
+}
+
+async function writeBookStudy(p, mode, length) {
+  const rid = 'bk-' + Date.now();
+  bookState.run = { rid, text: '', phase: '', kind: 'study' };
+  bookDrawStudy();
+  try {
+    const got = await api.studyGenerate({ ref: p.ref, mode, length }, rid);
+    api.studyJobSeen && api.studyJobSeen(rid);
+    bookState.studyId = got.id;
+  } catch (x) { if (!/Stopped/.test(x.message)) toast(x.message); }
+  finally { if (bookState.run && bookState.run.rid === rid) bookState.run = null; bookDrawStudy(); }
+}
+async function askStudy(h, question) {
+  question = String(question || '').trim();
+  if (!question) return;
+  const rid = 'bkq-' + Date.now();
+  bookState.run = { rid, text: '', phase: 'Looking through the sources…', kind: 'ask' };
+  bookDrawStudy();
+  try { await api.studyAsk(h.id, question, rid); } catch (x) { if (!/Stopped/.test(x.message)) toast(x.message); }
+  finally { if (bookState.run && bookState.run.rid === rid) bookState.run = null; bookDrawStudy(); }
+}
+/** The selected part of the study (or all of it) into the chapter's notes, with where it came from. */
+function addToNotes(h, body) {
+  const sel = getSelection();
+  const picked = sel && !sel.isCollapsed && body.contains(sel.anchorNode) ? String(sel).trim() : '';
+  const text = picked || body.innerText.trim();
+  const note = `From the study “${h.title}” (${h.label}):\n${text}`;
+  const box = document.querySelector('.bk-outline');
+  const now = (bookState.chapter.outline || '').trim();
+  const outline = now ? `${now}\n\n${note}` : note;
+  if (box) { box.value = outline; const d = box.closest('details'); if (d) d.open = true; }
+  queueSave({ outline }, 0);
+  toast(picked ? 'Added the selection to your notes' : 'Added the study to your notes');
+}
+// Streaming into the pane (study.js listens too, for its own requests)
+let bkLiveTimer = 0;
+if (api.onStudyDelta) api.onStudyDelta((rid, piece) => {
+  const r = bookState.run;
+  if (!r || r.rid !== rid) return;
+  r.text += piece;
+  if (!bkLiveTimer) bkLiveTimer = setTimeout(() => { bkLiveTimer = 0; const n = document.querySelector('.bk-slive'); if (n && bookState.run) n.replaceChildren(...mdNodes(bookState.run.text)); }, 150);
+});
+if (api.onStudyPhase) api.onStudyPhase((rid, phase) => {
+  const r = bookState.run;
+  if (!r || r.rid !== rid) return;
+  r.phase = phase;
+  const n = document.querySelector('.bk-sphase'); if (n) n.textContent = phase;
+});
 
 // ---------- saving as you type ----------
 function queueSave(patch, delay = 900) {

@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.34.1', date: '2026-11-21', title: 'Bible study beside your book',
+    new: [
+      'Book: a Study tab beside each chapter. Write a Bible study of the chapter’s passage in any style, read the studies you’ve already written on it, ask follow-up questions, and add a whole study, or just the part you select, to the chapter’s notes. Studies written here are saved to Your studies in the Bible section too.',
+    ],
+  },
+  {
     v: '1.34.0', date: '2026-11-21', title: 'Write a book',
     new: [
       'Write a book (Windows): an optional Book section for writing a book over months. Switch it on in Settings → General → Write a book, and a Book tab appears beside Journal, Bible, Week and Photos (Ctrl+5).',
