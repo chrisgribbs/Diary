@@ -5,6 +5,14 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.12', date: '2026-11-20', title: 'Studies that keep going, and say what they’re doing',
+    improved: [
+      'Bible study: a study keeps writing when you leave it, whether you switch to another part of WellWrite, switch to another app, or the journal locks. When you come back it carries on where it is, or shows the finished study if it’s done (it’s saved to Your studies either way).',
+      'Bible study: while a study is written, WellWrite says what it’s actually doing: which commentaries it’s reading (“Reading 6 passages from Robertson, Vincent and Tyndale Open Study Notes…”), which part it’s writing, and when it’s checking quotations against the sources.',
+      'Bible study: studies are written for readers today. They carry the old commentators’ insights into modern language and modern life, and no longer remark on what the sources don’t cover or apologise for older references.',
+    ],
+  },
+  {
     v: '1.33.11', date: '2026-11-20', title: 'Tyndale study notes and Bible dictionary',
     new: [
       'Bible study: two new library packs from Tyndale House Publishers, openly licensed: the Tyndale Open Study Notes (2022), with modern study notes on every book of the Bible, theme articles, profiles of Bible people and book introductions; and the Tyndale Open Bible Dictionary (2023), on the people, places, customs and ideas of the Bible. Download them in Settings → Bible study. Studies then draw on Tyndale’s notes alongside the classic commentaries, with Tyndale credited in the sources.',

@@ -2,6 +2,15 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.12 — Studies that keep going, and say what they’re doing
+_20 November 2026_
+
+**Improved**
+
+- Bible study: a study keeps writing when you leave it, whether you switch to another part of WellWrite, switch to another app, or the journal locks. When you come back it carries on where it is, or shows the finished study if it’s done (it’s saved to Your studies either way).
+- Bible study: while a study is written, WellWrite says what it’s actually doing: which commentaries it’s reading (“Reading 6 passages from Robertson, Vincent and Tyndale Open Study Notes…”), which part it’s writing, and when it’s checking quotations against the sources.
+- Bible study: studies are written for readers today. They carry the old commentators’ insights into modern language and modern life, and no longer remark on what the sources don’t cover or apologise for older references.
+
 ## 1.33.11 — Tyndale study notes and Bible dictionary
 _20 November 2026_
 

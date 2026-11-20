@@ -13,6 +13,7 @@ const study = {
   passage: null,        // { ref, label, passageText, topic?, concern?, entryIds? }
   current: null,        // the study being shown
   live: '',             // text so far, while it's being written
+  phase: '',            // what the engine is doing now, in words
   rid: '',
   asking: false,
   journal: null,        // [{ id, date, title, excerpt, on }] for Personal Reflection
@@ -82,6 +83,7 @@ function mdHtml(text) {
 /* ---------- the Study tab ---------- */
 async function renderStudyView(body) {
   try { study.status = await api.studyStatus(); } catch (x) { body.replaceChildren(el('p', { class: 'rv-note warn' }, x.message)); return; }
+  await catchUpOnStudy();
   const v = study.view;
   if (v === 'writing') return drawWriting(body);
   if (v === 'study' && study.current) return drawStudy(body);
@@ -199,23 +201,51 @@ async function drawJournalChoice() {
     })));
 }
 
+/**
+ * The engine keeps the study being written (study:job), so it carries on when you leave the page or the app, and
+ * this picks it up again: still writing → the writing view with everything so far; finished while you were away →
+ * the finished study, once. Called whenever the Study tab is drawn and when the app comes back to the front.
+ */
+async function catchUpOnStudy() {
+  if (!api.studyJob) return;
+  let j;
+  try { j = await api.studyJob(); } catch { return; }
+  if (!j) return;
+  if (!j.done) {
+    if (study.rid !== j.rid || study.view !== 'writing') { study.rid = j.rid; study.writing = { label: j.label, mode: j.mode, passageText: j.passageText }; study.view = 'writing'; }
+    study.live = j.text; study.phase = j.phase;   // the engine's copy is complete, even if the page missed some of it
+    return;
+  }
+  if (!j.seen && j.result && (!study.current || study.current.id !== j.result.id)) {
+    study.current = j.result; study.reflection = ''; study.view = 'study'; study.rid = '';
+    try { await api.studyJobSeen(j.rid); } catch {}
+  } else if (study.view === 'writing' && study.rid === j.rid) {
+    study.view = j.result ? 'study' : 'passage'; if (j.result) study.current = j.result; study.rid = '';
+    if (j.error && !/Stopped/.test(j.error)) toast(j.error);
+  }
+}
 async function writeStudy({ mode, length }) {
   const p = study.passage;
   const entryIds = mode === 'personal' && study.journal ? study.journal.filter(j => j.on).map(j => j.id) : [];
   const excerpts = Object.fromEntries((study.journal || []).filter(j => j.on).map(j => [j.id, j.excerpt]));
   study.rid = 'st-' + Date.now();
-  study.live = '';
+  study.live = ''; study.phase = '';
   study.writing = { label: p.label, mode, passageText: p.passageText };
+  const rid = study.rid;
   studyGo('writing');
   try {
-    const got = await api.studyGenerate({ ref: p.ref, topic: p.topic || '', concern: p.concern || '', entryIds, excerpts, mode, length }, study.rid);
+    const got = await api.studyGenerate({ ref: p.ref, topic: p.topic || '', concern: p.concern || '', entryIds, excerpts, mode, length }, rid);
+    // Locked meanwhile, or the page has moved on: the engine keeps it, and it's shown when you come back.
+    if (!state.unlocked || study.rid !== rid) return;
     study.current = got;
     study.reflection = '';
+    api.studyJobSeen && api.studyJobSeen(rid);
     studyGo('study');
   } catch (x) {
+    if (study.rid !== rid) return;
     if (study.view === 'writing') { study.view = 'passage'; studyRedraw(); }
     if (!/Stopped/.test(x.message)) toast(x.message);
-  } finally { study.rid = ''; }
+  } finally { if (study.rid === rid) study.rid = ''; }
 }
 
 function studyHeader(kicker, title, label) {
@@ -241,8 +271,21 @@ function drawLive() {
   const t = document.querySelector('.st-title');
   if (t && parts.title) t.textContent = parts.title;
   box.replaceChildren(...parts.sections.flatMap(s => [s.heading ? el('h3', {}, s.heading) : null, ...mdNodes(s.text)]).filter(Boolean),
-    el('p', { class: 'st-small st-pulse' }, study.live ? '' : 'Finding sources and beginning to write…'));
+    el('p', { class: 'st-small st-pulse st-phase' }, study.phase || 'Starting…'));
 }
+// What the engine is doing now ("Reading 6 passages from Robertson, Vincent and Tyndale Open Study Notes…").
+if (api.onStudyPhase) api.onStudyPhase((rid, phase) => {
+  if (rid !== study.rid) return;
+  study.phase = phase;
+  const n = document.querySelector('.st-phase'); if (n) n.textContent = phase;
+});
+// Finished while the page wasn't waiting for it (it was reloaded, or locked and opened again): show it now.
+if (api.onStudyDone) api.onStudyDone(rid => {
+  if (rid === study.rid && state.unlocked) setTimeout(() => { if (study.rid === rid && study.view === 'writing') studyRedraw(); }, 300);
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && state.unlocked && (study.view === 'writing' || study.rid)) studyRedraw();
+});
 if (api.onStudyDelta) api.onStudyDelta((rid, piece) => {
   if (rid === study.rid) { study.live += piece; if (!liveTimer) liveTimer = setTimeout(() => { liveTimer = 0; drawLive(); }, 120); }
   if (study.asking && rid === study.asking.rid) { study.asking.text += piece; const n = $('#stAnswerLive'); if (n) n.replaceChildren(...mdNodes(study.asking.text)); }

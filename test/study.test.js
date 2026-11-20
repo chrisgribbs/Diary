@@ -166,6 +166,10 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('â
   assert.ok(/honest|open room|steers/i.test(msgs[0].content));
   assert.ok(msgs[1].content.includes('## Reading slowly') && msgs[1].content.includes('[S1] '));
   assert.ok(!/William Barclay/.test(msgs[0].content), 'no writer is named as a style to copy');
+  // Written for readers today: no remarks on what's missing, no apologies for old sources.
+  assert.ok(msgs[0].content.includes('FOR READERS TODAY') && /Don't tell the reader what you don't know/.test(msgs[0].content));
+  assert.ok(!/If you are unsure, say so|none of the sources here comments|say so briefly/.test(msgs[0].content));
+  assert.ok(!/say so rather than guessing/.test(prompts.askMessages({ ref: 'x', passageText: 'y', mode: 'devotional' }, [], 'q', [])[1].content));
   // Teaching Study: its own teacher's voice and a numbered "What the passage teaches", still no writer named.
   const tm = prompts.studyMessages({ ref: 'Matthew 11:28-30', passageText: 'Come to meâ€¦', mode: 'teaching', length: 'standard' }, []);
   assert.ok(tm[1].content.includes('## What the passage teaches') && tm[1].content.includes('(i), (ii), (iii)') && tm[1].content.includes('first hearers'));

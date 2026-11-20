@@ -120,6 +120,8 @@ contextBridge.exposeInMainWorld('wellwrite', {
   studyEntryExcerpt: id => call('study:entryExcerpt', id),
   studyGenerate: (req, rid) => call('study:generate', req, rid),
   studyCancel: rid => call('study:cancel', rid),
+  studyJob: () => call('study:job'),
+  studyJobSeen: rid => call('study:jobSeen', rid),
   studyAsk: (id, question, rid) => call('study:ask', id, question, rid),
   studyHistory: () => call('study:history'),
   studyGet: id => call('study:get', id),
@@ -131,5 +133,7 @@ contextBridge.exposeInMainWorld('wellwrite', {
   studyPrayers: () => call('study:prayers'),
   studySetPrayers: list => call('study:setPrayers', list),
   onStudyDelta: fn => ipcRenderer.on('study:delta', (_e, rid, piece) => fn(rid, piece)),
+  onStudyPhase: fn => ipcRenderer.on('study:phase', (_e, rid, phase) => fn(rid, phase)),
+  onStudyDone: fn => ipcRenderer.on('study:done', (_e, rid) => fn(rid)),
   onStudyDownload: fn => ipcRenderer.on('study:download', (_e, p) => fn(p)),
 });

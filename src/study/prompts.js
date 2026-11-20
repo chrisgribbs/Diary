@@ -51,7 +51,7 @@ const MODES = {
     about: 'Extended exegesis, historical background and theology.',
     parts: ['understanding', 'background', 'words', 'commentary', 'theology', 'today', 'reflection', 'questions', 'prayer'],
     wants: ['greek', 'history', 'exposition', 'illustration'],
-    brief: 'A deep study: trace the passage’s argument and setting carefully, give more room to history and to the Greek or Hebrew, and say plainly where scholars differ or where an older source may be out of date.',
+    brief: 'A deep study: trace the passage’s argument and setting carefully, give more room to history and to the Greek or Hebrew, and and say plainly where scholars differ.',
   },
   lectio: {
     label: 'Lectio Divina',
@@ -131,10 +131,15 @@ Do not imitate any particular modern writer, and do not use their signature phra
 SOURCES
 - You are given numbered sources, [S1], [S2] and so on, each with its author, work and year. Draw on them, and cite the label after any claim that comes from one, like this: [S2].
 - Quote only words that appear in a source, word for word, in quotation marks, with the label. Keep quotations short (under 40 words). Never invent a quotation.
-- Greek and Hebrew words, their meanings and their grammar come only from the sources. If no source discusses a word, don't discuss it; if the passage has no word study in the sources, say in one sentence that none of the sources here comments on its original wording.
-- Never invent historical facts, dates, customs or people. If you are unsure, say so.
-- Older scholarship can be out of date. Each source may carry a caveat; where it bears on what you write, say so briefly.
+- Greek and Hebrew words, their meanings and their grammar come only from the sources. If no source discusses a word, don't discuss it. If the sources have no word study for this passage, open up a key English word or image from the passage instead, from its context, without remarking that the original wording isn't covered.
+- Never invent historical facts, dates, customs or people. If you are unsure of a fact, leave it out.
+- Older scholarship can be out of date, and each source may carry a caveat. Use the caveats quietly: leave out what has dated and use what still holds. Don't tell the reader a source is old, dated or "of its time", and never apologise for it.
 - Keep the biblical text, historical evidence, interpretation and personal application distinct, so the reader can tell which is which.
+
+FOR READERS TODAY
+- Write for someone living now. Many sources are a century or more old: carry their insight into today's language and today's life (work and rest, family, money, screens, worry, loneliness, the pace of things), so the passage speaks to a modern reader.
+- Restate dated language, customs or examples freshly in your own words rather than quoting them; quote an old writer only where the words still land today.
+- Don't tell the reader what you don't know, what you couldn't find, or what the sources leave out. Write from what you have.
 
 QUESTIONS FOR THE JOURNAL
 Write two or three questions. Each opens room for the reader to discover something, and none steers them toward an answer already decided.
@@ -197,7 +202,7 @@ function studyMessages(study, sources) {
 function askMessages(study, history, question, sources) {
   const intro = `We are studying ${study.ref} together (${(MODES[study.mode] || MODES.devotional).label}). The passage (${study.translation || 'WEB'}):\n"""\n${study.passageText}\n"""`;
   const mode = MODES[study.mode] || MODES.devotional;
-  const rules = (mode.voice ? 'Answer as the teacher of this study: clear, warm and explanatory, with the background and any word study the sources give. ' : '') + 'Take time with the reader’s question. Answer in unhurried, thoughtful paragraphs (about 400 to 700 words; longer only if the question truly needs it), in the same voice, from the sources below. Cite them with their labels. If the sources don’t cover something, say so rather than guessing. If the question is personal, don’t advise or fix: reflect, and you may end with one honest, open question. Plain prose, no headings.';
+  const rules = (mode.voice ? 'Answer as the teacher of this study: clear, warm and explanatory, with the background and any word study the sources give. ' : '') + 'Take time with the reader’s question. Answer in unhurried, thoughtful paragraphs (about 400 to 700 words; longer only if the question truly needs it), in the same voice, from the sources below. Cite them with their labels. Where the sources don’t cover something, answer from the passage and what they do give; never guess at facts, and don’t tell the reader what the sources leave out or how old they are. Speak to a reader living now. If the question is personal, don’t advise or fix: reflect, and you may end with one honest, open question. Plain prose, no headings.';
   const msgs = [{ role: 'system', content: SYSTEM }, { role: 'user', content: `${intro}\n\n${rules}\n\nSources:\n${sourceBlock(sources)}` }, { role: 'assistant', content: 'I have the passage and the sources.' }];
   for (const h of (history || []).slice(-8)) msgs.push({ role: h.role === 'assistant' ? 'assistant' : 'user', content: String(h.content).slice(0, 4000) });
   msgs.push({ role: 'user', content: question });

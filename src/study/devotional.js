@@ -206,6 +206,22 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
    * req: { ref, topic?, concern?, entryIds?: [ids the person agreed to share], mode?, length? }
    * Streams the text as it's written (event study:delta, requestId, piece) and returns the finished study.
    */
+  // The study being written, kept here in the engine so it carries on if the page is left or reloaded (a phone can
+  // recreate its screen while the app is in the background): the page asks for it with study:job when it comes back.
+  // phase is what's happening now, in words for the person; text is what's been written so far.
+  let job = null;
+  const setPhase = (j, phase) => { j.phase = phase; send('study:phase', j.rid, phase); };
+  const worksIn = list => { const w = [...new Set(list.map(x => x.author === 'Tyndale House Publishers' ? x.work : `${x.author.replace(/\s*\(ed\.\)/, '')}`))]; return w.length <= 3 ? w.join(', ').replace(/, ([^,]*)$/, ' and $1') : `${w.slice(0, 3).join(', ')} and ${w.length - 3} more`; };
+  const saveEntry = entry => { const st = vault.getStudy(); if (!st.history.some(h => h.id === entry.id)) vault.setStudy({ history: [entry, ...st.history].slice(0, 50) }); };
+  handle('study:job', () => {
+    if (!job) return null;
+    // Finished while the journal was locked: saved now it's open again.
+    if (job.pending) { try { saveEntry(job.pending); job.pending = null; } catch {} }
+    const { rid, label, mode, passageText, text, phase, done, error, seen } = job;
+    return { rid, label, mode, passageText, text, phase, done, error, seen, result: done && !error ? job.result : null };
+  });
+  handle('study:jobSeen', rid => { if (job && job.rid === String(rid)) job.seen = true; return true; });
+
   handle('study:generate', async (req, requestId) => {
     shareKey();
     req = req || {};
@@ -220,20 +236,33 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
       if (!s.journal) throw new Error('Turn on “Let Bible study read my journal” in Settings → Bible study first.');
       journal = req.entryIds.slice(0, 3).map(id => { try { const e = vault.get(String(id)); return { date: e.date, title: e.title || '', excerpt: String(req.excerpts && req.excerpts[id] || excerptOf(e.text, new Set(tokenize(p.passageText)))).slice(0, 900) }; } catch { return null; } }).filter(Boolean);
     }
-    const sources = await retrieve(lib, embedder(), { ref: p.ref, passageText: p.passageText, topic, question: concern, mode, length });
-    const ctrl = new AbortController();
     const rid = String(requestId || newId());
+    const j = job = { rid, label: p.label, mode, passageText: p.passageText, text: '', phase: '', done: false, error: '', seen: false, result: null, pending: null };
+    const ctrl = new AbortController();
     running.set(rid, ctrl);
     try {
+      setPhase(j, `Looking through the library for what the commentaries say on ${p.label}…`);
+      const sources = await retrieve(lib, embedder(), { ref: p.ref, passageText: p.passageText, topic, question: concern, mode, length });
+      setPhase(j, sources.length
+        ? `Reading ${sources.length} passage${sources.length === 1 ? '' : 's'} from ${worksIn(sources)}, and thinking the study through…`
+        : `No commentary in your library covers ${p.label}, so the study keeps to the text. Thinking it through…`);
       const study = { ref: p.label, passageText: p.passageText, translation: p.translation, mode, length, topic, concern, journal };
       const res = await or.chat({
         model: s.model, messages: prompts.studyMessages(study, sources), maxTokens: prompts.LENGTHS[length].maxTokens, temperature: 0.7, reasoning: prompts.THINKING,
-        privateHosts: s.privateHosts, signal: ctrl.signal, onDelta: piece => send('study:delta', rid, piece),
+        privateHosts: s.privateHosts, signal: ctrl.signal, onDelta: piece => {
+          j.text += piece;
+          const h = j.text.match(/^##\s+(.+)\n/gm);   // the part being written now (a heading once it's complete)
+          const now = h ? `Writing “${h[h.length - 1].replace(/^##\s+/, '').trim()}”…` : j.phase.startsWith('Writing') || !j.text.trim() ? j.phase : 'Writing…';
+          if (now !== j.phase) setPhase(j, now);
+          send('study:delta', rid, piece);
+        },
       });
+      setPhase(j, 'Checking quotations, and Greek and Hebrew words, against the sources…');
       let { md, flags, questionProblems: probs } = verify(res.text, { sources, passageText: p.passageText, extra: journal.map(j => j.excerpt), inBible });
       if (res.cut) flags.push({ kind: 'cut', text: 'The AI stopped before it finished, so the end is missing. Ask again, or try a shorter length.' });
       let cost = res.usage.cost;
       if (probs.length) {   // once, ask for questions that keep the rules
+        setPhase(j, 'Rewording the journal questions so they stay open…');
         try {
           const qs = questionsOf(md);
           const fix = await or.chat({ model: s.model, messages: prompts.questionFixMessages(p.label, p.passageText, qs, probs), maxTokens: 1500, temperature: 0.6, privateHosts: s.privateHosts, signal: ctrl.signal });
@@ -248,10 +277,14 @@ function registerStudy({ handle, vault, send, readSettings, deviceDir, libraryDi
         md, passageText: p.passageText, translation: 'WEB', topic, flags, thread: [], usage: { cost },
         sources: sources.map(x => ({ id: x.id, author: x.author, work: x.work, year: x.year, section: x.section, licence: x.licence, credit: x.credit, url: x.url, text: x.text, why: x.why })),
       };
-      const st = vault.getStudy();
-      vault.setStudy({ history: [entry, ...st.history].slice(0, 50) });
-      return { ...entry, barclay: refs.barclayLink(entry.ref), sharedJournal: journal.length };
-    } finally { running.delete(rid); }
+      setPhase(j, 'Saving it to your studies…');
+      try { saveEntry(entry); } catch { j.pending = entry; }   // locked meanwhile: saved when it's opened again
+      j.result = { ...entry, barclay: refs.barclayLink(entry.ref), sharedJournal: journal.length };
+      return j.result;
+    } catch (e) {
+      j.error = ctrl.signal.aborted ? 'Stopped.' : (e && e.message) || String(e);
+      throw e;
+    } finally { j.done = true; running.delete(rid); send('study:done', rid); }
   });
   handle('study:cancel', requestId => { const c = running.get(String(requestId)); if (c) c.abort(); return !!c; });
 

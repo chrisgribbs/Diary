@@ -96,6 +96,7 @@ Most of us carry more than we were asked to. Today, notice one weight you have p
 ## Closing prayer
 Lord Jesus, you know the weight I bring. Teach me to walk in step with you, and to find the rest you give.`;
 
+let SLOW = false;   // stream slowly, to leave the page mid-study
 const server = http.createServer((req, res) => {
   let body = '';
   req.on('data', d => { body += d; });
@@ -121,7 +122,7 @@ const server = http.createServer((req, res) => {
       const pieces = text.match(/[\s\S]{1,40}/g);
       let i = 0;
       const tick = () => {
-        if (i < pieces.length) { res.write(`data: ${JSON.stringify({ model: 'test/model', choices: [{ delta: { content: pieces[i++] } }] })}\n\n`); setTimeout(tick, 8); return; }
+        if (i < pieces.length) { res.write(`data: ${JSON.stringify({ model: 'test/model', choices: [{ delta: { content: pieces[i++] } }] })}\n\n`); setTimeout(tick, SLOW ? 90 : 8); return; }
         res.write(`data: ${JSON.stringify({ choices: [{ delta: {} }], usage: { prompt_tokens: 3000, completion_tokens: 900, cost: 0.0031 } })}\n\ndata: [DONE]\n\n`);
         res.end();
       };
@@ -156,7 +157,8 @@ function run() {
     const shot = async n => { await wait(400); fs.writeFileSync(path.join(OUT, n + '.png'), (await win.webContents.capturePage()).toPNG()); };
     const text = sel => js(`const n = document.querySelector('${sel}'); return n ? n.innerText : null`);
     const until = async (cond, ms = 8000) => { for (let t = 0; t < ms; t += 150) { if (await js(`return !!(${cond})`)) return true; await wait(150); } return false; };
-    const click = (sel, label) => js(`const b = [...document.querySelectorAll('${sel}')].find(x => x.textContent.trim().startsWith(${JSON.stringify(label)})); if (!b) throw new Error('no button ${label}'); b.click();`);
+    // Waits up to 3 s for the button: the Study tab checks with the engine (for a study in progress) before drawing.
+    const click = (sel, label) => js(`for (let t = 0; t < 60; t++) { const b = [...document.querySelectorAll('${sel}')].find(x => x.textContent.trim().startsWith(${JSON.stringify(label)})); if (b) { b.click(); return; } await new Promise(r => setTimeout(r, 50)); } throw new Error('no button ${label}');`);
 
     try {
       await js(`document.querySelector('#setupPw').value='river-stone'; document.querySelector('#setupPw2').value='river-stone'; document.querySelector('#setupForm').requestSubmit();`);
@@ -281,6 +283,28 @@ function run() {
       assert.ok(await until(`document.querySelector('.st-jrow')`), 'matching entry offered');
       assert.equal(await js(`return document.querySelector('.st-jrow input').checked`), false, 'nothing is ticked for you');
       await shot('s8-personal');
+
+      // A study carries on when the page loses track of it (a phone recreating its screen) and when the journal is
+      // locked and opened again: the engine keeps it, and the page picks it up, then shows the finished study once.
+      SLOW = true;
+      await js(`study.passage = await api.studyPick({ kind: 'ref', text: 'Matthew 11:28-30' }); study.mode = 'devotional'; study.view = 'passage'; studyRedraw();`);
+      assert.ok(await until(`[...document.querySelectorAll('.st-actions button')].some(b => b.textContent === 'Write the study')`));
+      await click('.st-actions button', 'Write the study');
+      assert.ok(await until(`/^Writing “/.test((document.querySelector('.st-phase') || {}).textContent || '')`, 10000), 'it says which part it is writing');
+      await js(`Object.assign(study, { view: 'start', rid: '', writing: null, live: '', phase: '' }); studyRedraw();`);
+      assert.ok(await until(`document.querySelector('.st-live') && document.querySelector('.st-live').textContent.length > 40`, 5000), 'the page picks the study up again, with what was written so far');
+      await shot('s13-picked-up');
+      await js(`lockNow();`); await wait(800);
+      await js(`document.querySelector('#unlockPw').value='river-stone'; document.querySelector('#unlockForm').requestSubmit();`); await wait(2500);
+      SLOW = false;
+      await js(`document.querySelector('.modeswitch [data-mode=bible]').click();`); await wait(300);
+      await js(`document.querySelector('.bv-tab[data-tab=study]').click();`);
+      assert.ok(await until(`document.querySelector('.st-question') && document.querySelector('.st-title').textContent !== 'Writing…'`, 20000), 'the finished study is there after unlocking');
+      const shown = await js(`return study.current.id`);
+      assert.ok(await js(`return (await api.studyHistory()).some(h => h.id === ${JSON.stringify('X')}.replace('X', study.current.id))`), 'and saved to your studies');
+      await js(`study.view = 'start'; studyRedraw();`); await wait(400);
+      assert.notEqual(await js(`return study.view`), 'study', 'shown once, not every time');
+      assert.equal(await js(`return study.current.id`), shown);
 
       // The verse of the day's Study button opens Bible study on that verse.
       await js(`const c = verseCard({ text: 'Be content with what you have.', ref: 'Hebrews 13:5', translation: 'web' }, '2026-11-19', 'top'); document.body.append(c); [...c.querySelectorAll('button')].find(b => b.textContent === 'Study').click(); setTimeout(() => c.remove(), 100);`);
