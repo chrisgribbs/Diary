@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.33.11', date: '2026-11-20', title: 'Tyndale study notes and Bible dictionary',
+    new: [
+      'Bible study: two new library packs from Tyndale House Publishers, openly licensed: the Tyndale Open Study Notes (2022), with modern study notes on every book of the Bible, theme articles, profiles of Bible people and book introductions; and the Tyndale Open Bible Dictionary (2023), on the people, places, customs and ideas of the Bible. Download them in Settings → Bible study. Studies then draw on Tyndale’s notes alongside the classic commentaries, with Tyndale credited in the sources.',
+    ],
+  },
+  {
     v: '1.33.10', date: '2026-11-20', title: 'Shorter study pages',
     improved: [
       'Bible study: the sources fold away under “Sources” so a study ends with the study. Tap to see them. Studies saved to your journal fold their sources the same way, and print or export with them open. Each credit now says “Public domain” once, not twice.',

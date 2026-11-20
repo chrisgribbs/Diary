@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.33.11 — Tyndale study notes and Bible dictionary
+_20 November 2026_
+
+**New**
+
+- Bible study: two new library packs from Tyndale House Publishers, openly licensed: the Tyndale Open Study Notes (2022), with modern study notes on every book of the Bible, theme articles, profiles of Bible people and book introductions; and the Tyndale Open Bible Dictionary (2023), on the people, places, customs and ideas of the Bible. Download them in Settings → Bible study. Studies then draw on Tyndale’s notes alongside the classic commentaries, with Tyndale credited in the sources.
+
 ## 1.33.10 — Shorter study pages
 _20 November 2026_
 
