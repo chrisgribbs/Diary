@@ -1,7 +1,7 @@
 'use strict';
 /**
  * The book as a Word document (.docx): a title page, then each chapter on a new page with its heading and passage,
- * and the writing with its bold, italics, quotations and lists. Built by hand (a .docx is a zip of a few XML files),
+ * and the writing with its formatting, in the book's layout (font, spacing, indents, page size and margins). Built by hand (a .docx is a zip of a few XML files),
  * so it needs nothing installed. Phone-safe like the rest of src/.
  */
 const zlib = require('zlib');
@@ -32,75 +32,124 @@ const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
 const ENT = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", apos: "'" };
 const unent = s => s.replace(/&(#\d+|#x[0-9a-f]+|\w+);/gi, (m, e) => e[0] === '#' ? String.fromCodePoint(e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : +e.slice(1)) : (ENT[e] ?? m));
 
-/** [{ style, runs: [{ text, b, i, u }] }] from a chapter's HTML. */
+// Classes the Book editor puts on a paragraph (renderer/book.js keeps only these).
+const ALIGN = { 'al-l': 'left', 'al-c': 'center', 'al-r': 'right', 'al-j': 'both' };
+const classesOf = attrs => ((/\bclass\s*=\s*"([^"]*)"/i.exec(attrs || '') || [])[1] || '').split(/\s+/).filter(Boolean);
+
+/**
+ * [{ style, runs: [{ text, b, i, u, s, sup, sub }], align, ind, first, br }] from a chapter's HTML.
+ * `first` marks a paragraph that opens a section (after a heading, a quotation, a list, a break or the start),
+ * which a book sets without a first-line indent. `br: 'page'` is a page break, style 'Break' a scene break.
+ */
 function paragraphs(html) {
   const out = [];
-  let cur = null, style = 'Normal', list = [];
-  const fmt = { b: 0, i: 0, u: 0 };
-  const start = s => { if (!cur || cur.runs.length) { cur = { style: s || style, runs: [] }; out.push(cur); } else cur.style = s || style; };
-  const end = () => { cur = null; };
-  for (const m of String(html || '').matchAll(/<(\/?)([a-z0-9]+)[^>]*>|([^<]+)/gi)) {
-    if (m[3] != null) {
-      const text = unent(m[3]).replace(/\s+/g, ' ');
+  let cur = null, style = 'Normal', list = [], quoteCls = [], after = true;   // `after`: the next paragraph opens a section
+  const fmt = { b: 0, i: 0, u: 0, s: 0, sup: 0, sub: 0 };
+  const start = (s, cls = []) => {
+    const st = s || style;
+    if (!cur || cur.runs.length) { cur = { style: st, runs: [] }; out.push(cur); } else cur.style = st;
+    const all = st === 'Quote' ? [...quoteCls, ...cls] : cls;
+    cur.align = all.map(c => ALIGN[c]).filter(Boolean).pop() || '';
+    cur.ind = Math.max(0, ...all.map(c => (/^ind([1-4])$/.exec(c) || [0, 0])[1] | 0));
+    if (all.includes('poem')) cur.style = 'Poem';
+    cur.first = cur.style === 'Normal' && after;
+  };
+  const end = () => { if (cur && cur.runs.length) after = cur.style !== 'Normal'; cur = null; };
+  for (const m of String(html || '').matchAll(/<(\/?)([a-z0-9]+)([^>]*)>|([^<]+)/gi)) {
+    if (m[4] != null) {
+      const text = unent(m[4]).replace(/\s+/g, ' ');
       if (!text.trim() && !cur) continue;
       if (!cur) start();
-      cur.runs.push({ text, b: fmt.b > 0, i: fmt.i > 0, u: fmt.u > 0 });
+      cur.runs.push({ text, b: fmt.b > 0, i: fmt.i > 0, u: fmt.u > 0, s: fmt.s > 0, sup: fmt.sup > 0, sub: fmt.sub > 0 });
       continue;
     }
-    const close = m[1] === '/', tag = m[2].toLowerCase();
+    const close = m[1] === '/', tag = m[2].toLowerCase(), cls = close ? [] : classesOf(m[3]);
     if (/^(b|strong)$/.test(tag)) fmt.b += close ? -1 : 1;
     else if (/^(i|em|cite)$/.test(tag)) fmt.i += close ? -1 : 1;
     else if (tag === 'u') fmt.u += close ? -1 : 1;
+    else if (/^(s|strike|del)$/.test(tag)) fmt.s += close ? -1 : 1;
+    else if (tag === 'sup') fmt.sup += close ? -1 : 1;
+    else if (tag === 'sub') fmt.sub += close ? -1 : 1;
     else if (tag === 'br') { if (cur) cur.runs.push({ br: true }); }
-    else if (/^h[1-3]$/.test(tag)) { if (close) { end(); } else start('Heading2'); }
-    else if (tag === 'blockquote') { style = close ? 'Normal' : 'Quote'; end(); }
-    else if (tag === 'ul' || tag === 'ol') { if (close) list.pop(); else list.push({ kind: tag, n: 0 }); end(); }
+    else if (tag === 'hr') {
+      end();
+      out.push(cls.includes('pb') ? { style: 'Normal', runs: [{ page: true }], pageBreak: true } : { style: 'Break', runs: [{ text: '*   *   *' }] });
+      after = true;
+    }
+    else if (/^h[1-3]$/.test(tag)) { if (close) { end(); after = true; } else start(tag === 'h3' ? 'Heading3' : 'Heading2', cls); }
+    else if (tag === 'blockquote') { end(); style = close ? 'Normal' : 'Quote'; quoteCls = close ? [] : cls; if (close) after = true; }
+    else if (tag === 'ul' || tag === 'ol') { if (close) { list.pop(); after = true; } else list.push({ kind: tag, n: 0 }); end(); }
     else if (tag === 'li') {
       if (close) { end(); continue; }
       const l = list[list.length - 1] || { kind: 'ul', n: 0 }; l.n++;
-      start('ListParagraph'); cur.runs.push({ text: l.kind === 'ol' ? `${l.n}. ` : '• ' });
+      start('ListParagraph', cls); cur.runs.push({ text: l.kind === 'ol' ? `${l.n}. ` : '• ' });
     }
-    else if (/^(p|div)$/.test(tag)) { if (close) end(); else start(); }
+    else if (/^(p|div)$/.test(tag)) { if (close) end(); else start(null, cls); }
   }
   for (const p of out) {   // tidy the edges of each paragraph
-    const r = p.runs.filter(x => !x.br);
+    while (p.runs.length && p.runs[p.runs.length - 1].br) p.runs.pop();   // the editor's trailing <br>
+    if (!p.runs.length && p.style === 'Poem') p.runs.push({ text: '' });   // an empty line: a stanza break
+    const r = p.runs.filter(x => !x.br && !x.page);
     if (r.length) { r[0].text = r[0].text.replace(/^\s+/, ''); r[r.length - 1].text = r[r.length - 1].text.replace(/\s+$/, ''); }
   }
-  return out.filter(p => p.runs.some(r => r.br || r.text));
+  const kept = out.filter(p => p.pageBreak || p.style === 'Poem' || p.runs.some(r => r.br || r.text));
+  kept.forEach((p, n) => { if (p.style === 'Poem' && (!kept[n + 1] || kept[n + 1].style !== 'Poem')) p.endPoem = true; });   // space after a poem's last line
+  return kept;
 }
 
-const run = r => r.br ? '<w:r><w:br/></w:r>'
-  : `<w:r>${r.b || r.i || r.u ? `<w:rPr>${r.b ? '<w:b/>' : ''}${r.i ? '<w:i/>' : ''}${r.u ? '<w:u w:val="single"/>' : ''}</w:rPr>` : ''}<w:t xml:space="preserve">${esc(r.text)}</w:t></w:r>`;
-const para = (style, runs) => `<w:p><w:pPr><w:pStyle w:val="${style}"/></w:pPr>${runs.map(run).join('')}</w:p>`;
+const cmTw = cm => Math.round(cm * 567);   // twentieths of a point
+const run = r => {
+  if (r.br) return '<w:r><w:br/></w:r>';
+  if (r.page) return '<w:r><w:br w:type="page"/></w:r>';
+  const pr = (r.b ? '<w:b/>' : '') + (r.i ? '<w:i/>' : '') + (r.s ? '<w:strike/>' : '') + (r.u ? '<w:u w:val="single"/>' : '')
+    + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : '');
+  return `<w:r>${pr ? `<w:rPr>${pr}</w:rPr>` : ''}<w:t xml:space="preserve">${esc(r.text)}</w:t></w:r>`;
+};
+function para(style, runs, p = {}, layout = Book.LAYOUT) {
+  const ind = [];
+  if (p.ind) ind.push(`w:left="${(style === 'Quote' ? 720 : style === 'ListParagraph' ? 720 : 0) + p.ind * 720}"`);
+  if (p.first && layout.indent) ind.push('w:firstLine="0"');
+  const pPr = `<w:pStyle w:val="${style}"/>${p.endPoem ? `<w:spacing w:after="${Math.round(layout.after * 20)}"/>` : ''}${p.align ? `<w:jc w:val="${p.align}"/>` : ''}${ind.length ? `<w:ind ${ind.join(' ')}/>` : ''}`;
+  return `<w:p><w:pPr>${pPr}</w:pPr>${runs.map(run).join('')}</w:p>`;
+}
 const plain = (style, text) => para(style, [{ text }]);
 
 function documentXml(book) {
-  const body = [];
+  const L = book.info.layout, body = [];
   body.push(plain('Title', book.info.title));
   if (book.info.subtitle) body.push(plain('Subtitle', book.info.subtitle));
   const chapters = Book.ordered(book);
   chapters.forEach((c, n) => {
     body.push(plain('Heading1', c.title || `Chapter ${n + 1}`));
     if (c.passage) body.push(plain('Passage', c.passage));
-    for (const p of paragraphs(c.html)) body.push(para(p.style, p.runs));
+    for (const p of paragraphs(c.html)) body.push(para(p.style, p.runs, p, L));
   });
+  const [w, h] = Book.PAGES[L.page], m = cmTw(Book.MARGINS[L.margins]);
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body.join('')}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body.join('')}<w:sectPr><w:pgSz w:w="${cmTw(w)}" w:h="${cmTw(h)}"/><w:pgMar w:top="${m}" w:right="${m}" w:bottom="${m}" w:left="${m}" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`;
 }
 
-const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+/** The styles, from the book's layout: the font, size, line and paragraph spacing, first-line indent and justification. */
+function stylesXml(L) {
+  const font = esc(L.font), hp = n => Math.round(n * 2);   // Word sizes are in half-points
+  const body = Math.round(L.size * 2), noFirst = '<w:ind w:firstLine="0"/>', left = L.justify ? '<w:jc w:val="left"/>' : '';
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Georgia" w:hAnsi="Georgia" w:cs="Georgia"/><w:sz w:val="24"/><w:lang w:val="en-AU"/></w:rPr></w:rPrDefault>
-<w:pPrDefault><w:pPr><w:spacing w:after="160" w:line="360" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>
-<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>
-<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="2400" w:after="240"/><w:jc w:val="center"/></w:pPr><w:rPr><w:sz w:val="56"/></w:rPr></w:style>
-<w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:jc w:val="center"/></w:pPr><w:rPr><w:i/><w:sz w:val="30"/></w:rPr></w:style>
-<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pageBreakBefore/><w:spacing w:before="1200" w:after="120"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:sz w:val="40"/></w:rPr></w:style>
-<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="360" w:after="120"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/></w:rPr></w:style>
-<w:style w:type="paragraph" w:styleId="Passage"><w:name w:val="Passage"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:spacing w:after="480"/></w:pPr><w:rPr><w:i/><w:color w:val="666666"/></w:rPr></w:style>
-<w:style w:type="paragraph" w:styleId="Quote"><w:name w:val="Quote"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:ind w:left="720" w:right="720"/></w:pPr><w:rPr><w:i/></w:rPr></w:style>
-<w:style w:type="paragraph" w:styleId="ListParagraph"><w:name w:val="List Paragraph"/><w:basedOn w:val="Normal"/><w:pPr><w:ind w:left="720" w:hanging="360"/><w:spacing w:after="80"/></w:pPr></w:style>
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}" w:cs="${font}" w:eastAsia="${font}"/><w:sz w:val="${body}"/><w:szCs w:val="${body}"/><w:lang w:val="en-AU"/></w:rPr></w:rPrDefault>
+<w:pPrDefault><w:pPr><w:spacing w:after="${Math.round(L.after * 20)}" w:line="${Math.round(L.line * 240)}" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/><w:pPr><w:widowControl/>${L.indent ? `<w:ind w:firstLine="${cmTw(L.indent)}"/>` : ''}${L.justify ? '<w:jc w:val="both"/>' : ''}</w:pPr></w:style>
+<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="2400" w:after="240"/>${noFirst}<w:jc w:val="center"/></w:pPr><w:rPr><w:sz w:val="${hp(L.size * 2.33)}"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr>${noFirst}<w:jc w:val="center"/></w:pPr><w:rPr><w:i/><w:sz w:val="${hp(L.size * 1.25)}"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pageBreakBefore/><w:spacing w:before="1200" w:after="120"/>${noFirst}${left}<w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:sz w:val="${hp(L.size * 1.67)}"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="360" w:after="120"/>${noFirst}${left}<w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="${hp(L.size * 1.17)}"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="80"/>${noFirst}${left}<w:outlineLvl w:val="2"/></w:pPr><w:rPr><w:b/><w:i/><w:sz w:val="${body}"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Passage"><w:name w:val="Passage"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:spacing w:after="480"/>${noFirst}${left}</w:pPr><w:rPr><w:i/><w:color w:val="666666"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Quote"><w:name w:val="Quote"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:ind w:left="720" w:right="720" w:firstLine="0"/></w:pPr><w:rPr><w:i/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Poem"><w:name w:val="Poem"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="0"/>${noFirst}${left}</w:pPr></w:style>
+<w:style w:type="paragraph" w:styleId="Break"><w:name w:val="Scene break"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="240"/>${noFirst}<w:jc w:val="center"/></w:pPr></w:style>
+<w:style w:type="paragraph" w:styleId="ListParagraph"><w:name w:val="List Paragraph"/><w:basedOn w:val="Normal"/><w:pPr><w:ind w:left="720" w:hanging="360" w:firstLine="0"/>${left}<w:spacing w:after="80"/></w:pPr></w:style>
 </w:styles>`;
+}
 
 function bookDocx(book) {
   book = Book.cleanBook(book);
@@ -113,7 +162,7 @@ function bookDocx(book) {
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${esc(book.info.title)}</dc:title><dc:creator>WellWrite</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().slice(0, 19)}Z</dcterms:created></cp:coreProperties>`],
     ['word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
-    ['word/styles.xml', STYLES],
+    ['word/styles.xml', stylesXml(book.info.layout)],
     ['word/document.xml', documentXml(book)],
   ]);
 }

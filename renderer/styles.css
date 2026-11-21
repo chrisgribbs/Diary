@@ -211,6 +211,15 @@ svg { stroke: currentColor; stroke-width: 1.6; fill: none; stroke-linecap: round
 
 /* ---------- App layout ---------- */
 .app { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+/* The Book's fold: the sidebar folds away for more room to write (desktop only). */
+.app.side-folded { grid-template-columns: minmax(0, 1fr); }
+.app.side-folded > .cloth { display: none; }
+.app.side-folded .listen-bar { --side: 0px; }
+.fold-btn { flex: none; width: 36px; height: 36px; margin-left: 8px; color: var(--pencil); border-radius: 6px; display: inline-grid; place-items: center; }
+.fold-btn[hidden] { display: none; }
+.fold-btn:hover { color: var(--ink); background: var(--paper-edge); }
+.fold-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.app.side-folded .fold-arrow { transform: rotate(180deg); transform-origin: 12.25px 10px; }
 .cloth { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid rgba(0,0,0,.35); }
 .cloth-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 18px 10px; }
 .wordmark { font: 700 27px/1 var(--brand); color: var(--foil); letter-spacing: -.005em; }
@@ -976,6 +985,7 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 
 /* ============ phones (and narrow windows) ============ */
 .menu-btn, .scrim, .camera-btn { display: none; }
+@media (max-width: 720px), (pointer: coarse) and (max-width: 1024px) { .fold-btn { display: none !important; } }
 [data-platform="android"] .camera-btn { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; color: var(--ink); }
 
 /* ============ photos ============ */
@@ -1506,15 +1516,52 @@ body.listening .readview { padding-bottom: 96px; }
 .bk-outline-box { margin: 0 0 14px; border: 1px solid var(--rule); border-radius: 10px; background: color-mix(in srgb, var(--cloth) 4%, transparent); }
 .bk-outline-box summary { cursor: pointer; padding: 10px 14px; font: 600 13px var(--sans); color: var(--pencil); }
 .bk-outline { display: block; width: 100%; box-sizing: border-box; border: 0; border-top: 1px solid var(--rule); background: transparent; padding: 12px 14px; font: 15px/1.5 var(--serif); color: var(--ink); resize: vertical; outline: none; }
-.bk-tools { position: sticky; top: -18px; z-index: 1; display: flex; align-items: center; gap: 4px; margin: 0 -8px 10px; padding: 8px; background: var(--paper); border-bottom: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); }
-.bk-fmt { height: 30px; padding: 0 10px; border-radius: 6px; font: 13px var(--sans); color: var(--ink); border: 1px solid transparent; }
+.bk-tools { position: sticky; top: -18px; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin: 0 -8px 10px; padding: 8px; background: var(--paper); border-bottom: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); }
+.bk-fmt { height: 30px; min-width: 30px; padding: 0 7px; border-radius: 6px; font: 14px var(--sans); color: var(--ink); border: 1px solid transparent; display: inline-grid; place-items: center; }
+.bk-fmt svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.bk-fmt circle { fill: currentColor; stroke: none; }
 .bk-fmt:hover { border-color: var(--rule); background: var(--paper-edge); }
+.bk-fmt.on { background: color-mix(in srgb, var(--ribbon) 14%, transparent); color: var(--ribbon); }
+.bk-fmt sup { font-size: .65em; }
+.bk-pageset { padding: 0 10px; font: 600 12.5px var(--sans); color: var(--ribbon); }
+.bk-pageset[aria-expanded="true"] { background: color-mix(in srgb, var(--ribbon) 12%, transparent); }
+.bk-sep { width: 1px; height: 20px; margin: 0 4px; background: var(--rule); }
+.bk-style { height: 30px; font: 13px var(--sans); padding: 0 6px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.bk-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px 14px; margin: -2px 0 14px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 10px; background: color-mix(in srgb, var(--foil) 5%, var(--paper)); }
+.bk-layout[hidden] { display: none; }
+.bk-lfield { display: grid; gap: 4px; font: 12px var(--sans); color: var(--pencil); }
+.bk-lfield select { height: 32px; font: 13.5px var(--sans); padding: 0 6px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.bk-lcheck { display: flex; align-items: center; gap: 8px; align-self: end; height: 32px; font-size: 13.5px; color: var(--ink); }
+.bk-lhint { grid-column: 1 / -1; margin: 0; font: 12.5px/1.45 var(--sans); color: var(--pencil); }
+.bk-lnote { color: var(--ribbon); font-weight: 600; }
 .bk-words { font: 600 13px var(--sans); color: var(--ink); margin-right: 8px; }
 .bk-saved { font: 12px var(--sans); color: var(--pencil); min-width: 4.5em; text-align: right; }
 .bk-saved.busy { color: var(--ribbon); }
-.bk-editor { min-height: 60vh; max-width: 38em; }
-.bk-editor h2 { font: 600 1.1em/1.3 var(--serif); margin: 1.2em 0 .5em; }
-.bk-editor blockquote { margin: 0 0 .8em; padding-left: 1.2em; border-left: 3px solid var(--foil); font-style: italic; }
+/* The writing, laid out as it will be in Word (the book's Page & text settings). */
+.bk-page { box-sizing: border-box; width: var(--bk-pagew, 21cm); max-width: 100%; margin: 0 auto; padding: 1.2cm min(var(--bk-margin, 2.54cm), 6%) 3cm;
+  background: var(--paper); border: 1px solid color-mix(in srgb, var(--rule) 80%, transparent); border-radius: 4px; box-shadow: 0 2px 14px rgba(0,0,0,.07); }
+.bk-page .bk-editor { max-width: none; min-height: 60vh; font-family: var(--bk-font, Georgia, serif); font-size: var(--bk-size, 12pt); line-height: var(--bk-line, 1.7); color: var(--ink); }
+.bk-page .bk-editor > *, .bk-page .bk-editor li, .bk-page .bk-editor blockquote > p { margin: 0 0 var(--bk-after, 8pt); }
+.bk-page .bk-editor p { text-indent: var(--bk-indent, 0); }
+.bk-page .bk-editor > p:first-child, .bk-page .bk-editor :is(h2, h3, hr, blockquote, ul, ol, .poem) + p, .bk-page .bk-editor p.poem, .bk-page .bk-editor li, .bk-page .bk-editor blockquote p { text-indent: 0; }
+.bk-page.justify .bk-editor :is(p:not(.poem), li, blockquote) { text-align: justify; }
+.bk-page .bk-editor p.poem { margin-bottom: 0; text-align: left; }   /* a poem's lines sit together; an empty line is a stanza break */
+.bk-page .bk-editor p.poem:has(+ :not(.poem)), .bk-page .bk-editor p.poem:last-child { margin-bottom: var(--bk-after, 8pt); }
+.bk-page .bk-editor h2 { font: 600 1.17em/1.3 var(--bk-font, Georgia, serif); margin: 1.3em 0 .5em; text-align: left; }
+.bk-page .bk-editor h3 { font: italic 600 1em/1.3 var(--bk-font, Georgia, serif); margin: 1em 0 .35em; text-align: left; }
+.bk-page .bk-editor blockquote { margin-left: 1.27cm; margin-right: 1.27cm; padding: 0; border: 0; font-style: italic; }
+.bk-page .bk-editor :is(ul, ol) { padding-left: 1.27cm; }
+.bk-page .bk-editor li { margin-bottom: 4pt; }
+.bk-page .bk-editor .al-l { text-align: left !important; }
+.bk-page .bk-editor .al-c { text-align: center !important; }
+.bk-page .bk-editor .al-r { text-align: right !important; }
+.bk-page .bk-editor .al-j { text-align: justify !important; }
+.bk-page .bk-editor .ind1 { margin-left: 1.27cm; } .bk-page .bk-editor .ind2 { margin-left: 2.54cm; }
+.bk-page .bk-editor .ind3 { margin-left: 3.81cm; } .bk-page .bk-editor .ind4 { margin-left: 5.08cm; }
+.bk-page .bk-editor hr { border: 0; height: auto; margin: 1em 0; text-align: center; overflow: visible; }
+.bk-page .bk-editor hr::after { content: '*\a0\a0\a0*\a0\a0\a0*'; color: var(--pencil); }
+.bk-page .bk-editor hr.pb { border-top: 1px dashed var(--rule); margin: 1.6em 0; height: 0; }
+.bk-page .bk-editor hr.pb::after { content: 'Page break'; position: relative; top: -.75em; padding: 0 8px; background: var(--paper); font: 11px var(--sans); color: var(--pencil); }
 
 /* the left pane's tabs: the passage, or Bible study on it */
 .bk-ptabs { position: sticky; top: -14px; z-index: 2; display: flex; gap: 4px; margin: -14px -26px 0; padding: 8px 20px 0; background: var(--paper); border-bottom: 1px solid var(--rule); }

@@ -2749,6 +2749,26 @@ async function exportQuotes() {
 
 
 /* ---------- views: Journal / Bible / Quote ---------- */
+/** The Book's fold: hides the sidebar while writing the book. Remembered on this computer; other sections always show the sidebar. */
+const sideFolded = () => { try { return localStorage.getItem('bookFold') === '1'; } catch { return false; } };
+function applyFold() {
+  const inBook = state.mode === 'book' && !ANDROID;
+  const folded = inBook && sideFolded();
+  $('#app').classList.toggle('side-folded', folded);
+  const b = $('#foldBtn');
+  b.hidden = !inBook;
+  const label = folded ? 'Show the sidebar' : 'Hide the sidebar';
+  b.setAttribute('aria-label', label);
+  b.title = label + (folded ? ' (Ctrl+\\)' : ' for more room to write (Ctrl+\\)');
+  b.setAttribute('aria-pressed', String(folded));
+}
+function toggleFold() {
+  if (state.mode !== 'book' || ANDROID) return;
+  try { localStorage.setItem('bookFold', sideFolded() ? '0' : '1'); } catch {}
+  applyFold();
+}
+$('#foldBtn').addEventListener('click', toggleFold);
+
 function setMode(mode) {
   if (mode === 'journal') requestAnimationFrame(() => fitTitle());
   if (!['journal', 'bible', 'quote', 'photos', 'book'].includes(mode) || (mode === 'book' && !bookAvailable())) mode = 'journal';
@@ -2763,6 +2783,7 @@ function setMode(mode) {
     b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on));
   }
   $('#showAbove').hidden = mode !== 'journal';
+  applyFold();
   closePopover();
   if (mode === 'bible') renderBibleView();
   else if (mode === 'quote') renderQuoteView();
@@ -4678,12 +4699,13 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
     if (k === 'n') { e.preventDefault(); newEntry(state.selectedDay || todayISO()); }
     else if (k === 'l') { e.preventDefault(); lockNow(); }
-    else if (k === 'f') { e.preventDefault(); $('#search').focus(); $('#search').select(); }
+    else if (k === 'f') { e.preventDefault(); if ($('#app').classList.contains('side-folded')) toggleFold(); $('#search').focus(); $('#search').select(); }
     else if (k === 's') { e.preventDefault(); state.dirty = true; saveNow().then(() => toast('Saved')); }
     else if (k === 'k' && body.contains(document.activeElement)) { e.preventDefault(); insertLink(); }
     else if (k === ',') { e.preventDefault(); openSettings(); }
     else if (k === '1' || k === '2' || k === '3' || k === '4') { e.preventDefault(); setMode(['journal', 'bible', 'quote', 'photos'][+k - 1]); }
     else if (k === '5' && bookAvailable()) { e.preventDefault(); setMode('book'); }
+    else if (k === '\\' && state.mode === 'book') { e.preventDefault(); toggleFold(); }
   }
   if (e.key === 'Escape' && !$('#lightbox').hidden) hidePhoto();
 }, true);

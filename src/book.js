@@ -3,7 +3,8 @@
  * The book: an optional writing project (Settings → General → "Write a book"), kept inside the encrypted journal
  * (the vault's meta, under `book`) and synced through Google Drive as its own file, merged chapter by chapter.
  *
- *   info:     { title, subtitle, goal (words), start, due (YYYY-MM-DD), order: [chapter ids], u }
+ *   info:     { title, subtitle, goal (words), start, due (YYYY-MM-DD), order: [chapter ids], layout, u }
+ *   layout:   how the book looks, in the editor and in Word: { font, size (pt), line, after (pt), indent (cm), justify, page, margins }
  *   chapters: [{ id, title, passage ('John 3:1-21'), outline (plain text), status, html, words, created, u }]
  *   gone:     { chapterId: when it was removed }   so a removal on one device isn't undone by another
  *   days:     { 'YYYY-MM-DD': the book's total words at the end of that day }   for the week's pace
@@ -55,6 +56,30 @@ function cleanChapter(c) {
   };
 }
 
+// The book's look. The defaults are the Word export as it was before layouts (Georgia 12 pt, 1.5 lines, 8 pt after).
+const FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Calibri', 'Arial'];
+const LINES = [1, 1.15, 1.5, 2];
+const AFTER = [0, 4, 6, 8, 12];
+const INDENTS = [0, 0.5, 0.75, 1, 1.27];
+const PAGES = { A4: [21, 29.7], Letter: [21.59, 27.94], A5: [14.8, 21], '6x9': [15.24, 22.86] };   // width, height in cm
+const MARGINS = { narrow: 1.27, moderate: 1.9, normal: 2.54, wide: 3.18 };   // cm, all four sides
+const LAYOUT = { font: 'Georgia', size: 12, line: 1.5, after: 8, indent: 0, justify: false, page: 'A4', margins: 'normal' };
+function cleanLayout(l) {
+  l = l && typeof l === 'object' ? l : {};
+  const pick = (list, v, d) => (list.includes(+v) ? +v : d);
+  const size = Math.round((+l.size || LAYOUT.size) * 2) / 2;
+  return {
+    font: FONTS.includes(l.font) ? l.font : LAYOUT.font,
+    size: size >= 9 && size <= 18 ? size : LAYOUT.size,
+    line: pick(LINES, l.line, LAYOUT.line),
+    after: pick(AFTER, l.after, LAYOUT.after),
+    indent: pick(INDENTS, l.indent, LAYOUT.indent),
+    justify: l.justify === true,
+    page: Object.prototype.hasOwnProperty.call(PAGES, l.page) ? l.page : LAYOUT.page,
+    margins: Object.prototype.hasOwnProperty.call(MARGINS, l.margins) ? l.margins : LAYOUT.margins,
+  };
+}
+
 function cleanBook(b) {
   b = b && typeof b === 'object' ? b : {};
   const i = b.info && typeof b.info === 'object' ? b.info : {};
@@ -75,6 +100,7 @@ function cleanBook(b) {
       start,
       due: ISO.test(i.due || '') && i.due > start ? i.due : addMonths(start, 6),
       order,
+      layout: cleanLayout(i.layout),
       u: time(i.u),
     },
     chapters, gone, days,
@@ -129,4 +155,4 @@ function mergeBooks(mine, theirs) {
 }
 const signature = b => JSON.stringify([b.info.u, b.chapters.map(c => c.id + c.u).sort(), Object.keys(b.gone).sort(), Object.entries(b.days).sort()]);
 
-module.exports = { cleanBook, cleanChapter, countWords, textOf, stats, mergeBooks, signature, ordered, total, localISO, addMonths, STATUS };
+module.exports = { cleanBook, cleanChapter, countWords, textOf, stats, mergeBooks, signature, ordered, total, localISO, addMonths, STATUS, cleanLayout, FONTS, LINES, AFTER, INDENTS, PAGES, MARGINS, LAYOUT };

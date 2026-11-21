@@ -75,6 +75,7 @@ app.whenReady().then(async () => {
   // Write: John beside the page
   await js(`document.querySelector('.bk-ch').click();`);
   assert.ok(await until(`document.querySelector('#bkEditor') && document.querySelector('.bk-passage .bk-on')`, 8000), 'the chapter opens with its passage marked');
+  assert.doesNotMatch(await text('.bk-passage'), /\bnull\b/, 'no stray "null" in the passage pane');
   assert.match(await text('.bk-passage'), /In the beginning was the Word/);
   assert.equal(await js(`return document.querySelectorAll('.bk-passage .bk-on').length`), 18, 'John 1:1-18 marked');
   const words = 'The Gospel of John begins before the beginning. Before Bethlehem and before the river Jordan there was the Word, and the Word was with God. ';
@@ -92,6 +93,29 @@ app.whenReady().then(async () => {
   await js(`document.querySelector('.bk-ch-status').value = 'drafting'; document.querySelector('.bk-ch-status').dispatchEvent(new Event('change'));`);
   await shot('k3-writing');
 
+  // Folding the sidebar for more room to write
+  assert.ok(await js(`return !document.querySelector('#foldBtn').hidden`), 'the fold button shows in the Book');
+  const wideBefore = await js(`return document.querySelector('.bk-write').getBoundingClientRect().width`);
+  await js(`document.querySelector('#foldBtn').click();`); await wait(300);
+  assert.ok(await js(`return document.querySelector('#app').classList.contains('side-folded') && getComputedStyle(document.querySelector('.cloth')).display === 'none'`), 'the sidebar folds away');
+  const wideAfter = await js(`return document.querySelector('.bk-write').getBoundingClientRect().width`);
+  assert.ok(wideAfter > wideBefore + 100, `the writing gets wider (${wideBefore} → ${wideAfter})`);
+  assert.equal(await js(`return document.querySelector('#foldBtn').getAttribute('aria-label')`), 'Show the sidebar');
+  await shot('k3b-folded');
+  await js(`setMode('journal');`); await wait(200);
+  assert.ok(await js(`return !document.querySelector('#app').classList.contains('side-folded') && document.querySelector('#foldBtn').hidden`), 'other sections keep the sidebar');
+  await js(`setMode('book');`);
+  assert.ok(await until(`document.querySelector('#app').classList.contains('side-folded')`), 'the Book remembers the fold');
+  assert.ok(await until(`document.querySelector('#bkEditor')`), 'the chapter is still open');
+  await js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '\\\\', ctrlKey: true, bubbles: true }));`); await wait(200);
+  assert.ok(await js(`return !document.querySelector('#app').classList.contains('side-folded')`), 'Ctrl+\\ unfolds it');
+  await js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '\\\\', ctrlKey: true, bubbles: true }));`); await wait(200);
+  assert.ok(await js(`return document.querySelector('#app').classList.contains('side-folded')`), 'Ctrl+\\ folds it again');
+  await js(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true }));`); await wait(200);
+  assert.ok(await js(`return !document.querySelector('#app').classList.contains('side-folded') && document.activeElement === document.querySelector('#search')`), 'Ctrl+F brings the sidebar back to search');
+  await js(`document.querySelector('#foldBtn').click();`); await wait(200);
+  await js(`const e = document.querySelector('#bkEditor'); e.focus(); const r = document.createRange(); r.selectNodeContents(e); r.collapse(false); getSelection().removeAllRanges(); getSelection().addRange(r);`);
+
   // Leaving saves; the overview shows the words and the status
   await js(`document.querySelector('#bkEditor').focus(); document.execCommand('insertText', false, ' One more sentence before I go.');`);
   await click('.bk-deskbar button', '‹ All chapters');
@@ -108,6 +132,54 @@ app.whenReady().then(async () => {
   await js(`await lockNow();`); await wait(600);
   await js(`document.querySelector('#unlockPw').value='river-stone'; document.querySelector('#unlockForm').requestSubmit();`); await wait(2500);
   assert.equal((await js(`return await api.bookGet()`)).stats.words, 110, 'locking saved the last words');
+
+  // Formatting: a poem, alignment, indents, breaks, and the book's Page & text settings
+  await js(`setMode('book');`); await wait(300);
+  await js(`document.querySelector('.bk-ch:nth-child(2)').click();`);
+  assert.ok(await until(`document.querySelector('#bkEditor')`));
+  const fmtId = await js(`return bookState.chapter.id`);
+  await js(`const e = document.querySelector('#bkEditor'); e.focus(); getSelection().selectAllChildren(e); getSelection().collapseToEnd();
+    for (const [i, l] of ['Worship needs a sacred space,', 'Uncrowded by life’s demands,', '', 'Holiness’ intolerance is expressed,', 'When what is created for worship'].entries()) {
+      if (i) document.execCommand('insertParagraph'); if (l) document.execCommand('insertText', false, l); }`);
+  assert.ok(await js(`return /^<p>Worship needs/.test(document.querySelector('#bkEditor').innerHTML)`), 'the first line of an empty chapter is a paragraph');
+  // Select the five lines and make them a poem
+  await js(`const e = document.querySelector('#bkEditor'), ps = [...e.querySelectorAll('p')], a = ps.findIndex(p => /Worship needs/.test(p.textContent));
+    const r = document.createRange(); r.setStart(ps[a], 0); r.setEnd(ps[ps.length - 1], 1); getSelection().removeAllRanges(); getSelection().addRange(r);
+    const s = document.querySelector('.bk-style'); s.value = 'poem'; s.dispatchEvent(new Event('change'));`);
+  await wait(200);
+  assert.equal(await js(`return document.querySelectorAll('#bkEditor p.poem').length`), 5, 'five poem lines, one of them a stanza break');
+  assert.equal(await js(`return getComputedStyle(document.querySelector('#bkEditor p.poem')).marginBottom`), '0px', 'a poem’s lines sit together');
+  assert.equal(await js(`return document.querySelector('.bk-style').value`), 'poem', 'the style list shows Poem');
+  // Centre one line, indent another with Tab
+  await js(`const p = [...document.querySelectorAll('#bkEditor p.poem')][0]; const r = document.createRange(); r.setStart(p.firstChild, 3); r.collapse(true); getSelection().removeAllRanges(); getSelection().addRange(r);`);
+  await js(`[...document.querySelectorAll('.bk-tools button')].find(b => b.title.startsWith('Centre')).click();`);
+  assert.ok(await js(`return [...document.querySelectorAll('#bkEditor p.poem')][0].classList.contains('al-c')`), 'centred');
+  assert.ok(await js(`return [...document.querySelectorAll('.bk-tools button')].find(b => b.title.startsWith('Centre')).classList.contains('on')`), 'the Centre button shows it');
+  await js(`document.querySelector('#bkEditor').dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));`);
+  assert.ok(await js(`return [...document.querySelectorAll('#bkEditor p.poem')][0].classList.contains('ind1')`), 'Tab indents');
+  // A scene break after the poem
+  await js(`const e = document.querySelector('#bkEditor'); const r = document.createRange(); r.selectNodeContents(e); r.collapse(false); getSelection().removeAllRanges(); getSelection().addRange(r);`);
+  await js(`[...document.querySelectorAll('.bk-tools button')].find(b => b.title.startsWith('Scene break')).click();`);
+  await js(`document.execCommand('insertText', false, 'After the break.');`);
+  assert.ok(await js(`return !!document.querySelector('#bkEditor hr')`), 'a scene break');
+  // Page & text: single spacing, no space between paragraphs, a 1 cm first-line indent, Garamond
+  await js(`document.querySelector('.bk-pageset').click();`);
+  assert.ok(await js(`return !document.querySelector('.bk-layout').hidden`), 'the settings open');
+  for (const [k, v] of [['line', '1'], ['after', '0'], ['indent', '1'], ['font', 'Garamond']]) {
+    await js(`const s = document.querySelector('.bk-layout [data-key=${k}]'); s.value = '${v}'; s.dispatchEvent(new Event('change'));`); await wait(250);
+  }
+  const lay = (await js(`return await api.bookGet()`)).info.layout;
+  assert.deepEqual([lay.line, lay.after, lay.indent, lay.font], [1, 0, 1, 'Garamond'], 'the layout is saved for the book');
+  assert.match(await js(`return getComputedStyle(document.querySelector('#bkEditor')).fontFamily`), /Garamond/);
+  assert.equal(await js(`return getComputedStyle([...document.querySelectorAll('#bkEditor p')].find(p => /Come and see|disciples|Andrew/.test(p.textContent)) || document.querySelector('#bkEditor p:not(.poem)')).textIndent`), '0px', 'the first paragraph is not indented');
+  await shot('k5-formatting');
+  await click('.bk-deskbar button', '‹ All chapters');
+  const fmtHtml = await js(`return (await api.bookChapter(${JSON.stringify(fmtId)})).html`);
+  assert.match(fmtHtml, /<p class="(?:poem al-c ind1|poem ind1 al-c|al-c poem ind1|al-c ind1 poem|ind1 poem al-c|ind1 al-c poem)">Worship needs/, 'the poem line keeps its classes');
+  assert.match(fmtHtml, /<hr>/);
+  await js(`document.querySelector('.bk-ch:nth-child(2)').click();`);
+  assert.ok(await until(`document.querySelector('#bkEditor p.poem.al-c')`), 'reopening keeps the formatting');
+  await click('.bk-deskbar button', '‹ All chapters');
 
   // Export to Word
   const file = path.join(os.tmpdir(), `wellwrite-book-${Date.now()}.docx`);

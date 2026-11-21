@@ -1,5 +1,5 @@
 'use strict';
-/* global api, el, $, toast, fmt, clean, state, bibleTr, bibleBooksList, versionButton, setMode, ANDROID */
+/* global api, el, $, toast, fmt, clean, state, bibleTr, bibleBooksList, versionButton, setMode, ANDROID, DOMPurify, ALLOWED */
 /**
  * The Book section (Windows; Settings → General → "Write a book"): a writing project with a word goal and a due date.
  *   Overview: progress towards the goal, pace against the due date, and the chapter plan (titles, passages, outlines).
@@ -169,22 +169,24 @@ function drawBookChapter(box) {
   status.value = c.status;
   const outline = el('textarea', { class: 'bk-outline', rows: '5', placeholder: 'Outline and notes for this chapter (not counted in your words)', oninput: () => queueSave({ outline: outline.value }) }, c.outline);
   const editor = el('div', { class: 'body bk-editor', id: 'bkEditor', contenteditable: 'true', spellcheck: 'true', 'aria-label': 'Chapter text', 'data-placeholder': 'Begin writing…' });
-  editor.innerHTML = clean(c.html || '');
-  editor.addEventListener('focus', () => document.execCommand('defaultParagraphSeparator', false, 'p'));
-  editor.addEventListener('input', () => { queueSave({ html: clean(editor.innerHTML) }); words.textContent = `${nf(countLocal(editor))} words`; });
+  editor.innerHTML = bookClean(c.html || '');
+  editor.addEventListener('focus', () => {
+    document.execCommand('defaultParagraphSeparator', false, 'p');
+    if (!editor.textContent.trim() && !editor.querySelector('p, h2, h3, blockquote, li, hr')) {   // start with a paragraph, so the first line can take a style
+      editor.innerHTML = '<p><br></p>';
+      const r = document.createRange(); r.setStart(editor.firstChild, 0); r.collapse(true); getSelection().removeAllRanges(); getSelection().addRange(r);
+    }
+  });
+  editor.addEventListener('blur', () => { if (editor.innerHTML === '<p><br></p>') editor.innerHTML = ''; });   // empty again: the placeholder shows
+  editor.addEventListener('input', () => { queueSave({ html: bookClean(editor.innerHTML) }); words.textContent = `${nf(countLocal(editor))} words`; });
   editor.addEventListener('paste', e => {   // plain text, so pasted styles don't come in
     e.preventDefault();
     const t = (e.clipboardData && e.clipboardData.getData('text/plain')) || '';
     document.execCommand('insertText', false, t);
   });
-  const fmtBtn = (label, title, fn) => el('button', { type: 'button', class: 'bk-fmt', title, onmousedown: e => e.preventDefault(), onclick: () => { editor.focus(); fn(); queueSave({ html: clean(editor.innerHTML) }); } }, label);
-  const tools = el('div', { class: 'bk-tools' },
-    fmtBtn(el('b', {}, 'B'), 'Bold (Ctrl+B)', () => document.execCommand('bold')),
-    fmtBtn(el('i', {}, 'I'), 'Italic (Ctrl+I)', () => document.execCommand('italic')),
-    fmtBtn('Heading', 'A heading within the chapter', () => document.execCommand('formatBlock', false, document.queryCommandValue('formatBlock') === 'h2' ? 'p' : 'h2')),
-    fmtBtn('“ Quote', 'Set a quotation apart', () => document.execCommand('formatBlock', false, document.queryCommandValue('formatBlock') === 'blockquote' ? 'p' : 'blockquote')),
-    fmtBtn('• List', 'A bulleted list', () => document.execCommand('insertUnorderedList')),
-    el('span', { class: 'rd-gap' }), words, saved);
+  const page = el('div', { class: 'bk-page' }, editor);
+  bookApplyLayout(page, info.layout);
+  const { tools, panel } = bookToolbar(editor, page, words, saved, () => queueSave({ html: bookClean(editor.innerHTML) }));
 
   box.replaceChildren(el('div', { class: 'bk-desk' },
     el('div', { class: 'bk-deskbar' },
@@ -200,7 +202,7 @@ function drawBookChapter(box) {
         el('div', { class: 'bk-pane', id: 'bkPassage' })),
       el('section', { class: 'bk-write' },
         el('details', { class: 'bk-outline-box', open: !c.html }, el('summary', {}, 'Outline and notes'), outline),
-        tools, editor))));
+        tools, panel, page))));
   bookDrawPane();
   if (!c.html) setTimeout(() => editor.focus(), 50);
 }
@@ -253,7 +255,7 @@ async function bookDrawPassage() {
   const prev = c1 > 1 ? [b, c1 - 1] : b > 0 && books[b - 1] ? [b - 1, books[b - 1].chapters] : null;
   const nextC = (c2 || c1);
   const next = books[b] && nextC < books[b].chapters ? [b, nextC + 1] : books[b + 1] ? [b + 1, 1] : null;
-  pane.replaceChildren(
+  pane.replaceChildren(...[
     el('div', { class: 'bk-pbar' },
       el('button', { type: 'button', class: 'rd-arrow', title: 'Previous chapter', disabled: !prev, onclick: () => prev && go(...prev) }, '‹'),
       refInput,
@@ -261,7 +263,7 @@ async function bookDrawPassage() {
       tr ? el('span', { class: 'rd-ver' }, versionButton(tr)) : null),
     usePassage || setAsPassage ? el('div', { class: 'bk-plinks' }, usePassage, setAsPassage) : null,
     ...parts,
-    copyright ? el('p', { class: 'rv-note' }, copyright) : null);
+    copyright ? el('p', { class: 'rv-note' }, copyright) : null].filter(Boolean));   // replaceChildren would show a null as the word "null"
   const first = pane.querySelector('.bk-on');
   const scroller = pane.closest('.bk-passage');
   if (first && scroller) scroller.scrollTop = Math.max(0, first.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 110);
@@ -419,3 +421,166 @@ async function bookFlush() {
 }
 window.addEventListener('blur', () => { if (state.mode === 'book') bookFlush(); });
 window.addEventListener('beforeunload', () => { bookFlush(); });
+
+
+// ---------- formatting: the toolbar, and the book's page and text settings ----------
+// Classes the editor may put on a paragraph; src/docx.js turns them into Word's alignment, indents and breaks.
+const BK_CLASS = /^(al-[lcrj]|ind[1-4]|poem|pb)$/;
+/** The journal's cleaning, keeping the book's paragraph classes (and nothing else). */
+function bookClean(html) {
+  const t = document.createElement('div');
+  t.innerHTML = DOMPurify.sanitize(html, { ...ALLOWED, ALLOWED_ATTR: [...ALLOWED.ALLOWED_ATTR, 'class'] });
+  t.querySelectorAll('[class]').forEach(n => {
+    const keep = [...n.classList].filter(c => BK_CLASS.test(c));
+    if (keep.length) n.className = keep.join(' '); else n.removeAttribute('class');
+  });
+  return t.innerHTML;
+}
+
+// The same choices as src/book.js (the engine checks them again).
+const BK_FONTS = ['Georgia', 'Times New Roman', 'Garamond', 'Palatino Linotype', 'Book Antiqua', 'Cambria', 'Calibri', 'Arial'];
+const BK_PAGES = { A4: [21, 'A4 (21 × 29.7 cm)'], Letter: [21.59, 'US Letter'], A5: [14.8, 'A5 (14.8 × 21 cm)'], '6x9': [15.24, 'Book, 6 × 9 in'] };
+const BK_MARGINS = { narrow: [1.27, 'Narrow (1.27 cm)'], moderate: [1.9, 'Moderate (1.9 cm)'], normal: [2.54, 'Normal (2.54 cm)'], wide: [3.18, 'Wide (3.18 cm)'] };
+const BK_LAYOUT = { font: 'Georgia', size: 12, line: 1.5, after: 8, indent: 0, justify: false, page: 'A4', margins: 'normal' };
+
+/** Shows the writing as it will look in Word: the font, size, spacing, indent, and the page's text width. */
+function bookApplyLayout(page, layout) {
+  const L = { ...BK_LAYOUT, ...(layout || {}) };
+  const v = (k, x) => page.style.setProperty(k, x);
+  v('--bk-font', `"${L.font}", Georgia, serif`);
+  v('--bk-size', L.size + 'pt');
+  v('--bk-line', String(Math.round(L.line * 1.15 * 100) / 100));   // Word's "single" is about 1.15 of the type size
+  v('--bk-after', L.after + 'pt');
+  v('--bk-indent', L.indent + 'cm');
+  v('--bk-pagew', BK_PAGES[L.page][0] + 'cm');
+  v('--bk-margin', BK_MARGINS[L.margins][0] + 'cm');
+  page.classList.toggle('justify', !!L.justify);
+}
+
+const bkIcon = (paths, w = 20) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', `0 0 ${w} 20`); s.setAttribute('aria-hidden', 'true'); s.innerHTML = paths; return s; };
+const BK_ICONS = {
+  l: '<path d="M3 5h14M3 9h9M3 13h14M3 17h9"/>', c: '<path d="M3 5h14M5.5 9h9M3 13h14M5.5 17h9"/>',
+  r: '<path d="M3 5h14M8 9h9M3 13h14M8 17h9"/>', j: '<path d="M3 5h14M3 9h14M3 13h14M3 17h14"/>',
+  out: '<path d="M9 5h8M9 9h8M9 13h8M3 17h14M6 8l-3 2.5L6 13"/>', in: '<path d="M9 5h8M9 9h8M9 13h8M3 17h14M3 8l3 2.5L3 13"/>',
+  ul: '<circle cx="4" cy="6" r="1.2"/><circle cx="4" cy="14" r="1.2"/><path d="M8 6h9M8 14h9"/>',
+  ol: '<path d="M3 4.5h1.5v4M3 8.5h3M3 12.5c0-1 3-1 3 .3 0 1-3 1.6-3 3.2h3M9 6h8M9 14h8"/>',
+  undo: '<path d="M7 5 3.5 8.5 7 12"/><path d="M4 8.5h8a4.5 4.5 0 0 1 0 9H8"/>', redo: '<path d="M13 5l3.5 3.5L13 12"/><path d="M16 8.5H8a4.5 4.5 0 0 0 0 9h4"/>',
+  clear: '<path d="M5 4h10M10 4l-3 12M4 16l12-12"/>',
+};
+
+/** The blocks (paragraphs, headings, quotations, list items) the selection touches. */
+function bkBlocks(editor) {
+  const sel = getSelection();
+  if (!sel.rangeCount || !editor.contains(sel.getRangeAt(0).commonAncestorContainer)) return [];
+  if ([...editor.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) document.execCommand('formatBlock', false, 'p');
+  const r = getSelection().getRangeAt(0);
+  let found = [...editor.children].filter(b => r.intersectsNode(b));
+  if (!found.length) { let n = r.startContainer; while (n && n.parentNode !== editor) n = n.parentNode; if (n && n.nodeType === 1) found = [n]; }
+  return found.flatMap(b => (/^(UL|OL)$/.test(b.tagName) ? [...b.children].filter(li => r.intersectsNode(li)) : [b])).filter(b => b.tagName !== 'HR');
+}
+const bkTidy = b => { if (!b.className.trim()) b.removeAttribute('class'); };
+function bkAlign(editor, a) {
+  const blocks = bkBlocks(editor);
+  const same = blocks.length && blocks.every(b => b.classList.contains('al-' + a));
+  for (const b of blocks) { b.classList.remove('al-l', 'al-c', 'al-r', 'al-j'); if (!same && a !== 'l') b.classList.add('al-' + a); bkTidy(b); }
+}
+function bkIndent(editor, by) {
+  for (const b of bkBlocks(editor)) {
+    const n = Math.max(0, Math.min(4, (+([...b.classList].find(c => /^ind\d$/.test(c)) || 'ind0').slice(3)) + by));
+    b.classList.remove('ind1', 'ind2', 'ind3', 'ind4'); if (n) b.classList.add('ind' + n); bkTidy(b);
+  }
+}
+/** The paragraph style of the block the cursor is in: p, poem, h2, h3 or blockquote. */
+function bkStyleAt(editor) {
+  const sel = getSelection();
+  if (!sel.rangeCount) return 'p';
+  let n = sel.anchorNode;
+  while (n && n !== editor) { if (n.nodeType === 1) { const t = n.tagName.toLowerCase(); if (/^(h2|h3|blockquote)$/.test(t)) return t; if (t === 'p' && n.parentNode === editor) return n.classList.contains('poem') ? 'poem' : 'p'; } n = n.parentNode; }
+  return 'p';
+}
+function bkSetStyle(editor, v) {
+  if (v === 'poem' || v === 'p') {
+    if (/^(h2|h3|blockquote)$/.test(bkStyleAt(editor))) document.execCommand('formatBlock', false, 'p');
+    for (const b of bkBlocks(editor)) if (b.tagName === 'P') { b.classList.toggle('poem', v === 'poem'); bkTidy(b); }
+  } else document.execCommand('formatBlock', false, v);
+}
+
+function bookToolbar(editor, page, words, saved, changed) {
+  const act = fn => () => { editor.focus(); fn(); changed(); sync(); };
+  const btn = (label, title, fn, key) => el('button', { type: 'button', class: 'bk-fmt', title, 'aria-label': title, 'data-k': key || '', onmousedown: e => e.preventDefault(), onclick: act(fn) }, label);
+  const cmd = (c, v) => () => document.execCommand(c, false, v);
+  const style = el('select', { class: 'bk-style', title: 'Paragraph style', 'aria-label': 'Paragraph style',
+    onchange: () => { editor.focus(); bkSetStyle(editor, style.value); changed(); sync(); } },
+    ...[['p', 'Body text'], ['h2', 'Heading'], ['h3', 'Subheading'], ['blockquote', 'Quotation'], ['poem', 'Poem or verse']].map(([v, l]) => el('option', { value: v }, l)));
+  const sep = () => el('span', { class: 'bk-sep', 'aria-hidden': 'true' });
+  const panel = bookLayoutPanel(page);
+  const tools = el('div', { class: 'bk-tools', role: 'toolbar', 'aria-label': 'Formatting' },
+    btn(bkIcon(BK_ICONS.undo), 'Undo (Ctrl+Z)', cmd('undo')), btn(bkIcon(BK_ICONS.redo), 'Redo (Ctrl+Y)', cmd('redo')), sep(),
+    style, sep(),
+    btn(el('b', {}, 'B'), 'Bold (Ctrl+B)', cmd('bold'), 'bold'), btn(el('i', {}, 'I'), 'Italic (Ctrl+I)', cmd('italic'), 'italic'),
+    btn(el('u', {}, 'U'), 'Underline (Ctrl+U)', cmd('underline'), 'underline'), btn(el('s', {}, 'S'), 'Strikethrough', cmd('strikeThrough'), 'strikeThrough'),
+    btn(el('span', {}, 'x', el('sup', {}, '2')), 'Superscript, for verse numbers and notes', cmd('superscript'), 'superscript'), sep(),
+    btn(bkIcon(BK_ICONS.ul), 'Bulleted list', cmd('insertUnorderedList'), 'insertUnorderedList'), btn(bkIcon(BK_ICONS.ol), 'Numbered list', cmd('insertOrderedList'), 'insertOrderedList'), sep(),
+    btn(bkIcon(BK_ICONS.l), 'Align left', () => bkAlign(editor, 'l'), 'al-l'), btn(bkIcon(BK_ICONS.c), 'Centre (Ctrl+E)', () => bkAlign(editor, 'c'), 'al-c'),
+    btn(bkIcon(BK_ICONS.r), 'Align right', () => bkAlign(editor, 'r'), 'al-r'), btn(bkIcon(BK_ICONS.j), 'Justify (Ctrl+J)', () => bkAlign(editor, 'j'), 'al-j'),
+    btn(bkIcon(BK_ICONS.out), 'Less indent (Shift+Tab)', () => bkIndent(editor, -1)), btn(bkIcon(BK_ICONS.in), 'More indent (Tab)', () => bkIndent(editor, 1)), sep(),
+    btn('✱', 'Scene break: a centred * * * between sections', cmd('insertHTML', '<hr><p><br></p>')), btn('⤓', 'Page break: start a new page in Word', cmd('insertHTML', '<hr class="pb"><p><br></p>')),
+    btn(bkIcon(BK_ICONS.clear), 'Clear formatting', () => { document.execCommand('removeFormat'); bkSetStyle(editor, 'p'); for (const b of bkBlocks(editor)) { b.removeAttribute('class'); } }), sep(),
+    el('button', { type: 'button', class: 'bk-fmt bk-pageset', 'aria-expanded': 'false', title: 'Font, spacing, indents and page size, for the whole book and the Word export',
+      onclick: e => { panel.hidden = !panel.hidden; e.currentTarget.setAttribute('aria-expanded', String(!panel.hidden)); } }, 'Page & text'),
+    el('span', { class: 'rd-gap' }), words, saved);
+  // Show what's on where the cursor is.
+  function sync() {
+    if (!document.body.contains(editor)) { document.removeEventListener('selectionchange', sync); return; }
+    if (!editor.contains(getSelection().anchorNode)) return;
+    style.value = bkStyleAt(editor);
+    const blocks = bkBlocks(editor);
+    for (const b of tools.querySelectorAll('[data-k]')) {
+      const k = b.dataset.k; if (!k) continue;
+      let on = false;
+      if (k.startsWith('al-')) on = blocks.length > 0 && blocks.every(x => (k === 'al-l' ? !/\bal-[crj]\b/.test(x.className) : x.classList.contains(k)));
+      else try { on = document.queryCommandState(k); } catch {}
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+    }
+  }
+  document.addEventListener('selectionchange', sync);
+  editor.addEventListener('keydown', e => {
+    const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
+    if (e.key === 'Tab' && !e.ctrlKey && !e.altKey) {
+      e.preventDefault(); act(() => bkIndent(editor, e.shiftKey ? -1 : 1))();
+    } else if (mod && e.key.toLowerCase() === 'e') { e.preventDefault(); act(() => bkAlign(editor, 'c'))(); }
+    else if (mod && e.key.toLowerCase() === 'j') { e.preventDefault(); act(() => bkAlign(editor, 'j'))(); }
+  });
+  return { tools, panel };
+}
+
+/** Page & text: the whole book's font, size, line and paragraph spacing, first-line indent, justification, page size and margins. */
+function bookLayoutPanel(page) {
+  const L = { ...BK_LAYOUT, ...((bookState.data && bookState.data.info.layout) || {}) };
+  const sel = (key, opts, fmtV = v => v) => {
+    const s = el('select', { 'data-key': key, onchange: () => save({ [key]: key === 'font' || key === 'page' || key === 'margins' ? s.value : +s.value }) },
+      ...opts.map(([v, l]) => el('option', { value: String(v) }, l)));
+    s.value = String(fmtV(L[key]));
+    return s;
+  };
+  const justify = el('input', { type: 'checkbox', 'data-key': 'justify', onchange: () => save({ justify: justify.checked }) });
+  justify.checked = !!L.justify;
+  const note = el('span', { class: 'bk-lnote' });
+  async function save(patch) {
+    Object.assign(L, patch);
+    bookApplyLayout(page, L);
+    try { bookState.data = await api.bookSetInfo({ layout: patch }); note.textContent = 'Saved for the whole book'; setTimeout(() => { note.textContent = ''; }, 1800); }
+    catch (x) { toast(x.message); }
+  }
+  const field = (label, control) => el('label', { class: 'bk-lfield' }, el('span', {}, label), control);
+  return el('div', { class: 'bk-layout', hidden: true },
+    field('Font', sel('font', BK_FONTS.map(f => [f, f]))),
+    field('Size', sel('size', [9, 10, 10.5, 11, 11.5, 12, 13, 14, 16].map(n => [n, n + ' pt']))),
+    field('Line spacing', sel('line', [[1, 'Single'], [1.15, '1.15'], [1.5, '1.5 lines'], [2, 'Double']])),
+    field('Space after paragraphs', sel('after', [[0, 'None'], [4, '4 pt'], [6, '6 pt'], [8, '8 pt'], [12, '12 pt']])),
+    field('First-line indent', sel('indent', [[0, 'None'], [0.5, '0.5 cm'], [0.75, '0.75 cm'], [1, '1 cm'], [1.27, '1.27 cm']])),
+    field('Page size', sel('page', Object.entries(BK_PAGES).map(([k, [, l]]) => [k, l]))),
+    field('Margins', sel('margins', Object.entries(BK_MARGINS).map(([k, [, l]]) => [k, l]))),
+    el('label', { class: 'bk-lfield bk-lcheck' }, justify, el('span', {}, 'Justify body text')),
+    el('p', { class: 'bk-lhint' }, 'These apply to every chapter, here and in Export to Word. A book usually has no space between paragraphs and a first-line indent instead; the first paragraph after a heading or break isn’t indented. ', note));
+}

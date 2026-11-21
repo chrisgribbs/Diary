@@ -410,7 +410,8 @@ function createBackend(platform) {
   handle('book:chapter', id => vault.getBook().chapters.find(c => c.id === String(id)) || null);
   handle('book:setInfo', patch => {
     patch = patch || {};
-    return bookView(vault.updateBook(b => { for (const k of ['title', 'subtitle', 'goal', 'start', 'due']) if (k in patch) b.info[k] = patch[k]; }));
+    return bookView(vault.updateBook(b => { for (const k of ['title', 'subtitle', 'goal', 'start', 'due']) if (k in patch) b.info[k] = patch[k];
+      if (patch.layout) b.info.layout = Book.cleanLayout({ ...b.info.layout, ...patch.layout }); }));
   });
   handle('book:addChapter', (fields, afterId) => {
     let id = '';
