@@ -281,6 +281,7 @@
     bookSaveChapter: (id, patch) => engine('book:saveChapter', id, patch),
     bookRemoveChapter: id => engine('book:removeChapter', id),
     bookMove: (id, by) => engine('book:move', id, by),
+    bookReorder: ids => engine('book:reorder', ids),
     bookExport: () => Promise.reject(new Error('Export your book from WellWrite on Windows.')),
     studyJobSeen: rid => engine('study:jobSeen', rid),
     studyAsk: (id, question, rid) => engine('study:ask', id, question, rid),

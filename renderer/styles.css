@@ -1462,7 +1462,7 @@ body.listening .readview { padding-bottom: 96px; }
 .bk-stat small { font: 12px var(--sans); color: var(--pencil); }
 .bk-plan h2, .bk-form h2 { margin: 0 0 12px; font: 600 13px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--pencil); }
 .bk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.bk-ch { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); cursor: pointer; }
+.bk-ch { display: grid; grid-template-columns: 14px 34px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); cursor: pointer; }
 .bk-ch:hover, .bk-ch:focus-visible { border-color: var(--pencil); outline: none; }
 .bk-num { font: 600 22px/1 var(--serif); color: var(--foil); text-align: center; padding-top: 2px; }
 .bk-ch-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
@@ -1591,3 +1591,10 @@ body.listening .readview { padding-bottom: 96px; }
 .bk-sask button { justify-self: start; }
 .bk-sphase { margin: 8px 0 10px; }
 .bk-sactions button, .bk-snew button { white-space: nowrap; flex: none; }
+
+/* dragging chapters into order */
+.bk-grip { align-self: center; font: 700 13px/1 var(--sans); letter-spacing: -2px; color: var(--pencil); opacity: .35; cursor: grab; user-select: none; }
+.bk-ch:hover .bk-grip, .bk-ch:focus-visible .bk-grip { opacity: .9; }
+.bk-ch[draggable="true"] { cursor: pointer; }
+.bk-ch.dragging { opacity: .45; border-style: dashed; border-color: var(--ribbon); }
+.bk-list:has(.dragging) .bk-ch:not(.dragging) { transition: transform .12s; }

@@ -77,6 +77,7 @@ contextBridge.exposeInMainWorld('wellwrite', {
   bookSaveChapter: (id, patch) => call('book:saveChapter', id, patch),
   bookRemoveChapter: id => call('book:removeChapter', id),
   bookMove: (id, by) => call('book:move', id, by),
+  bookReorder: ids => call('book:reorder', ids),
   bookExport: () => call('book:export'),
   openExternal: url => call('shell:openExternal', url),
   backupInfo: () => call('backup:info'),

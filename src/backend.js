@@ -435,6 +435,11 @@ function createBackend(platform) {
     return { words: c.words, u: c.u, stats: Book.stats(b) };
   });
   handle('book:removeChapter', id => bookView(vault.updateBook(b => { b.chapters = b.chapters.filter(c => c.id !== String(id)); })));
+  // A new order for the chapters (dragged in the overview): the ids it doesn't know are ignored, missing ones kept at the end.
+  handle('book:reorder', ids => bookView(vault.updateBook(b => {
+    const known = new Set(b.info.order), wanted = (Array.isArray(ids) ? ids : []).map(String).filter(id => known.has(id));
+    b.info.order = [...new Set([...wanted, ...b.info.order])];
+  })));
   handle('book:move', (id, by) => bookView(vault.updateBook(b => {
     const o = b.info.order, i = o.indexOf(String(id)), j = i + (by < 0 ? -1 : 1);
     if (i >= 0 && j >= 0 && j < o.length) [o[i], o[j]] = [o[j], o[i]];

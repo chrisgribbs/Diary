@@ -71,6 +71,24 @@ app.whenReady().then(async () => {
   assert.deepEqual(await js(`return [...document.querySelectorAll('.bk-ch-title')].map(n => n.textContent)`), ['In the beginning', 'Water into wine', 'Come and see']);
   await js(`[...document.querySelectorAll('.bk-ch')][1].querySelector('[title="Move down"]').click();`); await wait(300);
   await shot('k2-plan');
+  // Drag into order: Come and see dragged above In the beginning; the numbers follow the order, and it's saved
+  const drag = (from, to, below) => js(`const rows = [...document.querySelectorAll('.bk-ch')], a = rows[${from}], b = rows[${to}];
+    const dt = new DataTransfer(); a.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+    const r = b.getBoundingClientRect(); b.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt, clientX: r.left + 20, clientY: ${below} ? r.bottom - 4 : r.top + 4 }));
+    await new Promise(r => setTimeout(r, 50));
+    const nums = [...document.querySelectorAll('.bk-num')].map(n => n.textContent).join(',');
+    a.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt })); a.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt }));
+    return nums;`);
+  assert.equal(await drag(1, 0, false), '1,2,3', 'numbered by place while dragging');
+  assert.ok(await until(`[...document.querySelectorAll('.bk-ch-title')].map(n => n.textContent).join() === 'Come and see,In the beginning,Water into wine'`), 'dropped in its new place');
+  assert.deepEqual((await js(`return await api.bookGet()`)).chapters.map(c => c.title), ['Come and see', 'In the beginning', 'Water into wine'], 'the new order is saved');
+  assert.equal(await js(`return [...document.querySelectorAll('.bk-ch')].map(r => r.querySelector('.bk-num').textContent + r.querySelector('.bk-ch-title').textContent).join('|')`), '1Come and see|2In the beginning|3Water into wine');
+  await drag(0, 2, true);
+  assert.ok(await until(`[...document.querySelectorAll('.bk-ch-title')].map(n => n.textContent).join() === 'In the beginning,Water into wine,Come and see'`), 'dragged below the last');
+  // Alt+↑ on a chapter moves it up, and keeps it selected
+  await js(`const r = [...document.querySelectorAll('.bk-ch')][2]; r.focus(); r.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true }));`);
+  assert.ok(await until(`[...document.querySelectorAll('.bk-ch-title')].map(n => n.textContent).join() === 'In the beginning,Come and see,Water into wine'`), 'Alt+Up');
+  assert.ok(await until(`document.activeElement && document.activeElement.querySelector && /Come and see/.test(document.activeElement.textContent)`), 'still selected');
 
   // Write: John beside the page
   await js(`document.querySelector('.bk-ch').click();`);

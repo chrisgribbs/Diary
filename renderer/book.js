@@ -73,7 +73,7 @@ function drawBookOverview(box) {
     form === 'new' ? newChapterForm(box) : null,
     el('section', { class: 'bk-plan' },
       el('h2', {}, 'Chapters'),
-      chapters.length ? el('ol', { class: 'bk-list' }, ...chapters.map((c, i) => chapterRow(c, i, chapters.length, box)))
+      chapters.length ? dragList(el('ol', { class: 'bk-list' }, ...chapters.map((c, i) => chapterRow(c, i, chapters.length, box))), box)
         : el('div', { class: 'bk-empty' },
           el('p', {}, 'Plan your book here. Give each chapter a working title, the passage of John it reflects on, and an outline of what you want to say. Then open a chapter to write with the passage beside you.'),
           el('p', { class: 'bk-hint' }, `${nf(info.goal)} words is about ${Math.round(info.goal / 2500)} chapters of 2,500 words, or ${Math.round(info.goal / 4000)} of 4,000.`)))));
@@ -87,7 +87,16 @@ function chapterRow(c, i, n, box) {
     if (!confirming) { confirming = true; remove.textContent = `Remove${c.words ? ` (${nf(c.words)} words)` : ''}?`; remove.classList.add('ask'); setTimeout(() => { confirming = false; remove.textContent = '✕'; remove.classList.remove('ask'); }, 4000); return; }
     bookState.data = await api.bookRemoveChapter(c.id); drawBookOverview(box); toast(`Removed “${c.title || 'Untitled chapter'}”`);
   } }, '✕');
-  return el('li', { class: 'bk-ch', tabindex: '0', onclick: () => openChapter(c.id), onkeydown: e => { if (e.key === 'Enter' && e.target === e.currentTarget) openChapter(c.id); } },
+  return el('li', { class: 'bk-ch', tabindex: '0', draggable: 'true', 'data-id': c.id, title: 'Drag to reorder (or Alt+↑ / Alt+↓)',
+    onclick: () => openChapter(c.id),
+    onkeydown: e => {
+      if (e.key === 'Enter' && e.target === e.currentTarget) openChapter(c.id);
+      if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.target === e.currentTarget) {
+        e.preventDefault();
+        move(e.key === 'ArrowUp' ? -1 : 1)(e).then(() => { const r = bookBox().querySelector(`.bk-ch[data-id="${c.id}"]`); if (r) r.focus(); });
+      }
+    } },
+    el('span', { class: 'bk-grip', 'aria-hidden': 'true' }, '⋮⋮'),
     el('span', { class: 'bk-num' }, String(i + 1)),
     el('div', { class: 'bk-ch-main' },
       el('div', { class: 'bk-ch-top' },
@@ -102,6 +111,47 @@ function chapterRow(c, i, n, box) {
         el('button', { type: 'button', class: 'bk-icon', title: 'Move up', disabled: i === 0, onclick: move(-1) }, '↑'),
         el('button', { type: 'button', class: 'bk-icon', title: 'Move down', disabled: i === n - 1, onclick: move(1) }, '↓'),
         remove)));
+}
+
+/**
+ * Drag chapters into a new order: the row follows the pointer, the others make room, and the numbers follow the
+ * order as it changes (a chapter's number is its place in the book). Saved when you let go.
+ */
+function dragList(list, box) {
+  let dragging = null, before = '';
+  const renumber = () => [...list.querySelectorAll('.bk-ch')].forEach((r, i, all) => {
+    r.querySelector('.bk-num').textContent = String(i + 1);
+    const [up, down] = r.querySelectorAll('.bk-ch-tools .bk-icon');
+    if (up) up.disabled = i === 0; if (down) down.disabled = i === all.length - 1;
+  });
+  list.addEventListener('dragstart', e => {
+    const row = e.target.closest && e.target.closest('.bk-ch');
+    if (!row) return;
+    dragging = row; before = [...list.children].map(r => r.dataset.id).join();
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', row.dataset.id);
+    requestAnimationFrame(() => row.classList.add('dragging'));
+  });
+  list.addEventListener('dragover', e => {
+    if (!dragging) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    const over = e.target.closest && e.target.closest('.bk-ch');
+    if (!over || over === dragging) return;
+    const r = over.getBoundingClientRect();
+    const after = e.clientY > r.top + r.height / 2;
+    if (after ? over.nextSibling !== dragging : over.previousSibling !== dragging) { over[after ? 'after' : 'before'](dragging); renumber(); }
+  });
+  list.addEventListener('drop', e => { if (dragging) e.preventDefault(); });
+  list.addEventListener('dragend', async () => {
+    if (!dragging) return;
+    dragging.classList.remove('dragging');
+    const ids = [...list.children].map(r => r.dataset.id), moved = ids.join() !== before;
+    dragging = null;
+    if (!moved) return;
+    try { bookState.data = await api.bookReorder(ids); } catch (x) { toast(x.message); }
+    drawBookOverview(box);
+  });
+  return list;
 }
 
 function newChapterForm(box) {

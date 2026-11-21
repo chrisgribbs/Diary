@@ -5,6 +5,12 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.35.1', date: '2026-11-22', title: 'Drag your chapters into order',
+    new: [
+      'Book: drag chapters into order. Hold a chapter anywhere (the ⋮⋮ handle shows where) and drop it where it belongs; the others make room and the chapter numbers follow the new order as you drag. Alt+↑ and Alt+↓ move the selected chapter too, and the ↑ ↓ buttons still work.',
+    ],
+  },
+  {
     v: '1.35.0', date: '2026-11-21', title: 'Writing tools for your book',
     new: [
       'Book: fold the sidebar away for more room to write, with the button at the top left of the Book or Ctrl+\\. WellWrite remembers it, and the other sections keep the sidebar.',

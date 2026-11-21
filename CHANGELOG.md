@@ -2,6 +2,13 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.35.1 — Drag your chapters into order
+_22 November 2026_
+
+**New**
+
+- Book: drag chapters into order. Hold a chapter anywhere (the ⋮⋮ handle shows where) and drop it where it belongs; the others make room and the chapter numbers follow the new order as you drag. Alt+↑ and Alt+↓ move the selected chapter too, and the ↑ ↓ buttons still work.
+
 ## 1.35.0 — Writing tools for your book
 _21 November 2026_
 
