@@ -1,0 +1,73 @@
+07:17:35 webview at { x: 0, y: 128 } dpr 2.625
+07:17:37 PASS Back puts the keyboard away
+07:17:37 PASS journal open
+07:17:39 PASS tapping Bible opens it
+07:17:40 PASS tapping Week opens it
+07:17:42 PASS tapping Photos opens it
+07:17:43 PASS tapping Journal opens it
+07:17:49 PASS › goes to the next chapter (Psalm 23Psalm 23 ▾ → Psalm 24Psalm 24 ▾)
+07:17:50 PASS ‹ goes back
+07:17:52 PASS swiping left goes to the next chapter (Psalm 24Psalm 24 ▾)
+07:17:54 PASS swiping right goes back
+07:17:56 PASS tapping the chapter name opens “Choose a passage”
+07:17:58 PASS Close closes “Choose a passage”
+07:18:01 PASS tapping Genesis shows its chapters
+07:18:02 PASS tapping 3 opens Genesis 3
+07:18:07 PASS Ruth 2 opens
+07:18:09 PASS the button at the end goes on to Ruth 3
+07:18:11 PASS the version ▾ opens the list
+07:18:13 PASS choosing a version closes the list
+07:18:18 PASS tapping a verse selects it
+07:18:19 PASS Back clears the chosen verse and stays in the Bible
+07:18:20 PASS Search opens
+07:18:26 PASS searching shows results
+07:18:28 PASS Plans opens
+07:18:30 PASS back to Read
+07:18:33 PASS Back from Photos goes to the journal
+07:18:34 PASS + starts a new entry
+07:18:37 PASS while writing, the formatting buttons sit above the keyboard
+07:18:39 PASS a formatting button keeps the cursor in the entry
+07:18:41 PASS putting the keyboard away brings the bottom bar back
+07:18:43 PASS ⋯ opens the menu
+07:18:45 PASS ⋯ → Settings opens Settings
+07:18:46 PASS and Done closes it
+07:18:48 PASS the menu button opens the sidebar
+07:18:52 PASS the sidebar tabs keep it open
+07:18:57 PASS tapping an entry opens it and closes the sidebar
+07:19:05 PASS Settings opens
+07:19:05 PASS Settings starts with the list of sections
+07:19:07 PASS Settings: general opens
+07:19:08 PASS   Back returns to the list
+07:19:09 PASS Settings: readings opens
+07:19:10 PASS   Back returns to the list
+07:19:12 PASS Settings: bible opens
+07:19:13 PASS   ‹ Settings returns to the list
+07:19:15 PASS Settings: privacy opens
+07:19:16 PASS   Back returns to the list
+07:19:17 PASS Settings: backups opens
+07:19:18 PASS   Back returns to the list
+07:19:20 PASS Settings: wordpress opens
+07:19:21 PASS   Back returns to the list
+07:19:22 PASS Settings: about opens
+07:19:23 PASS   Back returns to the list
+07:19:25 PASS Done closes Settings
+07:19:27 PASS tapping a photo opens it, with Delete photo
+07:19:27 PASS …without bringing up the keyboard
+07:19:29 PASS Delete photo asks first
+07:19:32 PASS Close closes the photo
+07:19:34 PASS the category button opens its menu
+07:19:37 update progress: [{"downloading":true,"progress":0.99},{"downloading":true,"progress":1},{"error":"Couldn’t download the update: it isn’t signed by WellWrite"}]
+07:19:37 PASS the app downloads an update itself and checks who signed it
+07:19:39 scheduled: {"mutedDay":""}
+07:20:19 notifications:  NotificationRecord(0x04673adb: pkg=com.chrisgribble.wellwrite user=UserHandle{0} id=7 tag=null importance=3 key=0|com.chrisgribble.wellwrite|7|null|10192: Notification(channel=prayer_bell_3 shortcut=null contentView=null vibrate=null sound=null defaults=0x0 flags=0x18 color=0x00000000 category=reminder actions=2 vis=PRIVATE)) android.title=String (Midday prayer) Failed to write while dumping serv
+07:20:19 PASS the bell rings from the alarm clock with WellWrite in the background
+07:20:27 PASS tapping the bell opens Pause for prayer
+07:20:38 PASS “Mute today” on the notification mutes the bell in WellWrite too
+07:20:41 PASS swiping right on an entry goes to the one before (Swipe one)
+07:20:43 PASS swiping left goes to the next
+07:20:45 PASS and the next
+07:20:47 PASS Back on an older entry goes to today
+07:20:48 PASS one Back on today stays, and says to swipe again
+07:20:50 PASS a second Back leaves WellWrite
+07:20:59 PASS a bell tapped while WellWrite was closed opens the prayer (or “unlock to pray”)
+07:20:59 ALL TAP CHECKS PASSED
