@@ -2,6 +2,20 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.35.0 — Writing tools for your book
+_21 November 2026_
+
+**New**
+
+- Book: fold the sidebar away for more room to write, with the button at the top left of the Book or Ctrl+\. WellWrite remembers it, and the other sections keep the sidebar.
+- Book: more formatting. Choose a paragraph style (body text, heading, subheading, quotation, or poem and verse), and use bold, italic, underline, strikethrough, superscript for verse numbers, bulleted and numbered lists, alignment (left, centre, right, justified), indents (Tab and Shift+Tab), scene breaks, page breaks, clear formatting, undo and redo.
+- Book: the Poem style keeps a poem’s lines together, with a blank line between stanzas, instead of a full paragraph gap after every line.
+- Book: Page & text settings for the whole book: font, size, line spacing, space between paragraphs, first-line indent, justified text, page size (A4, Letter, A5 or 6 × 9 inch) and margins. Your writing shows on a page the width of your paper, and Export to Word follows the same settings, so the document looks the way it does on screen.
+
+**Fixed**
+
+- Book: the first line of a new chapter can now be given a style, and a stray “null” no longer appears at the top of the passage.
+
 ## 1.34.1 — Bible study beside your book
 _21 November 2026_
 
