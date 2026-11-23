@@ -1,6 +1,6 @@
 name: Release
 
-# When the version in package.json changes on main, build the Windows installer
+# When the version in package.json changes on main, build the Windows installer and the Mac app
 # and publish it as a GitHub release (tag v<version>). Installed copies of
 # WellWrite pick it up automatically. Complete releases are skipped; incomplete
 # ones (e.g. an interrupted upload) are repaired.
@@ -149,6 +149,68 @@ jobs:
             msg=$(tail -n 30 publish.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
             echo "::error title=Publish failed::$msg"; exit 1
           }
+
+  mac:
+    # After the Windows build, so the release already exists; adds the Mac app (one download for Intel and Apple-silicon Macs).
+    # It isn't signed by Apple, so the first open needs "Open Anyway" in System Settings, and updates are a download, not automatic.
+    needs: [relay, windows]
+    if: ${{ !cancelled() && needs.windows.result == 'success' }}
+    runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check release status
+        id: ver
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "v$v" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' 2>/dev/null | grep -qx "WellWrite-$v.dmg"; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "The Mac app for v$v is already released."
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.ver.outputs.skip != 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.ver.outputs.skip != 'true'
+        run: npm ci
+      - name: Test
+        if: steps.ver.outputs.skip != 'true'
+        run: npm test
+      - name: Add the shared Bible relay
+        if: steps.ver.outputs.skip != 'true' && needs.relay.outputs.url != ''
+        run: echo '{"bible":"${{ needs.relay.outputs.url }}"}' > src/relay-config.json
+      - name: Add Google sign-in settings
+        if: steps.ver.outputs.skip != 'true'
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: |
+          if [ -n "$GOOGLE_CLIENT_ID" ]; then node scripts/google-config.js; fi
+      - name: Build the Mac app
+        if: steps.ver.outputs.skip != 'true'
+        run: |
+          set -o pipefail
+          if ! npx electron-builder --mac --universal --publish never 2>&1 | tee build.log; then
+            msg=$(tail -n 60 build.log | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+            echo "::error title=Mac build failed::$msg"; exit 1
+          fi
+          ls -la dist
+      - name: Check it opens
+        if: steps.ver.outputs.skip != 'true'
+        run: |
+          app=$(ls -d dist/mac-universal/WellWrite.app)
+          codesign --verify --verbose "$app"
+          "$app/Contents/MacOS/WellWrite" > run.log 2>&1 &
+          pid=$!; sleep 15
+          if kill -0 $pid 2>/dev/null; then echo "WellWrite started and kept running."; kill $pid; else cat run.log; echo "::error title=Mac app didn't start::"; exit 1; fi
+      - name: Add to v${{ steps.ver.outputs.version }}
+        if: steps.ver.outputs.skip != 'true'
+        run: |
+          v=${{ steps.ver.outputs.version }}
+          gh release upload "v$v" dist/WellWrite-$v.dmg dist/WellWrite-$v-mac.zip dist/*.blockmap dist/latest-mac.yml --clobber --repo "$GITHUB_REPOSITORY"
 
   phone-check:
     # The phone app on an emulator first: it must open, make a journal and save an entry, without crashing.

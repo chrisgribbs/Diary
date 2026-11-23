@@ -1,7 +1,7 @@
 {
   "name": "wellwrite",
   "productName": "WellWrite",
-  "version": "1.35.1",
+  "version": "1.36.0",
   "description": "A private, encrypted desktop journal",
   "main": "main.js",
   "author": "Chris Gribble",
@@ -14,7 +14,8 @@
     "dist:portable": "electron-builder --win portable --x64 --publish never",
     "test:e2e": "electron --no-sandbox test/calendar.e2e.js && electron --no-sandbox test/connections.e2e.js && electron --no-sandbox test/daily.e2e.js && electron --no-sandbox test/trust.e2e.js && electron --no-sandbox test/weeks.e2e.js && electron --no-sandbox test/readings.e2e.js && electron --no-sandbox test/pictures.e2e.js && electron --no-sandbox test/apibible.e2e.js && electron --no-sandbox test/wordpress.e2e.js && electron --no-sandbox test/bible.e2e.js && electron --no-sandbox test/handwriting.e2e.js && electron --no-sandbox test/settings-close.e2e.js && electron --no-sandbox test/sync.e2e.js && electron --no-sandbox test/prayer.e2e.js && electron --no-sandbox test/daily-prayers.e2e.js && xvfb-run -a npx electron --no-sandbox test/listen.e2e.js && xvfb-run -a npx electron --no-sandbox test/swipe-entries.e2e.js && xvfb-run -a npx electron --no-sandbox test/study.e2e.js && electron --no-sandbox test/book.e2e.js",
     "build:bible": "node scripts/build-bible.js node_modules/world-english-bible node_modules/kjv",
-    "changelog": "node scripts/changelog.js"
+    "changelog": "node scripts/changelog.js",
+    "dist:mac": "electron-builder --mac --universal --publish never"
   },
   "devDependencies": {
     "@fontsource-variable/instrument-sans": "^5.3.0",
@@ -57,6 +58,32 @@
       "shortcutName": "WellWrite",
       "deleteAppDataOnUninstall": false,
       "artifactName": "WellWrite-Setup-${version}.exe"
+    },
+    "mac": {
+      "icon": "build/icon.png",
+      "category": "public.app-category.lifestyle",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "artifactName": "WellWrite-${version}-mac.${ext}"
+    },
+    "dmg": {
+      "title": "WellWrite ${version}",
+      "artifactName": "WellWrite-${version}.dmg"
     },
     "portable": {
       "artifactName": "WellWrite-Portable-${version}.exe"

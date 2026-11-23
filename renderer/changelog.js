@@ -5,6 +5,14 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.36.0', date: '2026-11-23', title: 'WellWrite on the Mac',
+    new: [
+      'WellWrite for Mac: one download (WellWrite-1.36.0.dmg) for Intel and Apple-silicon Macs. It has the same journal, Bible study, book and Google Drive sync as Windows, with a proper Mac menu bar, so ⌘C, ⌘V, ⌘Z and the other usual shortcuts work, and shortcut hints show ⌘ instead of Ctrl.',
+      'Mac: WellWrite can open at login and wait in the menu bar, and closing the window keeps it there, like Windows’ system tray. Quit it from the menu bar icon or with ⌘Q.',
+      'Mac: when a new version is out, WellWrite tells you and the Download button opens the release page. (The Mac app isn’t signed by Apple yet, so it can’t update itself the way the Windows app does.)',
+    ],
+  },
+  {
     v: '1.35.1', date: '2026-11-22', title: 'Drag your chapters into order',
     new: [
       'Book: drag chapters into order. Hold a chapter anywhere (the ⋮⋮ handle shows where) and drop it where it belongs; the others make room and the chapter numbers follow the new order as you drag. Alt+↑ and Alt+↓ move the selected chapter too, and the ↑ ↓ buttons still work.',

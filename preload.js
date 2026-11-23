@@ -105,6 +105,9 @@ contextBridge.exposeInMainWorld('wellwrite', {
   checkUpdates: () => call('app:checkUpdates'),
   installUpdate: () => call('app:installUpdate'),
   onUpdateReady: fn => ipcRenderer.on('app:update-ready', (_e, v) => fn(v)),
+  // Mac: a new version is out, to download (an unsigned Mac app can't install it itself)
+  onUpdateAvailable: fn => ipcRenderer.on('app:update-available', (_e, v, url) => fn(v, url)),
+  platform: process.platform,
   onFlush: fn => ipcRenderer.on('app:flush', async () => { try { await fn(); } finally { ipcRenderer.send('app:flushed'); } }),
   onLock: fn => ipcRenderer.on('app:lock', () => fn()),
   prayerUpcoming: days => call('prayer:upcoming', days),

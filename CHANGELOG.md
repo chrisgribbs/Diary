@@ -2,6 +2,15 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.36.0 — WellWrite on the Mac
+_23 November 2026_
+
+**New**
+
+- WellWrite for Mac: one download (WellWrite-1.36.0.dmg) for Intel and Apple-silicon Macs. It has the same journal, Bible study, book and Google Drive sync as Windows, with a proper Mac menu bar, so ⌘C, ⌘V, ⌘Z and the other usual shortcuts work, and shortcut hints show ⌘ instead of Ctrl.
+- Mac: WellWrite can open at login and wait in the menu bar, and closing the window keeps it there, like Windows’ system tray. Quit it from the menu bar icon or with ⌘Q.
+- Mac: when a new version is out, WellWrite tells you and the Download button opens the release page. (The Mac app isn’t signed by Apple yet, so it can’t update itself the way the Windows app does.)
+
 ## 1.35.1 — Drag your chapters into order
 _22 November 2026_
 

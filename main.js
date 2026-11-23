@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu, powerMonitor, nativeTh
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
+const MAC = process.platform === 'darwin';
 const { migrateJournal } = require('./src/migrate');
 const { createBackend, stripActive } = require('./src/backend');
 const prayer = require('./src/prayer');
@@ -78,8 +79,10 @@ function createWindow() {
   });
   win.webContents.session.setSpellCheckerEnabled(!!settings.spellcheck);
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  // Started with Windows for the prayer bell: stay in the tray until you open it.
-  const hiddenStart = process.argv.includes('--hidden') && readSettings().prayerBell;
+  // Started at login for the prayer bell: stay in the tray (the menu bar on a Mac) until you open it.
+  let openedHidden = process.argv.includes('--hidden');
+  if (MAC) { try { openedHidden = app.getLoginItemSettings().wasOpenedAsHidden; } catch {} }
+  const hiddenStart = openedHidden && readSettings().prayerBell;
   win.once('ready-to-show', () => { if (!hiddenStart) win.show(); });
 
   // Problems log: page errors and freezes go to <userData>/logs/wellwrite.log (newest 200 KB), so a bug
@@ -153,7 +156,7 @@ function createWindow() {
         if (vault.isUnlocked()) win.webContents.send('app:lock');
         win.hide();
         if (!readSettings().prayerTrayTold && Notification.isSupported()) {
-          new Notification({ title: 'WellWrite is still here', body: 'It’s in the tray, by the clock, so the prayer bell can ring. Quit it from there.', silent: true, icon: path.join(__dirname, 'build', 'icon.png') }).show();
+          new Notification({ title: 'WellWrite is still here', body: MAC ? 'It’s in the menu bar, at the top of the screen, so the prayer bell can ring. Quit it from there.' : 'It’s in the tray, by the clock, so the prayer bell can ring. Quit it from there.', silent: true, icon: path.join(__dirname, 'build', 'icon.png') }).show();
           writeSettings({ prayerTrayTold: true });
         }
       };
@@ -277,11 +280,17 @@ handle('export:readable', async () => {
 });
 
 // ---------- updates ----------
-let updateReady = null;
+let updateReady = null, updateAvailable = null;
+const RELEASES = 'https://github.com/chrisgribbs/Diary/releases/latest';
 function setupUpdates() {
   if (!app.isPackaged || process.env.PORTABLE_EXECUTABLE_FILE) return; // portable build can't self-update
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
+  // A Mac copy isn't signed by Apple, so it can't install updates itself: it only finds out about them, and the
+  // page offers the download (app:update-available). Windows downloads and installs them as before.
+  autoUpdater.autoDownload = !MAC;
+  autoUpdater.autoInstallOnAppQuit = !MAC;
+  if (MAC) autoUpdater.on('update-available', info => {
+    if (info && info.version && info.version !== app.getVersion()) { updateAvailable = info.version; if (win) win.webContents.send('app:update-available', info.version, RELEASES); }
+  });
   autoUpdater.on('update-downloaded', info => {
     updateReady = info.version;
     if (win) win.webContents.send('app:update-ready', info.version);
@@ -291,13 +300,14 @@ function setupUpdates() {
   setTimeout(check, 8000);
   setInterval(check, 6 * 60 * 60 * 1000);
 }
-handle('app:version', () => ({ version: backend.version, updateReady }));
+handle('app:version', () => ({ version: backend.version, updateReady, updateAvailable, releases: RELEASES, platform: process.platform }));
 handle('app:checkUpdates', async () => {
   if (!app.isPackaged) return { status: 'dev' };
   if (updateReady) return { status: 'ready', version: updateReady };
   try {
     const r = await autoUpdater.checkForUpdates();
     const v = r && r.updateInfo && r.updateInfo.version;
+    if (MAC && v && v !== app.getVersion()) { updateAvailable = v; return { status: 'available', version: v, url: RELEASES }; }
     return v && v !== app.getVersion() ? { status: 'downloading', version: v } : { status: 'latest' };
   } catch { return { status: 'offline' }; }
 });
@@ -367,7 +377,7 @@ function planBell() {
 function updateTray(s) {
   if (!s.prayerBell) { if (tray) { tray.destroy(); tray = null; } return; }
   if (!tray) {
-    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png')).resize({ width: 16, height: 16 }));
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png')).resize({ width: MAC ? 18 : 16, height: MAC ? 18 : 16 }));
     tray.setToolTip('WellWrite');
     tray.on('click', showWindow);
   }
@@ -387,7 +397,7 @@ function prayerChanged(s = readSettings()) {
   planBell();
   updateTray(s);
   if (app.isPackaged) {
-    try { app.setLoginItemSettings({ openAtLogin: !!(s.prayerBell && s.startWithWindows), args: ['--hidden'] }); } catch {}
+    try { app.setLoginItemSettings(MAC ? { openAtLogin: !!(s.prayerBell && s.startWithWindows), openAsHidden: true } : { openAtLogin: !!(s.prayerBell && s.startWithWindows), args: ['--hidden'] }); } catch {}
   }
 }
 handle('prayer:test', () => {
@@ -402,7 +412,13 @@ handle('prayer:testLog', () => testPrayer || []);
 app.on('second-instance', () => showWindow());
 
 app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
+  // Windows: no menu bar. A Mac always has one, and its Edit menu is what makes Cmd+C, Cmd+V and Cmd+Z work.
+  Menu.setApplicationMenu(MAC ? Menu.buildFromTemplate([
+    { role: 'appMenu' },
+    { role: 'editMenu' },
+    { label: 'View', submenu: [{ role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' }, { type: 'separator' }, { role: 'togglefullscreen' }] },
+    { role: 'windowMenu' },
+  ]) : null);
   createWindow();
   setupUpdates();
   backend.startTimers();
@@ -414,7 +430,14 @@ app.whenReady().then(() => {
   powerMonitor.on('suspend', lockAll);
 });
 
-app.on('before-quit', () => { reallyQuitting = true; vault.lock(); });
+app.on('before-quit', e => {
+  // On a Mac, Cmd+Q comes here first: close the window the usual way, so the page saves (and a backup runs if one
+  // is due) before WellWrite quits. Windows already closes through the window.
+  if (MAC && !quitting && win && !win.isDestroyed() && vault.isUnlocked()) { e.preventDefault(); reallyQuitting = true; win.close(); return; }
+  reallyQuitting = true; vault.lock();
+});
 app.on('window-all-closed', () => app.quit());
+// Mac: clicking WellWrite in the Dock brings the window back (from the menu bar, with the prayer bell on).
+app.on('activate', () => { if (win && !win.isDestroyed()) showWindow(); });
 
 module.exports = { getWindow: () => win, vault };

@@ -3,6 +3,18 @@
 const api = window.wellwrite;
 // On Android the same page runs in the WellWrite app; a few words and options differ.
 const ANDROID = api.platform === 'android';
+const MAC = api.platform === 'darwin';
+const DESKTOP_OS = MAC ? 'Mac' : 'Windows';   // in wording: "Match Windows", "signed in to your Mac"
+// On a Mac, shortcut hints say ⌘ rather than Ctrl (the shortcuts themselves accept either key).
+if (MAC) {
+  document.documentElement.dataset.os = 'mac';
+  const cmd = n => { for (const at of ['title', 'aria-label']) { const v = n.getAttribute && n.getAttribute(at); if (v && v.includes('Ctrl+')) n.setAttribute(at, v.replace(/Ctrl\+/g, '⌘')); } };
+  const all = root => { cmd(root); if (root.querySelectorAll) root.querySelectorAll('[title*="Ctrl+"], [aria-label*="Ctrl+"]').forEach(cmd); };
+  new MutationObserver(ms => { for (const m of ms) { if (m.type === 'attributes') cmd(m.target); else m.addedNodes.forEach(n => n.nodeType === 1 && all(n)); } })
+    .observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['title', 'aria-label'] });
+  document.addEventListener('DOMContentLoaded', () => all(document.body));
+  if (document.body) all(document.body);
+}
 const HERE = ANDROID ? 'this phone' : 'this computer';
 // Phones and tablets: putting the cursor in a box pops up the keyboard, which squeezes the screen and makes the next
 // tap miss what it was aimed at. So boxes you might not type in aren't focused on a touch screen.
@@ -3968,7 +3980,7 @@ function prayerControls(again) {
       c.on ? row('Sound', 'Three soft strikes of a bell, so you know it from other notifications. Or silent.', select(c.sound, [['bell', 'Soft bell'], ['silent', 'Silent']], v => set({ prayerSound: v }))) : null,
       c.on ? row('Today', mutedToday() ? 'The bell is quiet until tomorrow.' : 'Need quiet? The bell can rest until tomorrow.',
         el('button', { type: 'button', class: 'btn-plain', onclick: () => muteToday(!mutedToday()).then(again) }, mutedToday() ? 'Unmute' : 'Mute today')) : null,
-      c.on && !ANDROID ? row('Start with Windows', 'The bell rings only while WellWrite is running. With the bell on, closing the window keeps WellWrite in the tray (by the clock); quit it from there.',
+      c.on && !ANDROID ? row(MAC ? 'Open at login' : 'Start with Windows', MAC ? 'The bell rings only while WellWrite is running. With the bell on, closing the window keeps WellWrite in the menu bar, at the top of the screen; quit it from there.' : 'The bell rings only while WellWrite is running. With the bell on, closing the window keeps WellWrite in the tray (by the clock); quit it from there.',
         (() => { const x = el('input', { type: 'checkbox', onchange: e => set({ startWithWindows: e.target.checked }) }); x.checked = !!s.startWithWindows; return x; })()) : null,
       el('div', { class: 'btns', style: 'margin-top:14px' },
         el('button', { type: 'button', class: 'btn-plain', onclick: () => { $('#dlg').close(); pauseForPrayer(); } }, 'Pause for prayer now'),
@@ -4115,7 +4127,7 @@ function openSettings(section) {
           el('div', {}, el('b', {}, String(streak())), 'day streak')),
         since ? el('p', { style: 'margin-top:6px' }, `Writing since ${fmt(since, { day: 'numeric', month: 'long', year: 'numeric' })}.`) : null,
         el('h3', {}, 'Writing'),
-        row('Theme', null, select(s.theme, [['system', ANDROID ? 'Match phone' : 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
+        row('Theme', null, select(s.theme, [['system', ANDROID ? 'Match phone' : `Match ${DESKTOP_OS}`], ['light', 'Light'], ['dark', 'Dark']], v => updateSetting({ theme: v }))),
         row('Reading font', 'For your journal, the Bible and your studies.', select(s.readingFont || 'newsreader', READING_FONTS.map(f => [f[0], f[1]]), v => { updateSetting({ readingFont: v }); const p = $('#fontPreview'); if (p) { p.style.fontFamily = `'${readingFamily(v)}', Georgia, serif`; p.querySelector('small').textContent = READING_FONTS.find(f => f[0] === v)[3]; } })),
         el('p', { class: 'font-preview', id: 'fontPreview', style: `font-family: '${readingFamily(s.readingFont)}', Georgia, serif` },
           '“Come to me, all you who labour and are heavily burdened, and I will give you rest.”',
@@ -4145,7 +4157,7 @@ function openSettings(section) {
       panel('privacy', 'Privacy & lock', 'Your journal is encrypted with your password. When it locks, your writing is hidden.',
         row('Lock after inactivity', null, select(s.autoLockMinutes, [['1', '1 minute'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes'], ['60', '1 hour'], ['0', 'Never']], v => updateSetting({ autoLockMinutes: +v }))),
         row('Remember my password', 'When WellWrite locks, your writing is hidden either way. With these, you open it again with one click.', trustSelect()),
-        row(ANDROID ? 'Lock when I leave WellWrite' : 'Lock when minimised', ANDROID ? 'Locks whenever you switch to another app or the screen turns off.' : 'Also locks when Windows locks or the computer sleeps.', check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
+        row(ANDROID ? 'Lock when I leave WellWrite' : 'Lock when minimised', ANDROID ? 'Locks whenever you switch to another app or the screen turns off.' : `Also locks when ${MAC ? 'your Mac' : 'Windows'} locks or the computer sleeps.`, check(s.lockOnMinimize, v => updateSetting({ lockOnMinimize: v }))),
         row('Password', null, el('button', { type: 'button', class: 'btn-plain', onclick: () => { done(); changePassword(); } }, 'Change password'))),
 
       panel('sync', 'Sync between your devices', 'Keep your journal the same on your computer, phone and tablet, through your own Google Drive. Everything is encrypted with your journal password before it leaves this device.',
@@ -4215,7 +4227,7 @@ function trustSelect() {
   api.status().then(st => {
     const t = st.trust || { mode: 'ask' };
     sel.value = t.active || t.expired ? t.mode : 'ask';
-    if (!t.available) { sel.disabled = true; sel.title = ANDROID ? 'This phone can’t protect a saved password' : 'Windows can’t protect a saved password on this computer'; }
+    if (!t.available) { sel.disabled = true; sel.title = ANDROID ? 'This phone can’t protect a saved password' : `${MAC ? 'This Mac' : 'Windows'} can’t protect a saved password on this computer`; }
   }).catch(() => {});
   sel.addEventListener('change', async () => {
     const mode = sel.value;
@@ -4224,7 +4236,7 @@ function trustSelect() {
         title: ANDROID ? 'Trust this phone?' : 'Trust this computer?',
         text: ANDROID
           ? 'WellWrite will open without your password on this phone. Anyone who can unlock your phone could read your journal, so keep a screen lock on. Your password is still needed on any other device and to restore backups.'
-          : 'WellWrite will open without your password whenever you’re signed in to Windows on this computer. Anyone who can use your Windows account could read your journal. Your password is still needed on any other computer and to restore backups.',
+          : `WellWrite will open without your password whenever you’re signed in to ${DESKTOP_OS === 'Mac' ? 'your Mac' : 'Windows on this computer'}. Anyone who can use your ${DESKTOP_OS} account could read your journal. Your password is still needed on any other computer and to restore backups.`,
         ok: ANDROID ? 'Trust this phone' : 'Trust this computer',
       });
       if (!ok) { openSettings(); return; }
@@ -4245,9 +4257,11 @@ async function checkUpdates() {
     dev: 'Updates are only checked in the installed app.',
     ready: ANDROID ? `Version ${r.version} is available.` : `Version ${r.version} is ready. Restart WellWrite to install it.`,
     downloading: `Downloading version ${r.version}. You'll be asked to restart when it's ready.`,
+    available: `Version ${r.version} is out. Download it, then drag WellWrite into Applications to replace this one.`,
     latest: 'You have the latest version.',
     offline: "Couldn't reach the update server. Check your connection and try again.",
   }[r.status];
+  if (r.status === 'available') showUpdateAvailable(r.version, r.url);
   if (r.status === 'ready') {
     showUpdate(r.version);
     // On the phone, the download is right here too.
@@ -4263,7 +4277,17 @@ function showUpdate(version) {
   if (ANDROID) { $('#updateBtn').textContent = 'Update now'; if (api.prefetchUpdate) api.prefetchUpdate().catch(() => {}); }
   $('#updateBar').hidden = false;
 }
+/** Mac: a new version to download (the app isn't signed by Apple, so it can't replace itself). */
+function showUpdateAvailable(version, url) {
+  state.updateUrl = url;
+  document.body.classList.add('update-ready');
+  $('#updateText').textContent = `WellWrite ${version} is out.`;
+  $('#updateBtn').textContent = 'Download';
+  $('#updateBar').hidden = false;
+}
+if (api.onUpdateAvailable) api.onUpdateAvailable(showUpdateAvailable);
 $('#updateBtn').onclick = async () => {
+  if (state.updateUrl) { api.openExternal(state.updateUrl); return; }
   await saveNow();
   if (ANDROID) {
     $('#updateBtn').disabled = true;
@@ -4739,6 +4763,7 @@ api.version().then(v => {
   state.version = v.version;
   const b = $('#versionBtn'); b.textContent = 'v' + v.version; b.hidden = false;
   if (v.updateReady) showUpdate(v.updateReady);
+  else if (v.updateAvailable) showUpdateAvailable(v.updateAvailable, v.releases);
 }).catch(() => {});
 $('#versionBtn').addEventListener('click', async () => {
   const b = $('#versionBtn');
@@ -4746,7 +4771,9 @@ $('#versionBtn').addEventListener('click', async () => {
   const r = await api.checkUpdates().catch(() => ({ status: 'offline' }));
   b.textContent = 'v' + state.version;
   if (r.status === 'ready') showUpdate(r.version);
+  if (r.status === 'available') showUpdateAvailable(r.version, r.url);
   toast({
+    available: `WellWrite ${r.version} is out: use Download at the bottom of the window.`,
     dev: `WellWrite ${state.version}. Updates are only checked in the installed app.`,
     ready: ANDROID ? `WellWrite ${r.version} is available.` : `WellWrite ${r.version} is ready. Restart to install it.`,
     downloading: `Downloading WellWrite ${r.version}. You'll be asked to restart when it's ready.`,

@@ -246,6 +246,7 @@
     installUpdate: async () => { const u = await engine('app:installUpdate'); if (u) return app('installUpdate', u); },
     onUpdateProgress: fn => on('update-progress', fn),
     onUpdateReady: fn => on('app:update-ready', fn),
+    onUpdateAvailable: fn => on('app:update-available', fn),   // Mac only; the phone updates through its own APK download
     prefetchUpdate: async () => { const u = await engine('app:installUpdate'); if (u) return app('downloadUpdate', { ...u, auto: true }); },
     // The prayer bell: the engine works out the bells; Android's alarm clock rings them, even with WellWrite closed.
     prayerUpcoming: days => engine('prayer:upcoming', days),
