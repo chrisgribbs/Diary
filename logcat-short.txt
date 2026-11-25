@@ -1,0 +1,200 @@
+11-25 21:46:46.202  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:46:46.202  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:46:46.560  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:46:46.560  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:46:46.561  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:46:46.561  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name texSubset
+11-25 21:46:53.138  7000  7000 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-25 21:46:53.143  7000  7000 I AndroidRuntime: Using default boot image
+11-25 21:46:53.143  7000  7000 I AndroidRuntime: Leaving lock profiling enabled
+11-25 21:46:53.227  7000  7000 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-25 21:46:53.270  7000  7000 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-25 21:46:54.327  7000  7000 D AndroidRuntime: Shutting down VM
+11-25 21:47:01.024  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:47:01.024  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:47:01.024  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:47:19.862  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:47:19.862  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:47:19.862  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-25 21:47:37.189  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:47:37.189  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inCoverage
+11-25 21:47:37.248  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:47:37.248  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inDashParams
+11-25 21:47:37.248  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleParams
+11-25 21:47:37.307  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:47:37.307  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inDashParams
+11-25 21:47:37.307  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleParams
+11-25 21:47:37.371  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:47:37.371  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inDashParams
+11-25 21:47:37.371  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleParams
+11-25 21:47:40.185  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:47:40.186  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:47:40.297  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:47:40.297  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:47:54.602  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:47:54.602  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:47:54.603  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:47:54.703  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:47:54.703  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:47:54.703  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:48:04.379  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:48:04.379  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:48:26.273  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:48:26.273  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:48:26.350  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:48:26.351  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:48:26.351  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-25 21:48:48.550  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:48:48.550  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:49:42.201  9426  9426 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-25 21:49:42.206  9426  9426 I AndroidRuntime: Using default boot image
+11-25 21:49:42.206  9426  9426 I AndroidRuntime: Leaving lock profiling enabled
+11-25 21:49:42.310  9426  9426 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-25 21:49:42.348  9426  9426 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-25 21:49:43.422  9426  9426 D AndroidRuntime: Shutting down VM
+11-25 21:49:52.236  9582  9582 D AndroidRuntime: >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+11-25 21:49:52.240  9582  9582 I AndroidRuntime: Using default boot image
+11-25 21:49:52.240  9582  9582 I AndroidRuntime: Leaving lock profiling enabled
+11-25 21:49:52.290  9582  9582 D nativeloader: InitDefaultPublicLibraries for_preload=1: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libicu.so:libicui18n.so:libicuuc.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativehelper.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+11-25 21:49:52.316  9582  9582 D AndroidRuntime: Calling main entry com.android.commands.uiautomator.Launcher
+11-25 21:49:53.365  9582  9582 D AndroidRuntime: Shutting down VM
+11-25 21:50:00.349  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:00.349  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:00.420  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:00.420  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:00.523  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:00.523  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:01.347  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:01.347  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:01.347  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:50:02.269  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:02.269  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:50:02.269  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inTextureCoords
+11-25 21:50:02.355  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:02.355  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name coverage
+11-25 21:50:02.355  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name color
+11-25 21:50:02.355  3212  3430 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name localCoord
+11-25 21:50:11.196   523  1903 I ActivityManager: Killing 3466:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a192i0 (adj 0): isolated not needed
+11-25 21:50:13.737   523   553 I ActivityManager: Start proc 9937:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0i1 for  {com.chrisgribble.wellwrite/org.chromium.content.app.SandboxedProcessService0:0}
+11-25 21:50:13.771  9937  9937 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+11-25 21:50:15.637  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:15.637  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:15.806  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name pts01Attr
+11-25 21:50:15.806  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name pts23Attr
+11-25 21:50:15.806  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name argsAttr
+11-25 21:50:16.176  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:16.176  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:50:16.176  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inTextureCoords
+11-25 21:50:16.282  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name radii_selector
+11-25 21:50:16.282  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name corner_and_radius_outsets
+11-25 21:50:16.282  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name aa_bloat_and_coverage
+11-25 21:50:16.282  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name radii_x
+11-25 21:50:16.282  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 4 name radii_y
+11-25 21:50:16.282  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 5 name skew
+11-25 21:50:16.282  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 6 name translate_and_localrotate
+11-25 21:50:16.282  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 7 name color
+11-25 21:50:16.414  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name a_vertex
+11-25 21:50:16.467  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:16.467  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:16.564  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:16.564  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:16.636  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:16.636  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:16.706  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:16.706  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:16.755  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:16.755  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:16.755  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:50:16.859  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name radii_selector
+11-25 21:50:16.859  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name corner_and_radius_outsets
+11-25 21:50:16.859  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name aa_bloat_and_coverage
+11-25 21:50:16.859  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name radii_x
+11-25 21:50:16.859  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 4 name radii_y
+11-25 21:50:16.859  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 5 name skew
+11-25 21:50:16.859  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 6 name translate_and_localrotate
+11-25 21:50:16.859  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 7 name color
+11-25 21:50:17.069  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:17.069  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:17.162  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name resolveLevel_and_idx
+11-25 21:50:17.162  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name p01
+11-25 21:50:17.162  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name p23
+11-25 21:50:17.162  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name fanPointAttrib
+11-25 21:50:17.297  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:17.297  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:17.417  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name fillBounds
+11-25 21:50:17.417  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:17.417  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name locations
+11-25 21:50:17.524  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name radii_selector
+11-25 21:50:17.524  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name corner_and_radius_outsets
+11-25 21:50:17.524  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name aa_bloat_and_coverage
+11-25 21:50:17.524  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name radii_x
+11-25 21:50:17.524  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 4 name radii_y
+11-25 21:50:17.524  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 5 name skew
+11-25 21:50:17.524  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 6 name translate_and_localrotate
+11-25 21:50:17.524  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 7 name color
+11-25 21:50:17.648  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:17.648  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:50:17.648  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-25 21:50:17.707  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:17.707  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:50:17.707  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inTextureCoords
+11-25 21:50:17.777  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:17.777  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inDashParams
+11-25 21:50:17.777  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inRect
+11-25 21:50:17.829  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:17.829  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inTextureCoords
+11-25 21:50:17.882  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inputPoint
+11-25 21:50:17.929  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name resolveLevel_and_idx
+11-25 21:50:17.929  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name p01
+11-25 21:50:17.929  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name p23
+11-25 21:50:18.064  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name fillBounds
+11-25 21:50:18.064  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:18.064  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name locations
+11-25 21:50:18.138  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.138  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:18.193  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:18.193  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:50:18.193  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-25 21:50:18.230  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.230  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:18.316  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.316  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:18.360  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name radii_selector
+11-25 21:50:18.360  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name corner_and_radius_outsets
+11-25 21:50:18.360  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name aa_bloat_and_coverage
+11-25 21:50:18.360  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name radii_x
+11-25 21:50:18.360  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 4 name radii_y
+11-25 21:50:18.360  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 5 name skew
+11-25 21:50:18.360  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 6 name translate_and_localrotate
+11-25 21:50:18.360  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 7 name color
+11-25 21:50:18.476  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.476  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:18.476  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:50:18.656  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:18.656  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:50:18.656  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-25 21:50:18.696  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.696  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:18.742  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.742  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:18.793  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.793  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:18.863  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.863  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:18.935  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:18.935  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:18.935  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:50:19.086  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:19.086  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:19.086  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name localCoord
+11-25 21:50:19.249  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:19.249  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name localCoord
+11-25 21:50:19.481  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name position
+11-25 21:50:19.481  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name color
+11-25 21:50:19.830  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:19.830  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:50:19.830  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inCircleEdge
+11-25 21:50:19.869  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 0 name inPosition
+11-25 21:50:19.869  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 1 name inColor
+11-25 21:50:19.869  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 2 name inEllipseOffset
+11-25 21:50:19.869  9886  9922 E NODEJS  : s_glBindAttribLocation: bind attrib 3 name inEllipseRadii

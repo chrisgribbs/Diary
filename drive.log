@@ -1,0 +1,32 @@
+21:45:29 console error Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+21:45:29 PASS page talks to the Android app
+21:45:30 shot 2-lock
+21:45:38 shot 3-home
+21:45:38 PASS journal created and open: {"dataDir":"/data/user/0/com.chrisgribble.wellwrite/files/journal","trust":{"mode":"ask","active":false,"available":true}}
+21:45:38 PASS this phone can keep a remembered password (keystore)
+21:45:38 PASS an entry with emoji and accents saves and reads back exactly
+21:45:39 console error Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+21:45:47 PASS the entry is still there after reopening
+21:45:49 shot 4-journal
+21:45:51 shot 5-drawer
+21:45:51 PASS the menu button opens the sidebar
+21:45:52 PASS Back closes the sidebar
+21:45:59 shot 6-week
+21:46:02 shot 7-bible
+21:46:02 PASS the camera button is showing
+21:46:03 console error Failed to load resource: net::ERR_NAME_NOT_RESOLVED
+21:46:14 shot 7b-photos
+21:46:14 PASS the Photos view shows the photo
+21:46:14 PASS Bible search works (30 results)
+21:46:14 PASS remember-my-password can be switched on
+21:46:14 PASS version 1.37.0
+21:46:17 shot 8-settings
+21:46:24 focus:  mCurrentFocus=Window{28fc84d u0 com.android.camera2/com.android.camera.CaptureActivity} mFocusedApp=ActivityRecord{10766ad u0 com.android.camera2/com.android.camera.CaptureActivity t8} 
+21:46:24 PASS the camera button opens the camera
+21:46:25 shot 10-camera
+21:46:30 no button matching /(Next|Got it|Allow|While using|Only this time|NEXT|ALLOW)/i ; ids: android:id/decor_content_parent android:id/content com.android.camera2:id/activity_root_view com.android.camera2:id/camera_app_root com.android.camera2:id/preview_content com.android.camera2:id/focus_ring com.android.camera2:id/preview_overlay com.android.camera2:id/face_view com.android.camera2:id/module_layout com.android.camera2:id/progress_overlay com.android.camera2:id/sticky_bottom_capture_layout com.android.camera2:id/mode_options_overlay com.android.camera2:id/mode_options_toggle com.android.camera2:id/three_dots com.android.camera2:id/bottom_bar com.android.camera2:id/bottombar_captur
+21:46:40 shot 11-taken
+21:46:50 shot 12-back
+21:46:50 photos before 1 after 2 in open entry 1
+21:46:50 PASS a photo from the camera lands in today’s entry
+21:46:50 ALL PASSED
