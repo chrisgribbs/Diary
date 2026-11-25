@@ -755,6 +755,7 @@ async function openEntry(id, { via, keepMode } = {}) {
   state.current = { id: e.id, date: e.date, time: e.time, title: e.title, tags: [...e.tags], category: e.category || '', saved: true };
   titleIn.value = e.title || dateTitle(e.date); requestAnimationFrame(fitTitle);
   body.innerHTML = clean(e.html);
+  body.querySelectorAll('img[data-ink]').forEach(img => window.WellWriteInk.refresh(img));   // handwriting sits on the page itself
   decorateLinks();
   renderStamp(); renderChips(); renderCategoryPill(); showSheet(); updateCounts(); renderConnections(); renderBackLink(); renderQuoteSlot();
   $('#saveState').textContent = 'Saved';
@@ -3710,7 +3711,7 @@ async function handwrite(img = null) {
     const range = img ? null : saved;
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // the phone keyboard goes away while you write
     let r;
-    try { r = await window.WellWriteInk.open(img ? img.getAttribute('data-ink') : null); }
+    try { r = await window.WellWriteInk.open(img ? img.getAttribute('data-ink') : null, { title: titleIn.value || dateTitle(state.current.date) }); }
     catch (x) { toast(x.message); return; }
     if (!r) return;
     if (r === 'delete') {

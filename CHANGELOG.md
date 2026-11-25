@@ -2,6 +2,18 @@
 
 Every version, newest first. The same list is in the app under Settings → What’s new.
 
+## 1.37.0 — Handwriting that belongs on the page
+_26 November 2026_
+
+**New**
+
+- Write by hand: Add a page. Press Add a page (on the toolbar, or under the last page) to carry on writing on a fresh page, up to 12 pages in one go. A new page is also added by itself when you write near the bottom, and the page moves up after a line near the bottom of the screen, so a long thought keeps flowing.
+
+**Improved**
+
+- Handwriting now sits on your journal page like your typed writing does: just the ink, with no card, ruled paper or shadow around it, and lightened in dark mode. Blank stretches (like the rest of a page you moved on from) are closed up. Pages you’ve already written show the new way too.
+- The writing pad uses the journal’s own paper (light or dark) with the entry’s date at the top, and light ink on the dark page in dark mode.
+
 ## 1.36.0 — WellWrite on the Mac
 _23 November 2026_
 

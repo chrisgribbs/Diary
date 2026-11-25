@@ -5,6 +5,16 @@
 // Each version: { v, date (YYYY-MM-DD, Brisbane time), title, new: [], improved: [], fixed: [] }.
 const WELLWRITE_CHANGELOG = [
   {
+    v: '1.37.0', date: '2026-11-26', title: 'Handwriting that belongs on the page',
+    new: [
+      'Write by hand: Add a page. Press Add a page (on the toolbar, or under the last page) to carry on writing on a fresh page, up to 12 pages in one go. A new page is also added by itself when you write near the bottom, and the page moves up after a line near the bottom of the screen, so a long thought keeps flowing.',
+    ],
+    improved: [
+      'Handwriting now sits on your journal page like your typed writing does: just the ink, with no card, ruled paper or shadow around it, and lightened in dark mode. Blank stretches (like the rest of a page you moved on from) are closed up. Pages you’ve already written show the new way too.',
+      'The writing pad uses the journal’s own paper (light or dark) with the entry’s date at the top, and light ink on the dark page in dark mode.',
+    ],
+  },
+  {
     v: '1.36.0', date: '2026-11-23', title: 'WellWrite on the Mac',
     new: [
       'WellWrite for Mac: one download (WellWrite-1.36.0.dmg) for Intel and Apple-silicon Macs. It has the same journal, Bible study, book and Google Drive sync as Windows, with a proper Mac menu bar, so ⌘C, ⌘V, ⌘Z and the other usual shortcuts work, and shortcut hints show ⌘ instead of Ctrl.',

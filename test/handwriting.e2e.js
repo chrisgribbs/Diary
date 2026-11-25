@@ -97,6 +97,52 @@ app.whenReady().then(async () => {
   const page3 = await js(`return WellWriteInk.decode(document.querySelector('#body img[data-ink]').getAttribute('data-ink'))`);
   assert.equal(page3.strokes.length, 5, 'eraser removed the dot');
 
+  // ---- the picture in the entry is just the ink (clear background, no card), cropped to the writing ----
+  const px = await js(`const img = document.querySelector('#body img[data-ink]'); await img.decode();
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+    const cs = getComputedStyle(img);
+    return { corner: x.getImageData(2, 2, 1, 1).data[3], h: img.naturalHeight, shadow: cs.boxShadow, bg: cs.backgroundColor };`);
+  assert.equal(px.corner, 0, 'clear background, not ruled paper');
+  assert.ok(px.h < 500 * 1.5, `cropped to the writing (${px.h}px tall)`);
+  assert.equal(px.shadow, 'none', 'no card shadow');
+
+  // ---- add a page, write on it; writing near the bottom of the screen moves the page up ----
+  await js(`document.querySelector('#body img[data-ink]').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))`); await wait(500);
+  assert.match(await js(`return document.querySelector('.ink-title').textContent`), /2026/, 'the entry date at the top of the pad');
+  const h1 = await js(`return document.querySelector('.ink-canvas').getBoundingClientRect().height`);
+  const scroll0 = await js(`return document.querySelector('.ink-scroll').scrollTop`);
+  const nearBottom = await js(`const r = document.querySelector('.ink-canvas').getBoundingClientRect(); return innerHeight - 90 - r.top;`);
+  await write(90, nearBottom, 300, 'pen', 12); await wait(700);
+  assert.ok(await js(`return document.querySelector('.ink-scroll').scrollTop`) > scroll0 + 100, 'the page moves up after a line near the bottom');
+  await js(`document.querySelector('.ink-page-btn').click()`); await wait(800);
+  const h2 = await js(`return document.querySelector('.ink-canvas').getBoundingClientRect().height`);
+  assert.ok(Math.abs(h2 - 2 * h1) < 4, `a second page added (${h1} → ${h2})`);
+  assert.match(await js(`return document.querySelector('.ink-hint').textContent`), /2 pages/);
+  const pageTop = await js(`const c = document.querySelector('.ink-canvas'); return c.getBoundingClientRect().height / 2;`);
+  for (let i = 0; i < 3; i++) await write(90, pageTop + 160 + i * 52, 420, 'pen', 13 + i);
+  await shot('h3-second-page');
+  await js(`document.querySelector('.ink-more').click()`); await wait(500);
+  assert.match(await js(`return document.querySelector('.ink-hint').textContent`), /3 pages/, 'Add a page under the last page works too');
+  await js(`[...document.querySelectorAll('.ink-pad .btn-ink')].find(b => b.textContent === 'Done').click()`); await wait(700);
+  const page4 = await js(`return WellWriteInk.decode(document.querySelector('#body img[data-ink]').getAttribute('data-ink'))`);
+  assert.equal(page4.strokes.length, 9, 'writing on both pages kept');
+  assert.ok(page4.strokes.some(k => k.pts[0].y > 1300), 'some of it on page 2');
+  const tall = await js(`const img = document.querySelector('#body img[data-ink]'); await img.decode(); return img.naturalHeight / 1.5;`);
+  assert.ok(tall < 1000, `the blank rest of page 1 is closed up in the entry (${tall} units tall)`);
+  await js(`await saveNow()`);
+  await js(`document.querySelector('#sheetScroll').scrollTop = 1e6`); await shot('h4-entry-two-pages');
+
+  // ---- dark mode: the pad uses the dark page and light ink; the entry's picture is lightened ----
+  await js(`document.documentElement.dataset.theme = 'dark'`); await wait(200);
+  assert.notEqual(await js(`return getComputedStyle(document.querySelector('#body img[data-ink]')).filter`), 'none', 'lightened in dark mode');
+  await shot('h5-entry-dark');
+  await js(`document.querySelector('#body img[data-ink]').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))`); await wait(600);
+  const darkPx = await js(`const c = document.querySelector('.ink-canvas'); return [...c.getContext('2d').getImageData(c.width - 5, 5, 1, 1).data];`);
+  assert.ok(darkPx[0] < 60, 'dark page in the pad: ' + darkPx);
+  await shot('h6-pad-dark');
+  await js(`[...document.querySelectorAll('.ink-pad .btn-plain')].find(b => b.textContent === 'Cancel').click()`); await wait(400);
+  await js(`delete document.documentElement.dataset.theme`);
+
   // ---- photos view ignores handwriting ----
   await js(`document.querySelector('.modeswitch [data-mode=photos]').click()`); await wait(600);
   assert.ok(!(await has('#photosView .ph-tile img[src]')), 'no handwriting in Photos');

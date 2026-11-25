@@ -12,13 +12,15 @@
 // dt in ms. A stroke from the eraser is never stored; erasing removes whole strokes.
 (() => {
   const W = 1000;                 // page width, in page units
-  const LINE = 50, TOP = 110;     // ruled lines: spacing and first line
-  const PAGE = 1300, MORE = 650;  // starting page height, and how much is added when you near the bottom
+  const LINE = 50, TOP = 110;     // ruled lines: spacing, and the first line on each page
+  const PAGE = 1300;              // one page; Add a page (or writing near the bottom) adds another
+  const MAX_PAGES = 12;           // a canvas can only be so tall
   const COLOURS = ['#1f2430', '#1f4fa8', '#b3261e', '#2e7d4f'];
+  const COLOURS_DARK = ['#e6e3da', '#8fb3ff', '#ff9a8f', '#7fd1a1'];   // the same inks, readable on the dark page
   const COLOUR_NAMES = ['Black', 'Blue', 'Red', 'Green'];
   const SIZES = [3, 5, 8];
   const SIZE_NAMES = ['Fine', 'Medium', 'Bold'];
-  const PAPER = '#fbfaf4', RULE = '#dfe3ea', MARGIN = '#efc9c4';
+  const pageCount = h => Math.max(1, Math.ceil((h - 1) / PAGE));
   const PREFIX = 'v1:';
 
   /* ---------- storing ---------- */
@@ -68,20 +70,35 @@
   }
 
   /* ---------- drawing ---------- */
-  function paper(ctx, h) {
-    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, h);
-    ctx.strokeStyle = RULE; ctx.lineWidth = 1.2;
+  /** The pad's page: the journal's own paper colour and faint ruled lines, with a marked break between pages. */
+  function paper(ctx, h, look) {
+    ctx.fillStyle = look.paper; ctx.fillRect(0, 0, W, h);
+    ctx.strokeStyle = look.rule; ctx.lineWidth = 1.2;
     ctx.beginPath();
-    for (let y = TOP; y < h - 10; y += LINE) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    for (let p = 0; p * PAGE < h; p++) {
+      for (let y = p * PAGE + TOP; y < Math.min(h, (p + 1) * PAGE) - 20; y += LINE) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    }
     ctx.stroke();
-    ctx.strokeStyle = MARGIN; ctx.beginPath(); ctx.moveTo(70, 0); ctx.lineTo(70, h); ctx.stroke();
+    ctx.fillStyle = look.pencil; ctx.font = '500 22px system-ui, sans-serif'; ctx.textAlign = 'right';
+    for (let p = 1; p * PAGE < h; p++) {
+      const y = p * PAGE;
+      ctx.save(); ctx.strokeStyle = look.pencil; ctx.globalAlpha = .55; ctx.setLineDash([10, 10]); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.restore();
+      ctx.fillText('Page ' + (p + 1), W - 8, y + 36);
+    }
+  }
+  /** The colours to draw with: the app's own, so the pad looks like the journal page (light or dark). */
+  function looks() {
+    const cs = getComputedStyle(document.documentElement), v = n => cs.getPropertyValue(n).trim();
+    const dark = cs.colorScheme === 'dark' || v('color-scheme') === 'dark';
+    return { paper: v('--paper') || '#f3f4ef', rule: v('--rule') || '#d5d8cf', pencil: v('--pencil') || '#6a7080', inks: dark ? COLOURS_DARK : COLOURS };
   }
   const width = (k, p) => k.s * (0.35 + 0.9 * p);
   const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, p: (a.p + b.p) / 2 });
   /** Draw a stroke's points from index `from` on (smoothed through the midpoints). */
-  function drawStroke(ctx, k, from = 0) {
+  function drawStroke(ctx, k, from = 0, inks = COLOURS) {
     const pts = k.pts;
-    ctx.strokeStyle = ctx.fillStyle = COLOURS[k.c] || COLOURS[0];
+    ctx.strokeStyle = ctx.fillStyle = inks[k.c] || inks[0];
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     if (pts.length === 1 || (pts.length === 2 && from === 0 && Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y) < 0.5)) {
       ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, width(k, pts[0].p) / 2, 0, Math.PI * 2); ctx.fill();
@@ -97,17 +114,35 @@
   /** How far down the page the writing goes. */
   const inkBottom = strokes => strokes.reduce((m, k) => k.pts.reduce((n, q) => Math.max(n, q.y + k.s), m), 0);
 
-  /** A picture of the page, cropped below the last line of writing. */
+
+  /** The picture kept in the entry: just the ink, on a clear background, cropped to the writing, so it sits on the
+   *  journal page like the typed text does (no card, no ruled lines). Dark mode lightens it with CSS. */
   function picture(page) {
-    const h = Math.max(TOP + LINE * 3, Math.min(page.h, Math.ceil((inkBottom(page.strokes) + LINE) / LINE) * LINE + 20));
+    // Bands of writing, top to bottom; a blank stretch between them (the rest of a page, say) is closed up to two lines.
+    const spans = page.strokes.map(k => { const ys = k.pts.map(q => q.y); return [Math.min(...ys) - k.s - 16, Math.max(...ys) + k.s + 16, k]; })
+      .sort((a, b) => a[0] - b[0]);
+    const bands = [];
+    for (const [a, b, k] of spans) {
+      const last = bands[bands.length - 1];
+      if (last && a <= last.b + LINE * 2) { last.b = Math.max(last.b, b); last.ks.push(k); }
+      else bands.push({ a: Math.max(0, a), b, ks: [k] });
+    }
+    let y = 0;
+    for (const band of bands) { band.shift = y - band.a; y += band.b - band.a + LINE; }
+    const h = Math.max(LINE, y - LINE);
     const scale = 1.5;
     const c = document.createElement('canvas');
     c.width = W * scale; c.height = Math.round(h * scale);
     const ctx = c.getContext('2d');
-    ctx.scale(scale, scale);
-    paper(ctx, h);
-    page.strokes.forEach(k => drawStroke(ctx, k));
+    for (const band of bands) {
+      ctx.setTransform(scale, 0, 0, scale, 0, band.shift * scale);
+      band.ks.forEach(k => drawStroke(ctx, k));
+    }
     return c.toDataURL('image/png');
+  }
+  /** Redraw a handwritten picture already in an entry (pages from before 1.37 were kept on ruled paper). */
+  async function refresh(img) {
+    try { const page = await decode(img.getAttribute('data-ink')); if (page.strokes.length) img.src = picture(page); } catch {}
   }
 
   /* ---------- the writing pad ---------- */
@@ -119,13 +154,14 @@
     eraser: svg('<path d="M8.5 16.5h8"/><path d="M3.8 12.2l7.5-7.5a1.5 1.5 0 0 1 2.1 0l2.9 2.9a1.5 1.5 0 0 1 0 2.1l-6.9 6.8H7.6l-3.8-3.7a1.1 1.1 0 0 1 0-.6z"/><path d="M7.6 8.4l5 5"/>'),
     undo: svg('<path d="M7 5L3.5 8.5 7 12"/><path d="M4 8.5h7.5a4.5 4.5 0 0 1 0 9H9"/>'),
     redo: svg('<path d="M13 5l3.5 3.5L13 12"/><path d="M16 8.5H8.5a4.5 4.5 0 0 0 0 9H11"/>'),
+    page: svg('<path d="M5 2.5h6.5L15 6v11.5H5z"/><path d="M11.5 2.5V6H15"/><path d="M10 9v6M7 12h6"/>'),
   };
 
   /**
    * Open the pad. existing: data-ink text of a page to carry on with, or null for a new page.
    * Resolves { dataUrl, ink } when you press Done, 'delete' if you delete the page, or null if you cancel.
    */
-  function open(existing) {
+  function open(existing, { title = '' } = {}) {
     return new Promise(async resolve => {
       let page;
       try { page = existing ? await decode(existing) : null; }
@@ -149,9 +185,12 @@
       const undoBtn = tool('Undo', IC.undo, undo);
       const redoBtn = tool('Redo', IC.redo, redo);
       const clearBtn = el('button', { type: 'button', class: 'ink-text', onclick: clearAll }, 'Clear');
+      const pageBtn = el('button', { type: 'button', class: 'ink-text ink-page-btn', title: 'Add a page', onclick: () => addPage(true), html: IC.page + '<span>Add a page</span>' });
       const hint = el('span', { class: 'ink-hint' });
       const canvas = el('canvas', { class: 'ink-canvas', 'aria-label': 'Handwriting page' });
-      const sheet = el('div', { class: 'ink-sheet' }, canvas);
+      const moreBtn = el('button', { type: 'button', class: 'ink-more', onclick: () => addPage(true), html: IC.page + '<span>Add a page</span>' });
+      const head = title ? el('div', { class: 'ink-head' }, el('div', { class: 'ink-title' }, title), el('div', { class: 'ink-sub' }, 'Writing by hand')) : null;
+      const sheet = el('div', { class: 'ink-sheet' }, head, canvas, moreBtn);
       const scroller = el('div', { class: 'ink-scroll' }, sheet);
       const overlay = el('div', { class: 'ink-pad', role: 'dialog', 'aria-label': 'Write by hand' },
         el('div', { class: 'ink-bar' },
@@ -159,6 +198,7 @@
           el('div', { class: 'ink-group' }, ...swatches),
           el('div', { class: 'ink-group' }, ...sizes),
           el('div', { class: 'ink-group' }, undoBtn, redoBtn, clearBtn),
+          el('div', { class: 'ink-group' }, pageBtn),
           hint,
           el('div', { class: 'ink-group ink-end' },
             existing ? el('button', { type: 'button', class: 'ink-text danger', onclick: () => finish('delete') }, 'Delete page') : null,
@@ -170,19 +210,24 @@
       function setErase(on) { erasing = on; }
       function sync() {
         penBtn.classList.toggle('on', !erasing); eraseBtn.classList.toggle('on', erasing);
-        swatches.forEach((b, i) => b.classList.toggle('on', i === colour && !erasing));
+        swatches.forEach((b, i) => { b.classList.toggle('on', i === colour && !erasing); b.style.setProperty('--c', look.inks[i]); });
         sizes.forEach((b, i) => b.classList.toggle('on', i === size && !erasing));
         undoBtn.disabled = !undoStack.length; redoBtn.disabled = !redoStack.length;
         clearBtn.disabled = !page.strokes.length;
-        hint.textContent = penSeen ? 'Write with your pen · scroll with a finger' : 'Write with a pen, finger or mouse · two fingers to scroll';
+        const n = pageCount(page.h), full = n >= MAX_PAGES;
+        pageBtn.disabled = moreBtn.disabled = full;
+        moreBtn.lastChild.textContent = full ? `${MAX_PAGES} pages is the most for one piece of handwriting. Press Done, then write by hand again to carry on.` : 'Add a page';
+        hint.textContent = (n > 1 ? `${n} pages · ` : '') + (penSeen ? 'Write with your pen · scroll with a finger' : 'Write with a pen, finger or mouse · two fingers to scroll');
       }
 
       // ---- sizing: the page fills the width; drawing is in page units ----
       let scale = 1;
       const ctx = canvas.getContext('2d');
+      let look = looks();
       function layout() {
         // On a phone the page is wider than the screen (scroll sideways) so the lines are far enough apart to write between.
-        const cssW = Math.max(640, Math.min(scroller.clientWidth - 24, 1100));
+        const cssW = Math.max(640, Math.min(scroller.clientWidth - 32, 960));
+        sheet.style.width = cssW + 'px';
         scale = cssW / W;
         const dpr = window.devicePixelRatio || 1;
         canvas.style.width = cssW + 'px'; canvas.style.height = Math.round(page.h * scale) + 'px';
@@ -192,12 +237,28 @@
       function redraw() {
         const dpr = window.devicePixelRatio || 1;
         ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
-        paper(ctx, page.h);
-        page.strokes.forEach(k => drawStroke(ctx, k));
+        paper(ctx, page.h, look);
+        page.strokes.forEach(k => drawStroke(ctx, k, 0, look.inks));
+      }
+      /** Another page under the last one; with `go`, scroll so its top is in view. */
+      function addPage(go) {
+        const n = pageCount(page.h);
+        if (n >= MAX_PAGES) return false;
+        page.h = (n + 1) * PAGE; layout(); sync();
+        if (go) scroller.scrollTo({ top: canvas.offsetTop + n * PAGE * scale - 70, behavior: 'smooth' });
+        return true;
       }
       function growIfNeeded(y) {
-        if (y > page.h - 250) { page.h += MORE; layout(); }
+        if (y > page.h - 300) addPage(false);
       }
+      /** After a line near the bottom of the screen, move the page up so the next line is in easy reach. */
+      function followWriting(y) {
+        const below = canvas.getBoundingClientRect().top + y * scale - scroller.getBoundingClientRect().bottom;
+        if (below > -140) scroller.scrollBy({ top: Math.round(scroller.clientHeight * 0.45), behavior: 'smooth' });
+      }
+      const scheme = window.matchMedia('(prefers-color-scheme: dark)');
+      const onScheme = () => { look = looks(); redraw(); sync(); };
+      scheme.addEventListener('change', onScheme);
       const ro = new ResizeObserver(() => layout());
       ro.observe(scroller);
 
@@ -258,7 +319,7 @@
         const k = { c: colour, s: SIZES[size], pts: [{ ...q, p: pressure(e), t: Date.now() }] };
         page.strokes.push(k);
         current = { id: e.pointerId, stroke: k, touch: e.pointerType === 'touch' };
-        drawStroke(ctx, k);
+        drawStroke(ctx, k, 0, look.inks);
       });
       canvas.addEventListener('pointermove', e => {
         if (e.pointerType === 'touch' && touches.has(e.pointerId) && (!current || current.id !== e.pointerId)) {
@@ -279,7 +340,7 @@
           if (Math.hypot(q.x - last.x, q.y - last.y) < 0.6) continue;
           k.pts.push({ ...q, p: pressure(ev), t: Date.now() });
         }
-        if (k.pts.length > from) drawStroke(ctx, k, from);
+        if (k.pts.length > from) drawStroke(ctx, k, from, look.inks);
       });
       const end = e => {
         touches.delete(e.pointerId);
@@ -291,7 +352,9 @@
         const k = current.stroke; current = null;
         if (e.type === 'pointercancel') { page.strokes.splice(page.strokes.indexOf(k), 1); redraw(); return; }
         record({ add: k });
-        growIfNeeded(k.pts.reduce((m, q) => Math.max(m, q.y), 0));
+        const low = k.pts.reduce((m, q) => Math.max(m, q.y), 0);
+        growIfNeeded(low);
+        if (e.pointerType !== 'touch' || penSeen) followWriting(low);
       };
       canvas.addEventListener('pointerup', end);
       canvas.addEventListener('pointercancel', end);
@@ -317,6 +380,7 @@
           else result = { dataUrl: picture(page), ink: await encode(page) };
         }
         ro.disconnect();
+        scheme.removeEventListener('change', onScheme);
         document.removeEventListener('keydown', onKey, true);
         overlay.remove();
         resolve(result);
@@ -327,5 +391,5 @@
     });
   }
 
-  window.WellWriteInk = { open, encode, decode, picture, PREFIX };
+  window.WellWriteInk = { open, encode, decode, picture, refresh, PREFIX, PAGE };
 })();

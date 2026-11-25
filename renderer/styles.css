@@ -1186,13 +1186,18 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 }
 
 /* Handwriting: a page in an entry, and the pad you write it on (ink.js) */
-.body img[data-ink] { cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.06); }
-.ink-pad { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--cloth); }
+/* A handwritten page sits on the journal page like typed text: no card, just the ink (lightened in dark mode). */
+.body img[data-ink] { cursor: pointer; display: block; width: 100%; height: auto; margin: .4em 0; border-radius: 0; box-shadow: none !important; background: none; }
+.body img[data-ink]:hover { outline: 1px dashed var(--rule); outline-offset: 6px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .body img[data-ink] { filter: invert(1) hue-rotate(180deg) brightness(.92); } }
+:root[data-theme="dark"] .body img[data-ink] { filter: invert(1) hue-rotate(180deg) brightness(.92); }
+/* The writing pad: the same paper as the journal, the entry's date at the top, and pages one under another. */
+.ink-pad { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--paper); }
 .ink-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 8px 14px; background: var(--paper); border-bottom: 1px solid var(--rule); }
 .ink-group { display: flex; align-items: center; gap: 4px; }
 .ink-end { margin-left: auto; gap: 8px; }
 .ink-btn { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 8px; color: var(--pencil); }
-.ink-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ink-btn svg, .ink-page-btn svg, .ink-more svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .ink-btn:hover, .ink-btn.on { background: var(--paper-edge); color: var(--ink); }
 .ink-btn:disabled, .ink-text:disabled { opacity: .35; pointer-events: none; }
 .ink-swatch { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; }
@@ -1204,11 +1209,18 @@ textarea.title { resize: none; overflow: hidden; display: block; width: 100%; bo
 .ink-text { padding: 7px 10px; border-radius: 6px; color: var(--pencil); }
 .ink-text:hover { background: var(--paper-edge); color: var(--ink); }
 .ink-text.danger { color: var(--danger, #b3261e); }
+.ink-page-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); border: 1px solid var(--rule); }
 .ink-hint { font-size: 12.5px; color: var(--pencil); }
-.ink-scroll { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 16px 12px 40px; }
-.ink-sheet { width: max-content; margin: 0 auto; }
-@media (max-width: 700px) { .ink-scroll { padding: 10px 8px 40px; } .ink-sheet { margin: 0; } }
-.ink-canvas { display: block; touch-action: none; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 8px 24px rgba(0,0,0,.10); cursor: crosshair; }
+.ink-scroll { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 22px 16px 40px; }
+.ink-sheet { margin: 0 auto; }
+.ink-head { margin: 0 0 6px; }
+.ink-title { font: 600 30px/1.2 var(--serif); font-variation-settings: 'opsz' 36; color: var(--ink); }
+.ink-sub { margin-top: 4px; font-size: 13px; color: var(--pencil); padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+.ink-more { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 14px 0 0; padding: 14px; border: 1.5px dashed var(--rule); border-radius: 10px; color: var(--pencil); font-size: 14.5px; }
+.ink-more:hover:not(:disabled) { color: var(--ink); border-color: var(--pencil); background: var(--paper-edge); }
+.ink-more:disabled { border-style: solid; font-size: 13px; }
+@media (max-width: 700px) { .ink-scroll { padding: 12px 8px 40px; } .ink-sheet { margin: 0; } .ink-title { font-size: 22px; } .ink-page-btn span { display: none; } }
+.ink-canvas { display: block; touch-action: none; cursor: crosshair; }
 @media (max-width: 700px) { .ink-hint { display: none; } .ink-bar { gap: 4px 8px; padding: 6px 8px; } }
 
 /* Settings → What's new */
