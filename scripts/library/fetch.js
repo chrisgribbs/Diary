@@ -106,9 +106,39 @@ function csvRows(text) {
     index.push({ src, file: `${src}/${name}`, bytes: data.length, ...info });
   };
 
-  // Gutenberg
-  if (GUTENBERG.some(g => wanted(g.id))) try {
-    const rows = csvRows(await get('https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv'));
+  // Gutenberg: the catalogue from the main site or a mirror, falling back to Gutendex's search; each text from the
+  // main site or a mirror (gutenberg.org sometimes answers cloud machines with 503)
+  const gutenbergText = async n => {
+    const d = String(n).split('').slice(0, -1).join('/');
+    for (const url of [`https://www.gutenberg.org/cache/epub/${n}/pg${n}.txt`, `https://gutenberg.pglaf.org/cache/epub/${n}/pg${n}.txt`,
+      `https://aleph.gutenberg.org/${d}/${n}/${n}-0.txt`, `https://gutenberg.pglaf.org/${d}/${n}/${n}-0.txt`, `https://www.gutenberg.org/files/${n}/${n}-0.txt`]) {
+      try { return await get(url, { tries: 3 }); } catch (e) { console.log('  ', e.message); }
+    }
+    throw new Error('no copy of ' + n);
+  };
+  let catalogue = null;
+  for (const url of ['https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv', 'https://gutenberg.pglaf.org/cache/epub/feeds/pg_catalog.csv']) {
+    if (catalogue || !GUTENBERG.some(g => wanted(g.id))) break;
+    try { catalogue = csvRows(await get(url, { tries: 4 })); } catch (e) { console.log('gutenberg catalogue failed:', e.message); }
+  }
+  if (!catalogue && GUTENBERG.some(g => wanted(g.id))) {
+    // Gutendex (a search service over Gutenberg's catalogue): build the same rows from its answers
+    const SEARCH = { maclaren: 'maclaren expositions', expositors: "expositor's bible" };
+    catalogue = [['Text#', 'Type', 'Title', 'Authors', 'Language', 'Issued']];
+    for (const g of GUTENBERG.filter(g => wanted(g.id) && SEARCH[g.id])) {
+      let url = `https://gutendex.com/books/?languages=en&search=${encodeURIComponent(SEARCH[g.id])}`;
+      try {
+        while (url) {
+          const page = await get(url, { as: 'json', tries: 4 });
+          for (const b of page.results) catalogue.push([String(b.id), 'Text', b.title, b.authors.map(a => a.name).join('; '), 'en', '']);
+          url = page.next; await wait(800);
+        }
+      } catch (e) { console.log('gutendex failed:', g.id, e.message); }
+    }
+    console.log('gutendex rows:', catalogue.length - 1);
+  }
+  if (catalogue && GUTENBERG.some(g => wanted(g.id))) try {
+    const rows = catalogue;
     const head = rows.shift();
     const col = n => head.indexOf(n);
     const [cId, cType, cTitle, cAuthors, cLang, cIssued] = ['Text#', 'Type', 'Title', 'Authors', 'Language', 'Issued'].map(col);
@@ -118,13 +148,13 @@ function csvRows(text) {
       for (const r of hits.slice(0, 80)) {
         const n = r[cId];
         try {
-          const txt = await get(`https://www.gutenberg.org/cache/epub/${n}/pg${n}.txt`);
+          const txt = await gutenbergText(n);
           save(g.id, `pg${n}.txt`, txt, { site: 'gutenberg', url: `https://www.gutenberg.org/ebooks/${n}`, title: r[cTitle], authors: r[cAuthors], issued: r[cIssued], rights: 'Public domain in the USA (Project Gutenberg)' });
         } catch (e) { console.log('  failed', n, e.message); }
         await wait(1200);
       }
     }
-  } catch (e) { console.log('gutenberg catalogue failed:', e.message); }
+  } catch (e) { console.log('gutenberg failed:', e.message); }
 
   // archive.org
   for (const a of ARCHIVE.filter(a => wanted(a.id))) {
