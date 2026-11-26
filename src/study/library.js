@@ -86,7 +86,7 @@ class BuiltinClassics {
       if (!this.manifest.sources[srcId]) this.manifest.sources[srcId] = { author: it.author, work, year: 0, licence: 'public-domain', credit: it.source || '', url: '', caveat: '' };
       return [srcId, 'contemplative', [], 0, 0, (it.themes || []).join(', '), ''];
     });
-    const terms = {};
+    const terms = Object.create(null);
     this.items.forEach((it, i) => { for (const t of new Set(tokenize(it.text + ' ' + (it.themes || []).join(' ')))) (terms[t] = terms[t] || []).push(i); });
     this.keyIndex = { n: this.items.length, terms };
   }
@@ -163,7 +163,7 @@ class Library {
       const { n, terms } = p.keys;
       const scores = new Map(), hits = new Map();
       for (const t of q) {
-        const list = terms[t];
+        const list = Object.prototype.hasOwnProperty.call(terms, t) ? terms[t] : null;   // not "constructor" from the prototype
         if (!list || !list.length) continue;
         const idf = Math.log(1 + n / list.length);
         for (const i of list) { scores.set(i, (scores.get(i) || 0) + idf); hits.set(i, (hits.get(i) || 0) + 1); }

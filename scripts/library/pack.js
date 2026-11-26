@@ -69,7 +69,7 @@ function keysFor(texts, extra = []) {
   const docs = texts.map((t, i) => tokenize(t + ' ' + (extra[i] || '')));
   const df = new Map();
   for (const d of docs) for (const w of new Set(d)) df.set(w, (df.get(w) || 0) + 1);
-  const n = docs.length, terms = {};
+  const n = docs.length, terms = Object.create(null);   // no prototype: "constructor" is a word too
   docs.forEach((d, i) => {
     const tf = new Map();
     for (const w of d) tf.set(w, (tf.get(w) || 0) + 1);

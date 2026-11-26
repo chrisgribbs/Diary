@@ -30,6 +30,16 @@
       "id": "dictionary",
       "name": "Bible dictionary",
       "about": "Tyndale Open Bible Dictionary (2023): articles on the people, places, customs and ideas of the Bible. Openly licensed (CC BY-SA 4.0)."
+    },
+    {
+      "id": "maclaren",
+      "name": "Maclaren’s Expositions",
+      "about": "Alexander Maclaren, Expositions of Holy Scripture (1904–10): about 1,200 sermons and expositions from Genesis to 1 John, by the “prince of expository preachers”. Warm, clear and practical."
+    },
+    {
+      "id": "expositors",
+      "name": "The Expositor’s Bible",
+      "about": "The Expositor’s Bible (ed. W. Robertson Nicoll, 1887–1905): readable book-by-book expositions by Marcus Dods, George Adam Smith, James Denney, Alexander Maclaren and others, covering most of the Bible."
     }
   ],
   "sources": [
@@ -341,6 +351,335 @@
       "credit": "Tyndale Open Bible Dictionary, © 2023 Tyndale House Publishers, licensed under CC BY-SA 4.0 (creativecommons.org/licenses/by-sa/4.0). Adapted from Tyndale Open Bible Dictionary: formatting, pictures and maps removed. The original work by Tyndale House Publishers is available for free at http://www.tyndaleopenresources.com.",
       "url": "https://tyndaleopenresources.com/",
       "caveat": "A Bible dictionary keyed to the New Living Translation: names and quoted phrases follow the NLT, which can differ from the World English Bible."
+    },
+    {
+      "id": "maclaren",
+      "pack": "maclaren",
+      "category": "exposition",
+      "parser": "maclaren",
+      "files": [
+        "maclaren/pg13601.txt",
+        "maclaren/pg15836.txt",
+        "maclaren/pg21190.txt",
+        "maclaren/pg24674.txt",
+        "maclaren/pg7069.txt",
+        "maclaren/pg7351.txt",
+        "maclaren/pg7883.txt",
+        "maclaren/pg7925.txt",
+        "maclaren/pg8068.txt",
+        "maclaren/pg8069.txt",
+        "maclaren/pg8070.txt",
+        "maclaren/pg8071.txt",
+        "maclaren/pg8200.txt",
+        "maclaren/pg8381.txt",
+        "maclaren/pg8397.txt"
+      ],
+      "author": "Alexander Maclaren",
+      "work": "Expositions of Holy Scripture",
+      "year": 1904,
+      "licence": "public-domain",
+      "credit": "Alexander Maclaren, Expositions of Holy Scripture (Hodder & Stoughton; A. C. Armstrong, 1904–10). Public domain. Text from Project Gutenberg’s editions.",
+      "url": "https://www.gutenberg.org/ebooks/author/2475",
+      "caveat": "Victorian sermons preached in Manchester, quoting the Authorised (King James) Version. Their warmth and turns of phrase are Maclaren’s own: draw on his insight in fresh words, and quote only a short phrase where it is memorable."
+    },
+    {
+      "id": "expositors",
+      "pack": "expositors",
+      "category": "exposition",
+      "parser": "expositors",
+      "files": [
+        "expositors/pg32968.txt",
+        "expositors/pg33151.txt",
+        "expositors/pg33288.txt",
+        "expositors/pg33420.txt",
+        "expositors/pg37120.txt",
+        "expositors/pg37345.txt",
+        "expositors/pg39196.txt",
+        "expositors/pg39394.txt",
+        "expositors/pg39395.txt",
+        "expositors/pg39628.txt",
+        "expositors/pg39727.txt",
+        "expositors/pg39767.txt",
+        "expositors/pg39788.txt",
+        "expositors/pg39856.txt",
+        "expositors/pg39913.txt",
+        "expositors/pg39941.txt",
+        "expositors/pg39956.txt",
+        "expositors/pg40235.txt",
+        "expositors/pg40470.txt",
+        "expositors/pg40775.txt",
+        "expositors/pg40811.txt",
+        "expositors/pg41850.txt",
+        "expositors/pg41893.txt",
+        "expositors/pg42027.txt",
+        "expositors/pg42189.txt",
+        "expositors/pg42251.txt",
+        "expositors/pg42258.txt",
+        "expositors/pg42273.txt",
+        "expositors/pg42303.txt",
+        "expositors/pg42319.txt",
+        "expositors/pg42334.txt",
+        "expositors/pg42354.txt",
+        "expositors/pg42445.txt",
+        "expositors/pg42488.txt",
+        "expositors/pg42601.txt",
+        "expositors/pg42639.txt",
+        "expositors/pg42645.txt",
+        "expositors/pg42753.txt",
+        "expositors/pg42891.txt",
+        "expositors/pg43672.txt",
+        "expositors/pg43847.txt",
+        "expositors/pg44027.txt",
+        "expositors/pg44103.txt",
+        "expositors/pg44619.txt",
+        "expositors/pg46975.txt",
+        "expositors/pg47337.txt",
+        "expositors/pg48858.txt",
+        "expositors/pg49045.txt",
+        "expositors/pg50747.txt"
+      ],
+      "volumes": {
+        "expositors/pg32968.txt": [
+          57
+        ],
+        "expositors/pg33151.txt": [
+          42
+        ],
+        "expositors/pg33288.txt": [
+          42
+        ],
+        "expositors/pg33420.txt": [
+          1
+        ],
+        "expositors/pg37120.txt": [
+          40
+        ],
+        "expositors/pg37345.txt": [
+          50,
+          56
+        ],
+        "expositors/pg39196.txt": [
+          48
+        ],
+        "expositors/pg39394.txt": [
+          8
+        ],
+        "expositors/pg39395.txt": [
+          0
+        ],
+        "expositors/pg39628.txt": [
+          53,
+          54,
+          55
+        ],
+        "expositors/pg39727.txt": [
+          6,
+          7
+        ],
+        "expositors/pg39767.txt": [
+          22
+        ],
+        "expositors/pg39788.txt": [
+          49
+        ],
+        "expositors/pg39856.txt": [
+          41
+        ],
+        "expositors/pg39913.txt": [
+          20
+        ],
+        "expositors/pg39941.txt": [
+          21,
+          24
+        ],
+        "expositors/pg39956.txt": [
+          14,
+          15,
+          16
+        ],
+        "expositors/pg40235.txt": [
+          12,
+          13
+        ],
+        "expositors/pg40470.txt": [
+          17
+        ],
+        "expositors/pg40775.txt": [
+          61,
+          62,
+          63
+        ],
+        "expositors/pg40811.txt": [
+          39
+        ],
+        "expositors/pg41850.txt": [
+          46
+        ],
+        "expositors/pg41893.txt": [
+          23
+        ],
+        "expositors/pg42027.txt": [
+          11
+        ],
+        "expositors/pg42189.txt": [
+          19
+        ],
+        "expositors/pg42251.txt": [
+          65
+        ],
+        "expositors/pg42258.txt": [
+          43
+        ],
+        "expositors/pg42273.txt": [
+          59,
+          60
+        ],
+        "expositors/pg42303.txt": [
+          43
+        ],
+        "expositors/pg42319.txt": [
+          5
+        ],
+        "expositors/pg42334.txt": [
+          2
+        ],
+        "expositors/pg42354.txt": [
+          45
+        ],
+        "expositors/pg42445.txt": [
+          18
+        ],
+        "expositors/pg42488.txt": [
+          18
+        ],
+        "expositors/pg42601.txt": [
+          23
+        ],
+        "expositors/pg42639.txt": [
+          3
+        ],
+        "expositors/pg42645.txt": [
+          47
+        ],
+        "expositors/pg42753.txt": [
+          51,
+          52
+        ],
+        "expositors/pg42891.txt": [
+          10
+        ],
+        "expositors/pg43672.txt": [
+          22
+        ],
+        "expositors/pg43847.txt": [
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "expositors/pg44027.txt": [
+          18
+        ],
+        "expositors/pg44103.txt": [
+          26
+        ],
+        "expositors/pg44619.txt": [
+          9
+        ],
+        "expositors/pg46975.txt": [
+          25
+        ],
+        "expositors/pg47337.txt": [
+          58,
+          64
+        ],
+        "expositors/pg48858.txt": [
+          44
+        ],
+        "expositors/pg49045.txt": [
+          4
+        ],
+        "expositors/pg50747.txt": [
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ]
+      },
+      "authors": {
+        "expositors/pg32968.txt": "Thomas Charles Edwards",
+        "expositors/pg33151.txt": "Marcus Dods",
+        "expositors/pg33288.txt": "Marcus Dods",
+        "expositors/pg33420.txt": "G. A. Chadwick",
+        "expositors/pg37120.txt": "G. A. Chadwick",
+        "expositors/pg37345.txt": "Alexander Maclaren",
+        "expositors/pg39196.txt": "George G. Findlay",
+        "expositors/pg39394.txt": "William Garden Blaikie",
+        "expositors/pg39395.txt": "Marcus Dods",
+        "expositors/pg39628.txt": "Alfred Plummer",
+        "expositors/pg39727.txt": "Robert A. Watson",
+        "expositors/pg39767.txt": "George Adam Smith",
+        "expositors/pg39788.txt": "Robert Rainy",
+        "expositors/pg39856.txt": "Henry Burton",
+        "expositors/pg39913.txt": "Samuel Cox",
+        "expositors/pg39941.txt": "Walter F. Adeney",
+        "expositors/pg39956.txt": "Walter F. Adeney",
+        "expositors/pg40235.txt": "W. H. Bennett",
+        "expositors/pg40470.txt": "Robert A. Watson",
+        "expositors/pg40775.txt": "William Alexander",
+        "expositors/pg40811.txt": "John Monro Gibson",
+        "expositors/pg41850.txt": "James Denney",
+        "expositors/pg41893.txt": "W. H. Bennett",
+        "expositors/pg42027.txt": "F. W. Farrar",
+        "expositors/pg42189.txt": "Robert F. Horton",
+        "expositors/pg42251.txt": "William Milligan",
+        "expositors/pg42258.txt": "George Thomas Stokes",
+        "expositors/pg42273.txt": "J. Rawson Lumby",
+        "expositors/pg42303.txt": "George Thomas Stokes",
+        "expositors/pg42319.txt": "William Garden Blaikie",
+        "expositors/pg42334.txt": "Samuel H. Kellogg",
+        "expositors/pg42354.txt": "Marcus Dods",
+        "expositors/pg42445.txt": "Alexander Maclaren",
+        "expositors/pg42488.txt": "Alexander Maclaren",
+        "expositors/pg42601.txt": "C. J. Ball",
+        "expositors/pg42639.txt": "Robert A. Watson",
+        "expositors/pg42645.txt": "George G. Findlay",
+        "expositors/pg42753.txt": "James Denney",
+        "expositors/pg42891.txt": "F. W. Farrar",
+        "expositors/pg43672.txt": "George Adam Smith",
+        "expositors/pg43847.txt": "George Adam Smith",
+        "expositors/pg44027.txt": "Alexander Maclaren",
+        "expositors/pg44103.txt": "F. W. Farrar",
+        "expositors/pg44619.txt": "William Garden Blaikie",
+        "expositors/pg46975.txt": "John Skinner",
+        "expositors/pg47337.txt": "Alfred Plummer",
+        "expositors/pg48858.txt": "H. C. G. Moule",
+        "expositors/pg49045.txt": "Andrew Harper",
+        "expositors/pg50747.txt": "George Adam Smith"
+      },
+      "author": "W. Robertson Nicoll (ed.)",
+      "work": "The Expositor’s Bible",
+      "year": 1887,
+      "licence": "public-domain",
+      "credit": "The Expositor’s Bible, edited by W. Robertson Nicoll, by various authors (Hodder & Stoughton; A. C. Armstrong, 1887–1905): the 49 volumes in Project Gutenberg’s editions. Public domain.",
+      "url": "https://www.gutenberg.org/ebooks/search/?query=expositor%27s+bible",
+      "caveat": "Late-Victorian scholarship, each volume by a different writer (named with each passage). Some critical views (dates, authorship) reflect debates of the 1890s; give the writer’s name with any view that may be dated."
     }
   ]
 }

@@ -50,6 +50,30 @@ assert.ok(chunks.slice(1).every(c => c.section === 'Long' ? c.text.startsWith('�
   assert.deepEqual(h[0].refs, [[39, 11, 28, 11, 28]]);
   assert.deepEqual(h[1].refs, [[0, 32, 24, 32, 24]]);
   assert.ok(!h[0].text.includes('Jones'), 'the next reading list is not part of the text');
+  // Maclaren (Gutenberg): a title in capitals, the quote ending "--REF", a reference wrapped onto the next line,
+  // a reference alone under the quote, and a second sermon ("II") on the same passage
+  const maclaren = require('../scripts/library/parsers/maclaren');
+  const sermon = 'No wise teacher is ever afraid of repeating himself, and the average mind requires the reiteration of truth. '.repeat(10);
+  const mac = maclaren(`*** START OF THE PROJECT GUTENBERG EBOOK X ***\n\nCONTENTS\n\nTHE TRUE VINE\nABIDING IN LOVE\n\n\n\nTHE TRUE VINE\n\n'I am the true vine, and My Father is the husbandman.'--JOHN xv. 1.\n\n${sermon}\n\n\n\nTHE TRUE BRANCHES OF THE TRUE VINE\n\n'I am the vine, ye are the branches: herein is My Father glorified.'--JOHN\nxv. 5-8.\n\n${sermon}\n\n\n\nABIDING IN LOVE\n\n    'As the Father hath loved Me, so have I loved you.'\n    JOHN XV. 9 (R. V.).\n\n${sermon}\n\n\n\nABIDING IN LOVE\n\n\nII\n\n\n${sermon}\n\n*** END OF THE PROJECT GUTENBERG EBOOK X ***`);
+  assert.deepEqual(mac.map(x => x.section), ['The True Vine (John 15:1)', 'The True Branches of the True Vine (John 15:5–8)', 'Abiding in Love (John 15:9)', 'Abiding in Love (John 15:9)'], 'every sermon found, the contents skipped');
+  assert.ok(mac[0].text.startsWith("'I am the true vine"), 'a short quote leads the sermon');
+  assert.equal(maclaren.anchorRef('GENESIS i. 26-ii. 3.').join(), '0,1,26,2,3');
+  assert.equal(maclaren.anchorRef('GENESIS xii. 8; xiii. 3, 4, 18.').join(), '0,12,8,12,8');
+
+  // The Expositor's Bible: CHAPTER headings with titles below, the passage printed before a chapter (Dods), the
+  // volume's author on each section, and a stray "B.C. 586" never read as a chapter
+  const expositors = require('../scripts/library/parsers/expositors');
+  const ch = 'In the preceding section of this Epistle Paul introduced the subject which was prominent in his thoughts. '.repeat(18);
+  const exp = expositors(`\n\nCHAPTER I.\n\nTHE CHURCH IN CORINTH\n\n"Paul, called to be an apostle."--1 COR. i. 1-9.\n\n${ch}\n\n_THE FOOLISHNESS OF PREACHING._\n\n     "For Christ sent me not to baptize, but to preach the gospel."--1 COR. i. 17-ii. 5.\n\n\n\nCHAPTER II.\n\n_THE FOOLISHNESS OF PREACHING._\n\n${ch}\n\nCHAPTER III.\n\nTHE EXILE (B.C. 586)\n\n${ch}\n\nCHAPTER IV.\n\nA THEME\n\n${ch} as in (xi. 2), and again (xi. 4), and in chap. xi.\n\nCHAPTER V.\n\nLAST\n\n${ch}`,
+    { file: 'x.txt', source: { volumes: { 'x.txt': [45] }, authors: { 'x.txt': 'Marcus Dods' } } });
+  assert.deepEqual(exp.map(x => x.section), ['Marcus Dods: The Church in Corinth (1 Corinthians 1:1–9)', 'Marcus Dods: The Foolishness of Preaching (1 Corinthians 1:17–2:5)',
+    'Marcus Dods: The Exile (B.C. 586)', 'Marcus Dods: A Theme (1 Corinthians 11)', 'Marcus Dods: Last']);
+  assert.ok(!exp[0].text.includes('baptize'), 'the next chapter’s passage is not part of this one');
+
+  // The keyword index has no prototype: "constructor" is just a word
+  const { keysFor } = require('../scripts/library/pack');
+  assert.deepEqual(keysFor(['the constructor of the toString method', 'another passage entirely']).terms.constructor, [0]);
+
   const chapters = require('../scripts/library/parsers/chapters');
   const para = 'The soul that would find God must first find itself, and walk in quietness. '.repeat(25);
   const c = chapters(`CONTENTS\nChapter I. Of the soul . . . . 3\nChapter II. Of prayer . . . . 9\n\nBOOK I.\n\nCHAPTER I.\n\nOf the soul\n\n${para}\n\nCHAPTER II.\n\nOf prayer\n\n${para}\n\nBOOK II.\n\nCHAPTER I.\n\nOf rest\n\n${para}`, { source: { part: '^BOOK\\s+[IVX]+\\.?$' } });
